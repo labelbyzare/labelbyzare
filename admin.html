@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    padding: 2rem;
+    color: #222;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto 2rem;
+  }
+  .topbar h1 { font-size: 1.3rem; margin: 0; }
+  button {
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #d0d3d9;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .btn-primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn-danger { background: #c0392b; color: #fff; border-color: #c0392b; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .card {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+  th { color: #777; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+  td img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
+  .row-actions button { margin-right: 0.4rem; font-size: 0.8rem; padding: 0.35rem 0.7rem; }
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+  .badge-sale { background: #fdecea; color: #c0392b; }
+  .badge-new { background: #eaf6ec; color: #1e8449; }
+  .badge-out { background: #f0f0f0; color: #888; }
+
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 2rem 1rem;
+  }
+  .overlay.open { display: flex; }
+  .form-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 640px;
+  }
+  .form-card h2 { margin-top: 0; }
+  .field { margin-bottom: 1rem; }
+  .field-row { display: flex; gap: 1rem; }
+  .field-row .field { flex: 1; }
+  label { display: block; font-size: 0.82rem; color: #444; margin-bottom: 0.3rem; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #d0d3d9;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .checkbox-group { display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1rem; }
+  .checkbox-group label { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.85rem; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem; }
+  .hint { font-size: 0.78rem; color: #888; margin-top: 0.25rem; }
+  #form-message { font-size: 0.85rem; margin-top: 0.5rem; }
+  #form-message.error { color: #c0392b; }
+  .image-preview { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .image-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Admin Dashboard</h1>
+  <button id="logout-btn">Log Out</button>
+</div>
+
+<div class="wrap">
+  <p id="status">Checking session...</p>
+
+  <div id="content" style="display:none;">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <strong>Products</strong>
+        <button class="btn-primary" id="add-product-btn">+ Add Product</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th></th><th>Name</th><th>Category</th><th>Price</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="products-tbody"></tbody>
+      </table>
+      <p id="empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No products yet. Click "+ Add Product" to create your first one.</p>
+    </div>
+
+    <div class="card" id="orders-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <strong>Orders</strong>
+        <button id="refresh-orders-btn">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+      <p id="orders-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No orders yet.</p>
+    </div>
+
+    <div class="card" id="security-card">
+      <strong>Security — Two-Factor Authentication</strong>
+      <p id="mfa-status" style="color:#888; margin:0.6rem 0;">Checking status...</p>
+
+      <div id="mfa-disabled-view" style="display:none">
+        <button class="btn-primary" id="enable-mfa-btn">Enable 2FA</button>
+      </div>
+
+      <div id="mfa-enroll-view" style="display:none">
+        <p style="font-size:0.85rem;color:#444;">Scan this QR code with an authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code it shows.</p>
+        <div id="mfa-qr" style="margin:1rem 0;"></div>
+        <p style="font-size:0.78rem;color:#888;">Can't scan? Enter this code manually: <code id="mfa-secret" style="user-select:all;"></code></p>
+        <div class="field" style="max-width:200px;margin-top:1rem;">
+          <label>6-digit code</label>
+          <input type="text" id="mfa-enroll-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456">
+        </div>
+        <div style="display:flex; gap:0.6rem; margin-top:1rem;">
+          <button type="button" id="mfa-cancel-btn">Cancel</button>
+          <button type="button" class="btn-primary" id="mfa-verify-btn">Verify & Enable</button>
+        </div>
+        <div id="mfa-enroll-message" style="font-size:0.85rem;margin-top:0.5rem;"></div>
+      </div>
+
+      <div id="mfa-enabled-view" style="display:none">
+        <p style="color:#1e8449;font-size:0.9rem;">✓ Two-factor authentication is enabled on this account.</p>
+        <button class="btn-danger" id="disable-mfa-btn">Disable 2FA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="form-overlay">
+  <div class="form-card">
+    <h2 id="form-title">Add Product</h2>
+    <form id="product-form">
+      <input type="hidden" id="edit-id">
+
+      <div class="field">
+        <label>Product ID (unique, e.g. "aby-005" — cannot be changed later)</label>
+        <input type="text" id="f-id" required>
+      </div>
+
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="f-name" required>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Category</label>
+          <input type="text" id="f-category" placeholder="Everyday, Occasion...">
+        </div>
+        <div class="field">
+          <label>Price</label>
+          <input type="number" id="f-price" step="0.01" required>
+        </div>
+        <div class="field">
+          <label>Old Price (optional, for sale)</label>
+          <input type="number" id="f-oldprice" step="0.01">
+        </div>
+      </div>
+
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="f-isnew"> New</label>
+        <label><input type="checkbox" id="f-issale"> On Sale</label>
+        <label><input type="checkbox" id="f-instock" checked> In Stock</label>
+      </div>
+
+      <div class="field">
+        <label>Sizes (comma-separated)</label>
+        <input type="text" id="f-sizes" placeholder="S, M, L, XL">
+      </div>
+
+      <div class="field">
+        <label>Colors (comma-separated, format Name:#hex)</label>
+        <input type="text" id="f-colors" placeholder="Taupe Beige:#c2b09c, Emerald:#046307">
+      </div>
+
+      <div class="field">
+        <label>Main Image</label>
+        <input type="file" id="f-img-file" accept="image/*">
+        <div class="hint">Uploading replaces the current main image below.</div>
+        <input type="hidden" id="f-img">
+        <div class="image-preview" id="main-img-preview"></div>
+      </div>
+
+      <div class="field">
+        <label>Gallery Images (upload one or more; adds to existing gallery)</label>
+        <input type="file" id="f-gallery-files" accept="image/*" multiple>
+        <input type="hidden" id="f-gallery">
+        <div class="image-preview" id="gallery-preview"></div>
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea id="f-description"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Fabric / Care</label>
+          <textarea id="f-fabric"></textarea>
+        </div>
+        <div class="field">
+          <label>Shipping Info</label>
+          <textarea id="f-shipping"></textarea>
+        </div>
+        <div class="field">
+          <label>Returns Info</label>
+          <textarea id="f-returns"></textarea>
+        </div>
+      </div>
+
+      <div id="form-message"></div>
+
+      <div class="form-actions">
+        <button type="button" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn-primary" id="save-btn">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="order-overlay">
+  <div class="form-card">
+    <h2>Order Details</h2>
+    <div id="order-details-body"></div>
+    <div class="field" style="margin-top:1.5rem;">
+      <label>Status</label>
+      <select id="order-status-select">
+        <option value="new">New</option>
+        <option value="processing">Processing</option>
+        <option value="shipped">Shipped</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="button" id="order-close-btn">Close</button>
+      <button type="button" class="btn-danger" id="order-delete-btn">Delete Order</button>
+      <button type="button" class="btn-primary" id="order-save-status-btn">Save Status</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script>
+const statusEl = document.getElementById("status");
+const contentEl = document.getElementById("content");
+const tbody = document.getElementById("products-tbody");
+const emptyMsg = document.getElementById("empty-msg");
+
+const overlay = document.getElementById("form-overlay");
+const form = document.getElementById("product-form");
+const formTitle = document.getElementById("form-title");
+const formMessage = document.getElementById("form-message");
+const saveBtn = document.getElementById("save-btn");
+
+let currentMainImg = "";
+let currentGallery = [];
+
+async function checkAccess() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Only emails listed in public.admins are staff — everyone else (any
+  // customer account included) is turned away here, before anything on
+  // this page loads.
+  const { data: adminRow } = await supabaseClient
+    .from("admins")
+    .select("email")
+    .eq("email", session.user.email)
+    .maybeSingle();
+  if (!adminRow) {
+    await supabaseClient.auth.signOut();
+    window.location.href = "login.html";
+    return;
+  }
+
+  const { data: aal } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
+    window.location.href = "login.html";
+    return;
+  }
+  statusEl.style.display = "none";
+  contentEl.style.display = "block";
+  loadProducts();
+  loadMfaStatus();
+}
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  window.location.href = "login.html";
+});
+
+async function loadProducts() {
+  const { data, error } = await supabaseClient
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    tbody.innerHTML = "";
+    emptyMsg.style.display = "block";
+    emptyMsg.textContent = "Error loading products: " + error.message;
+    return;
+  }
+
+  if (!data.length) {
+    tbody.innerHTML = "";
+    emptyMsg.style.display = "block";
+    emptyMsg.textContent = 'No products yet. Click "+ Add Product" to create your first one.';
+    return;
+  }
+
+  emptyMsg.style.display = "none";
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><img src="${p.img || ''}" onerror="this.style.visibility='hidden'"></td>
+      <td>${escapeHtml(p.name)}</td>
+      <td>${escapeHtml(p.category || '')}</td>
+      <td>Rs. ${p.price}${p.old_price ? ` <s style="color:#999">${p.old_price}</s>` : ''}</td>
+      <td>
+        ${p.is_sale ? '<span class="badge badge-sale">Sale</span>' : ''}
+        ${p.is_new ? '<span class="badge badge-new">New</span>' : ''}
+        ${!p.in_stock ? '<span class="badge badge-out">Out of stock</span>' : ''}
+      </td>
+      <td class="row-actions">
+        <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Edit</button>
+        <button class="btn-danger" onclick="deleteProduct('${p.id}')">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+
+document.getElementById("add-product-btn").addEventListener("click", () => openForm());
+document.getElementById("cancel-btn").addEventListener("click", closeForm);
+
+function openForm(product = null) {
+  form.reset();
+  formMessage.textContent = "";
+  currentMainImg = product?.img || "";
+  currentGallery = product?.gallery || [];
+  renderImagePreviews();
+
+  if (product) {
+    formTitle.textContent = "Edit Product";
+    document.getElementById("edit-id").value = product.id;
+    document.getElementById("f-id").value = product.id;
+    document.getElementById("f-id").disabled = true;
+    document.getElementById("f-name").value = product.name || "";
+    document.getElementById("f-category").value = product.category || "";
+    document.getElementById("f-price").value = product.price || "";
+    document.getElementById("f-oldprice").value = product.old_price || "";
+    document.getElementById("f-isnew").checked = !!product.is_new;
+    document.getElementById("f-issale").checked = !!product.is_sale;
+    document.getElementById("f-instock").checked = product.in_stock !== false;
+    document.getElementById("f-sizes").value = (product.sizes || []).join(", ");
+    document.getElementById("f-colors").value = (product.colors || []).map(c => `${c.name}:${c.hex}`).join(", ");
+    document.getElementById("f-description").value = product.description || "";
+    document.getElementById("f-fabric").value = product.fabric || "";
+    document.getElementById("f-shipping").value = product.shipping || "";
+    document.getElementById("f-returns").value = product.returns || "";
+  } else {
+    formTitle.textContent = "Add Product";
+    document.getElementById("edit-id").value = "";
+    document.getElementById("f-id").disabled = false;
+    document.getElementById("f-instock").checked = true;
+  }
+
+  overlay.classList.add("open");
+}
+
+function closeForm() {
+  overlay.classList.remove("open");
+}
+
+function renderImagePreviews() {
+  const mainPrev = document.getElementById("main-img-preview");
+  mainPrev.innerHTML = currentMainImg ? `<img src="${currentMainImg}">` : "";
+  const galPrev = document.getElementById("gallery-preview");
+  galPrev.innerHTML = currentGallery.map(url => `<img src="${url}">`).join("");
+}
+
+window.editProduct = openForm;
+
+async function uploadImage(file) {
+  const ext = file.name.split(".").pop();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabaseClient.storage.from("product-images").upload(path, file);
+  if (error) throw error;
+  const { data } = supabaseClient.storage.from("product-images").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+document.getElementById("f-img-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  formMessage.textContent = "Uploading image...";
+  formMessage.className = "";
+  try {
+    currentMainImg = await uploadImage(file);
+    renderImagePreviews();
+    formMessage.textContent = "";
+  } catch (err) {
+    formMessage.textContent = "Image upload failed: " + err.message;
+    formMessage.className = "error";
+  }
+});
+
+document.getElementById("f-gallery-files").addEventListener("change", async (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  formMessage.textContent = "Uploading images...";
+  formMessage.className = "";
+  try {
+    for (const file of files) {
+      const url = await uploadImage(file);
+      currentGallery.push(url);
+    }
+    renderImagePreviews();
+    formMessage.textContent = "";
+  } catch (err) {
+    formMessage.textContent = "Image upload failed: " + err.message;
+    formMessage.className = "error";
+  }
+});
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  saveBtn.disabled = true;
+  formMessage.textContent = "";
+  formMessage.className = "";
+
+  const editId = document.getElementById("edit-id").value;
+  const id = document.getElementById("f-id").value.trim();
+
+  const sizes = document.getElementById("f-sizes").value
+    .split(",").map(s => s.trim()).filter(Boolean);
+
+  const colors = document.getElementById("f-colors").value
+    .split(",").map(s => s.trim()).filter(Boolean).map(pair => {
+      const [name, hex] = pair.split(":").map(s => s.trim());
+      return { name, hex };
+    });
+
+  const payload = {
+    id,
+    name: document.getElementById("f-name").value.trim(),
+    category: document.getElementById("f-category").value.trim(),
+    price: parseFloat(document.getElementById("f-price").value) || 0,
+    old_price: document.getElementById("f-oldprice").value ? parseFloat(document.getElementById("f-oldprice").value) : null,
+    is_new: document.getElementById("f-isnew").checked,
+    is_sale: document.getElementById("f-issale").checked,
+    in_stock: document.getElementById("f-instock").checked,
+    sizes,
+    colors,
+    img: currentMainImg,
+    img2: currentMainImg,
+    gallery: currentGallery,
+    description: document.getElementById("f-description").value.trim(),
+    fabric: document.getElementById("f-fabric").value.trim(),
+    shipping: document.getElementById("f-shipping").value.trim(),
+    returns: document.getElementById("f-returns").value.trim(),
+  };
+
+  let error;
+  if (editId) {
+    ({ error } = await supabaseClient.from("products").update(payload).eq("id", editId));
+  } else {
+    ({ error } = await supabaseClient.from("products").insert(payload));
+  }
+
+  if (error) {
+    formMessage.textContent = error.message;
+    formMessage.className = "error";
+    saveBtn.disabled = false;
+    return;
+  }
+
+  saveBtn.disabled = false;
+  closeForm();
+  loadProducts();
+});
+
+window.deleteProduct = async function(id) {
+  if (!confirm("Delete this product? This cannot be undone.")) return;
+  const { error } = await supabaseClient.from("products").delete().eq("id", id);
+  if (error) {
+    alert("Error deleting: " + error.message);
+    return;
+  }
+  loadProducts();
+};
+
+checkAccess();
+
+// ---------- 2FA MANAGEMENT ----------
+const mfaStatusEl = document.getElementById("mfa-status");
+const mfaDisabledView = document.getElementById("mfa-disabled-view");
+const mfaEnrollView = document.getElementById("mfa-enroll-view");
+const mfaEnabledView = document.getElementById("mfa-enabled-view");
+const mfaEnrollMessage = document.getElementById("mfa-enroll-message");
+
+let pendingEnrollFactorId = null;
+
+function hideAllMfaViews() {
+  mfaDisabledView.style.display = "none";
+  mfaEnrollView.style.display = "none";
+  mfaEnabledView.style.display = "none";
+}
+
+async function loadMfaStatus() {
+  const { data, error } = await supabaseClient.auth.mfa.listFactors();
+  if (error) {
+    mfaStatusEl.textContent = "Could not check 2FA status: " + error.message;
+    return;
+  }
+  const verified = data.totp.find(f => f.status === "verified");
+  hideAllMfaViews();
+  if (verified) {
+    mfaStatusEl.textContent = "";
+    mfaEnabledView.style.display = "block";
+    mfaEnabledView.dataset.factorId = verified.id;
+  } else {
+    mfaStatusEl.textContent = "Not enabled. Your admin login only requires a password.";
+    mfaDisabledView.style.display = "block";
+  }
+}
+
+document.getElementById("enable-mfa-btn").addEventListener("click", async () => {
+  hideAllMfaViews();
+  mfaEnrollView.style.display = "block";
+  mfaEnrollMessage.textContent = "";
+
+  const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: "totp" });
+  if (error) {
+    mfaEnrollMessage.textContent = error.message;
+    mfaEnrollMessage.className = "error";
+    return;
+  }
+  pendingEnrollFactorId = data.id;
+  document.getElementById("mfa-qr").innerHTML = `<img src="${data.totp.qr_code}" alt="Scan with authenticator app" style="width:180px;height:180px;">`;
+  document.getElementById("mfa-secret").textContent = data.totp.secret;
+});
+
+document.getElementById("mfa-cancel-btn").addEventListener("click", async () => {
+  if (pendingEnrollFactorId) {
+    await supabaseClient.auth.mfa.unenroll({ factorId: pendingEnrollFactorId });
+    pendingEnrollFactorId = null;
+  }
+  loadMfaStatus();
+});
+
+document.getElementById("mfa-verify-btn").addEventListener("click", async () => {
+  const code = document.getElementById("mfa-enroll-code").value.trim();
+  mfaEnrollMessage.textContent = "";
+  mfaEnrollMessage.className = "";
+
+  const { data: challenge, error: challengeError } = await supabaseClient.auth.mfa.challenge({ factorId: pendingEnrollFactorId });
+  if (challengeError) {
+    mfaEnrollMessage.textContent = challengeError.message;
+    mfaEnrollMessage.className = "error";
+    return;
+  }
+
+  const { error: verifyError } = await supabaseClient.auth.mfa.verify({
+    factorId: pendingEnrollFactorId,
+    challengeId: challenge.id,
+    code
+  });
+
+  if (verifyError) {
+    mfaEnrollMessage.textContent = verifyError.message;
+    mfaEnrollMessage.className = "error";
+    return;
+  }
+
+  pendingEnrollFactorId = null;
+  loadMfaStatus();
+});
+
+document.getElementById("disable-mfa-btn").addEventListener("click", async () => {
+  if (!confirm("Disable two-factor authentication? Your account will only require a password to log in.")) return;
+  const factorId = mfaEnabledView.dataset.factorId;
+  const { error } = await supabaseClient.auth.mfa.unenroll({ factorId });
+  if (error) {
+    alert("Error disabling 2FA: " + error.message);
+    return;
+  }
+  loadMfaStatus();
+});
+
+// ---------- ORDERS ----------
+const ordersTbody = document.getElementById("orders-tbody");
+const ordersEmptyMsg = document.getElementById("orders-empty-msg");
+const orderOverlay = document.getElementById("order-overlay");
+const orderDetailsBody = document.getElementById("order-details-body");
+const orderStatusSelect = document.getElementById("order-status-select");
+let currentOrderId = null;
+
+const STATUS_LABELS = { new: "New", processing: "Processing", shipped: "Shipped", completed: "Completed", cancelled: "Cancelled" };
+const STATUS_COLORS = { new: "#4a6fa5", processing: "#c9a227", shipped: "#1e8449", completed: "#1a1a1a", cancelled: "#c0392b" };
+
+async function loadOrders() {
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    ordersTbody.innerHTML = "";
+    ordersEmptyMsg.style.display = "block";
+    ordersEmptyMsg.textContent = "Error loading orders: " + error.message;
+    return;
+  }
+
+  if (!data.length) {
+    ordersTbody.innerHTML = "";
+    ordersEmptyMsg.style.display = "block";
+    ordersEmptyMsg.textContent = "No orders yet.";
+    return;
+  }
+
+  ordersEmptyMsg.style.display = "none";
+  ordersTbody.innerHTML = data.map(o => `
+    <tr>
+      <td>${escapeHtml(o.order_number)}</td>
+      <td>${escapeHtml(o.full_name)}</td>
+      <td>Rs. ${o.total}</td>
+      <td><span class="badge" style="background:${STATUS_COLORS[o.status] || '#888'};color:#fff;">${STATUS_LABELS[o.status] || o.status}</span></td>
+      <td>${new Date(o.created_at).toLocaleDateString()}</td>
+      <td class="row-actions"><button onclick='viewOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>View</button></td>
+    </tr>
+  `).join("");
+}
+
+window.viewOrder = function(order) {
+  currentOrderId = order.id;
+  const itemsHtml = (order.items || []).map(it =>
+    `<div style="padding:.4rem 0;border-bottom:1px solid #eee;">${escapeHtml(it.name)} — ${escapeHtml(it.size)} · ${escapeHtml(it.color)} × ${it.qty} — Rs. ${it.price * it.qty}</div>`
+  ).join("");
+
+  orderDetailsBody.innerHTML = `
+    <div style="font-size:0.9rem;line-height:1.7;">
+      <p><strong>${escapeHtml(order.full_name)}</strong> · ${escapeHtml(order.email)} · ${escapeHtml(order.phone)}</p>
+      <p>${escapeHtml(order.address)}, ${escapeHtml(order.area)}, ${escapeHtml(order.city)}, ${escapeHtml(order.country)} ${order.postal_code ? '('+escapeHtml(order.postal_code)+')' : ''}</p>
+      <p>${escapeHtml(order.delivery_type)} · ${escapeHtml(order.payment_type)}</p>
+    </div>
+    <div style="margin-top:1rem;">${itemsHtml}</div>
+    <div style="margin-top:1rem;font-weight:600;">
+      Subtotal: Rs. ${order.subtotal} · Shipping: Rs. ${order.shipping_fee} · Total: Rs. ${order.total}
+    </div>
+  `;
+  orderStatusSelect.value = order.status || "new";
+  orderOverlay.classList.add("open");
+};
+
+document.getElementById("order-close-btn").addEventListener("click", () => {
+  orderOverlay.classList.remove("open");
+});
+
+document.getElementById("order-save-status-btn").addEventListener("click", async () => {
+  const { error } = await supabaseClient.from("orders").update({ status: orderStatusSelect.value }).eq("id", currentOrderId);
+  if (error) {
+    alert("Error updating status: " + error.message);
+    return;
+  }
+  orderOverlay.classList.remove("open");
+  loadOrders();
+});
+
+document.getElementById("order-delete-btn").addEventListener("click", async () => {
+  if (!confirm("Delete this order permanently?")) return;
+  const { error } = await supabaseClient.from("orders").delete().eq("id", currentOrderId);
+  if (error) {
+    alert("Error deleting order: " + error.message);
+    return;
+  }
+  orderOverlay.classList.remove("open");
+  loadOrders();
+});
+
+document.getElementById("refresh-orders-btn").addEventListener("click", loadOrders);
+loadOrders();
+</script>
+
+</body>
+</html>

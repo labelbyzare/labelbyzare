@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account | Label by Zare</title>
+<meta name="description" content="Manage your Label by Zare profile, orders, addresses and account settings.">
+<link rel="icon" type="image/jpeg" href="images/logo.jpg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="grain"></div>
+
+<nav class="site-nav is-dark scrolled" id="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="nav-logo"><img src="images/logo.jpg" alt="Label by Zare logo">LABEL <span>by</span> ZARE</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Collection</a></li>
+      <li><a href="new-arrivals.html">New Arrivals</a></li>
+      <li><a href="sale.html">Sale</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="track-order.html">Track Order</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-icon-btn js-open-search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+      <a href="wishlist.html" class="nav-icon-btn" aria-label="Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg><span class="badge js-wish-count">0</span></a>
+      <a href="account.html" class="nav-icon-btn" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg></a>
+      <button class="nav-icon-btn js-open-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span class="badge js-cart-count">0</span></button>
+      <button class="nav-burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu">
+  <div class="eyebrow">Menu</div>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html">Collection</a></li>
+    <li><a href="new-arrivals.html">New Arrivals</a></li>
+    <li><a href="sale.html">Sale</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="track-order.html">Track Order</a></li>
+    <li><a href="wishlist.html">Wishlist</a></li>
+  </ul>
+</div>
+
+<div class="search-overlay">
+  <div class="search-top">
+    <input type="text" placeholder="Search for abayas, collections…" aria-label="Search">
+    <button class="search-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="search-body">
+    <p class="search-hint">Try &ldquo;Noir Luxe&rdquo;, &ldquo;Evening&rdquo;, or &ldquo;Sale&rdquo;.</p>
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="cart-drawer-backdrop"></div>
+<div class="cart-drawer">
+  <div class="drawer-head"><h3 class="serif">Your Bag</h3><button class="js-close-drawer nav-icon-btn" aria-label="Close bag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="drawer-body"></div>
+  <div class="drawer-foot"></div>
+</div>
+
+<main class="wrap" id="account-main" style="padding-top:calc(var(--nav-h) + 2.6rem); padding-bottom: var(--sp-6); display:none">
+  <div class="eyebrow">My Account</div>
+  <h1 class="display-2" style="margin:.8rem 0 2.4rem">Welcome Back</h1>
+
+  <div class="account-layout">
+    <aside class="account-sidebar">
+      <div class="account-sidebar-profile">
+        <div class="account-avatar-sm" id="sidebar-avatar">?</div>
+        <div>
+          <div class="account-sidebar-name" id="sidebar-name">—</div>
+          <div class="account-sidebar-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <ul class="account-nav">
+        <li><a href="#profile" class="tab-link active" data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>Profile</a></li>
+        <li><a href="cart.html"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>Cart</a></li>
+        <li><a href="wishlist.html"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>Wishlist</a></li>
+        <li><a href="#orders" class="tab-link" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M20 7 12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>My Orders</a></li>
+        <li><a href="#addresses" class="tab-link" data-tab="addresses"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>Addresses</a></li>
+        <li><a href="#settings" class="tab-link" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>Account Settings</a></li>
+        <li><button type="button" class="danger" id="logout-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Log Out</button></li>
+      </ul>
+    </aside>
+
+    <div class="account-panel">
+
+      <!-- PROFILE -->
+      <section id="panel-profile" class="tab-panel">
+        <h2 class="serif">Profile</h2>
+        <div class="avatar-upload">
+          <div class="account-avatar-lg" id="profile-avatar">?</div>
+          <div>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none">
+            <button type="button" class="btn btn-outline btn-sm" id="avatar-btn">Change Photo</button>
+            <p style="font-size:0.78rem;color:var(--taupe);margin-top:.5rem">JPG or PNG, square photos look best.</p>
+          </div>
+        </div>
+        <div id="profile-error" class="auth-error"></div>
+        <div id="profile-success" class="auth-success"></div>
+        <div class="field"><label for="profileName">Full Name</label><input type="text" id="profileName"></div>
+        <div class="field"><label>Email</label><input type="email" id="profileEmailDisplay" disabled></div>
+        <button type="button" class="btn btn-solid" id="save-profile-btn">Save Changes</button>
+      </section>
+
+      <!-- ORDERS -->
+      <section id="panel-orders" class="tab-panel" style="display:none">
+        <h2 class="serif">My Orders</h2>
+        <div id="orders-list"></div>
+        <div id="orders-empty" class="empty-state" style="display:none">
+          <p>You haven't placed any orders yet.</p>
+          <a href="shop.html" class="btn btn-solid" style="margin-top:1rem">Shop the Collection</a>
+        </div>
+      </section>
+
+      <!-- ADDRESSES -->
+      <section id="panel-addresses" class="tab-panel" style="display:none">
+        <div class="account-panel-head">
+          <h2 class="serif" style="margin:0">Addresses</h2>
+          <button type="button" class="btn btn-outline btn-sm" id="add-address-btn">+ Add Address</button>
+        </div>
+        <div id="addresses-list"></div>
+        <div id="addresses-empty" class="empty-state" style="display:none">
+          <p>No saved addresses yet.</p>
+        </div>
+
+        <form id="address-form" style="display:none; margin-top: var(--sp-4); border-top:1px solid var(--line); padding-top: var(--sp-4)">
+          <input type="hidden" id="addrId">
+          <div class="form-grid">
+            <div class="field"><label for="addrLabel">Label</label><input type="text" id="addrLabel" placeholder="Home, Work…" required></div>
+            <div class="field"><label for="addrFullName">Full Name</label><input type="text" id="addrFullName" required></div>
+            <div class="field"><label for="addrPhone">Phone</label><input type="tel" id="addrPhone" required></div>
+            <div class="field"><label for="addrCountry">Country</label>
+              <select id="addrCountry" required><option>Pakistan</option><option>United Arab Emirates</option><option>Saudi Arabia</option><option>United Kingdom</option><option>Other</option></select>
+            </div>
+            <div class="field"><label for="addrCity">City</label><input type="text" id="addrCity" required></div>
+            <div class="field"><label for="addrArea">Area</label><input type="text" id="addrArea" required></div>
+            <div class="field"><label for="addrPostal">Postal Code</label><input type="text" id="addrPostal"></div>
+            <div class="field full"><label for="addrAddress">Address</label><input type="text" id="addrAddress" required></div>
+          </div>
+          <label style="display:flex; align-items:center; gap:.6rem; font-size:0.85rem; color:var(--taupe); cursor:pointer; margin-bottom:1rem">
+            <input type="checkbox" id="addrDefault" style="width:auto"> Set as default address
+          </label>
+          <button type="submit" class="btn btn-solid btn-sm">Save Address</button>
+          <button type="button" class="btn btn-outline btn-sm" id="cancel-address-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="panel-settings" class="tab-panel" style="display:none">
+        <h2 class="serif">Account Settings</h2>
+
+        <div class="settings-block">
+          <h3>Change Email</h3>
+          <div id="email-error" class="auth-error"></div>
+          <div id="email-success" class="auth-success"></div>
+          <div class="field"><label for="newEmail">New Email</label><input type="email" id="newEmail"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="change-email-btn">Update Email</button>
+          <p style="font-size:0.78rem;color:var(--taupe);margin-top:.5rem">We'll send a confirmation link to the new address before it takes effect.</p>
+        </div>
+
+        <div class="settings-block">
+          <h3>Change Password</h3>
+          <div id="password-error" class="auth-error"></div>
+          <div id="password-success" class="auth-success"></div>
+          <div class="field"><label for="newPass">New Password</label><input type="password" id="newPass" minlength="6"></div>
+          <div class="field"><label for="confirmPass">Confirm New Password</label><input type="password" id="confirmPass" minlength="6"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="change-password-btn">Update Password</button>
+        </div>
+
+        <div class="settings-block danger-zone">
+          <h3>Delete Account</h3>
+          <p style="font-size:0.85rem;color:var(--taupe);margin-bottom:1rem">
+            This permanently deletes your profile, saved addresses, cart and wishlist from Label by Zare, and logs you out. This can't be undone.
+          </p>
+          <div id="delete-error" class="auth-error"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="delete-account-btn" style="border-color:#b3402f; color:#b3402f">Delete My Account</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<div id="account-loading" class="wrap" style="padding-top:calc(var(--nav-h) + 4rem); text-align:center; color:var(--taupe)">Loading your account…</div>
+
+<footer class="site-footer">
+  <div class="wrap footer-bottom">
+    <span>&copy; 2026 Label by Zare. All rights reserved.</span>
+    <span>Designed for the modern abaya wardrobe.</span>
+  </div>
+</footer>
+
+<div class="toast"><span class="dot"></span><span class="toast-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="js/data.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/main.js"></script>
+<script src="js/customer-auth.js"></script>
+<script src="js/account.js"></script>
+
+<div class="float-actions">
+  <a class="float-btn whatsapp" href="https://wa.me/923288691979" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <span class="float-tooltip">Chat on WhatsApp</span>
+    <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.362.687 4.564 1.872 6.418L4 29l7.771-1.83A11.93 11.93 0 0 0 16.001 27C22.63 27 28 21.627 28 15S22.63 3 16.001 3zm0 21.6a9.55 9.55 0 0 1-4.87-1.34l-.35-.207-4.61 1.086 1.104-4.49-.228-.362A9.56 9.56 0 1 1 25.56 15a9.56 9.56 0 0 1-9.559 9.6zm5.24-7.152c-.287-.144-1.698-.838-1.961-.934-.263-.096-.454-.144-.646.144-.191.288-.742.934-.91 1.126-.168.192-.335.216-.622.072-.287-.144-1.212-.447-2.309-1.427-.854-.762-1.43-1.703-1.598-1.991-.168-.288-.018-.443.126-.587.13-.129.287-.336.43-.504.144-.168.192-.288.287-.48.096-.192.048-.36-.024-.504-.072-.144-.646-1.559-.885-2.135-.233-.56-.47-.484-.646-.493l-.55-.01c-.192 0-.504.072-.767.36-.263.288-1.004.981-1.004 2.393 0 1.412 1.028 2.776 1.171 2.968.144.192 2.024 3.09 4.905 4.334.685.296 1.22.473 1.637.605.688.219 1.314.188 1.809.114.552-.082 1.698-.694 1.938-1.364.24-.67.24-1.244.168-1.364-.072-.12-.263-.192-.55-.336z"/></svg>
+  </a>
+  <a class="float-btn instagram" href="https://www.instagram.com/thelabelbyzare?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" aria-label="Follow on Instagram">
+    <span class="float-tooltip">Follow on Instagram</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+  </a>
+</div>
+
+</body>
+</html>

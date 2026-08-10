@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Your Order | Label by Zare</title>
+<meta name="description" content="Track the status of your Label by Zare order using your order number and email.">
+<link rel="icon" type="image/jpeg" href="images/logo.jpg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="grain"></div>
+
+<nav class="site-nav is-light" id="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="nav-logo"><img src="images/logo.jpg" alt="Label by Zare logo">LABEL <span>by</span> ZARE</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Collection</a></li>
+      <li><a href="new-arrivals.html">New Arrivals</a></li>
+      <li><a href="sale.html">Sale</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="track-order.html" class="active">Track Order</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-icon-btn js-open-search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+      <a href="wishlist.html" class="nav-icon-btn" aria-label="Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg><span class="badge js-wish-count">0</span></a>
+      <a href="account.html" class="nav-icon-btn" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg></a>
+      <button class="nav-icon-btn js-open-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span class="badge js-cart-count">0</span></button>
+      <button class="nav-burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu">
+  <div class="eyebrow">Menu</div>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html">Collection</a></li>
+    <li><a href="new-arrivals.html">New Arrivals</a></li>
+    <li><a href="sale.html">Sale</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="track-order.html">Track Order</a></li>
+    <li><a href="wishlist.html">Wishlist</a></li>
+  </ul>
+</div>
+
+<div class="search-overlay">
+  <div class="search-top">
+    <input type="text" placeholder="Search for abayas, collections…" aria-label="Search">
+    <button class="search-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="search-body">
+    <p class="search-hint">Try &ldquo;Noir Luxe&rdquo;, &ldquo;Evening&rdquo;, or &ldquo;Sale&rdquo;.</p>
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="cart-drawer-backdrop"></div>
+<div class="cart-drawer">
+  <div class="drawer-head"><h3 class="serif">Your Bag</h3><button class="js-close-drawer nav-icon-btn" aria-label="Close bag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="drawer-body"></div>
+  <div class="drawer-foot"></div>
+</div>
+
+<main class="wrap track-hero">
+  <div class="eyebrow" style="justify-content:center">Where's My Order</div>
+  <h1 class="display-2" style="margin:1rem 0 .8rem">Track Your Order</h1>
+  <p style="max-width:48ch;margin:0 auto var(--sp-5);color:var(--taupe)">Enter your order number and the email address you used at checkout to see its current status.</p>
+
+  <div class="track-form-card">
+    <form id="track-form" novalidate>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="t-order-number">Order Number</label>
+          <input type="text" id="t-order-number" placeholder="LZ-123456" required>
+        </div>
+        <div class="field full">
+          <label for="t-email">Email Address</label>
+          <input type="email" id="t-email" placeholder="you@example.com" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-solid btn-block" id="track-submit-btn">Track Order</button>
+      <div id="track-message"></div>
+    </form>
+  </div>
+
+  <div class="track-result" id="track-result" style="display:none"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><img src="images/logo.jpg" alt="Label by Zare logo">Label <em>by</em> Zare</div>
+        <p style="max-width:32ch;color:var(--beige)">Considered abayas for the modern woman — cut with intention, worn with quiet confidence.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul><li><a href="shop.html">Collection</a></li><li><a href="new-arrivals.html">New Arrivals</a></li><li><a href="sale.html">Sale</a></li><li><a href="wishlist.html">Wishlist</a></li></ul>
+      </div>
+      <div>
+        <h4>About</h4>
+        <ul><li><a href="about.html">Our Story</a></li><li><a href="about.html#values">Craftsmanship</a></li><li><a href="#">Sustainability</a></li><li><a href="#">Contact</a></li></ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul><li><a href="track-order.html">Track Order</a></li><li><a href="support.html#size-guide">Size Guide</a></li><li><a href="support.html#shipping-returns">Shipping &amp; Returns</a></li><li><a href="support.html#faqs">FAQs</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Label by Zare. All rights reserved.</span>
+      <span>Designed for the modern abaya wardrobe.</span>
+    </div>
+  </div>
+  <a href="login.html">Admin</a>
+</footer>
+
+<div class="toast"><span class="dot"></span><span class="toast-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="js/data.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/customer-auth.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+const STEP_ORDER = ["new", "processing", "shipped", "completed"];
+const STEP_LABELS = { new: "Order Placed", processing: "Processing", shipped: "Shipped", completed: "Delivered" };
+
+function formatPKRLocal(n){
+  return "PKR " + Number(n || 0).toLocaleString("en-PK");
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+
+function renderTimeline(status){
+  if (status === "cancelled") {
+    return `
+      <div class="track-status-pill is-cancelled" style="margin-bottom:var(--sp-4)"><span class="dot"></span>Cancelled</div>
+      <p style="color:var(--taupe);font-size:0.9rem">This order was cancelled. If you believe this is a mistake, please reach out to us on WhatsApp with your order number.</p>
+    `;
+  }
+
+  const currentIndex = STEP_ORDER.indexOf(status);
+  const pillClass = status === "completed" ? "is-completed" : "";
+
+  const steps = STEP_ORDER.map((step, i) => {
+    let cls = "";
+    if (i < currentIndex) cls = "is-done";
+    else if (i === currentIndex) cls = status === "completed" ? "is-done is-current" : "is-current";
+    return `
+      <div class="track-step ${cls}">
+        <div class="node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="label">${STEP_LABELS[step]}</div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="track-status-pill ${pillClass}" style="margin-bottom:var(--sp-2)"><span class="dot"></span>${STEP_LABELS[status] || status}</div>
+    <div class="track-timeline">${steps}</div>
+  `;
+}
+
+function renderOrder(order){
+  const itemsHtml = (order.items || []).map(it => `
+    <div class="order-line">
+      <div>
+        <div class="name">${escapeHtml(it.name)} × ${it.qty}</div>
+        <div class="meta">${escapeHtml(it.size)} · ${escapeHtml(it.color)}</div>
+      </div>
+      <div>${formatPKRLocal(it.price * it.qty)}</div>
+    </div>
+  `).join("");
+
+  const resultEl = document.getElementById("track-result");
+  resultEl.innerHTML = `
+    <div class="track-order-head">
+      <div>
+        <div class="eyebrow">Order</div>
+        <div class="order-num" style="margin-top:.4rem">№ ${escapeHtml(order.order_number)}</div>
+        <p style="color:var(--taupe);font-size:0.85rem;margin-top:.3rem">Placed on ${new Date(order.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</p>
+      </div>
+    </div>
+
+    ${renderTimeline(order.status)}
+
+    <div class="track-detail-grid">
+      <div>
+        <h4>Shipping To</h4>
+        <p>${escapeHtml(order.full_name)}<br>
+        ${escapeHtml(order.address)}, ${escapeHtml(order.area)}<br>
+        ${escapeHtml(order.city)}, ${escapeHtml(order.country)} ${order.postal_code ? escapeHtml(order.postal_code) : ""}<br>
+        ${escapeHtml(order.phone)}</p>
+      </div>
+      <div>
+        <h4>Delivery &amp; Payment</h4>
+        <p>${escapeHtml(order.delivery_type)}<br>${escapeHtml(order.payment_type)}</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3 class="serif" style="font-size:1.2rem;margin-bottom:1rem">Order Items</h3>
+      ${itemsHtml}
+      <div style="margin-top:1rem">
+        <div class="summary-row"><span class="muted">Subtotal</span><span>${formatPKRLocal(order.subtotal)}</span></div>
+        <div class="summary-row"><span class="muted">Shipping</span><span>${formatPKRLocal(order.shipping_fee)}</span></div>
+        <div class="summary-row total"><span>Total</span><span>${formatPKRLocal(order.total)}</span></div>
+      </div>
+    </div>
+  `;
+  resultEl.style.display = "block";
+
+  if (window.gsap) {
+    gsap.fromTo(resultEl, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .6, ease: "power2.out" });
+  }
+  resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.getElementById("track-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("track-submit-btn");
+  const msg = document.getElementById("track-message");
+  const resultEl = document.getElementById("track-result");
+  resultEl.style.display = "none";
+  msg.textContent = "";
+  msg.className = "";
+
+  const orderNumber = document.getElementById("t-order-number").value.trim();
+  const email = document.getElementById("t-email").value.trim();
+
+  if (!orderNumber || !email) return;
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "Searching…";
+
+  try {
+    const { data, error } = await supabaseClient.rpc("track_order", {
+      p_order_number: orderNumber,
+      p_email: email
+    });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      msg.textContent = "We couldn't find an order matching that order number and email. Please double-check and try again.";
+      msg.className = "error";
+      return;
+    }
+
+    renderOrder(data[0]);
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Something went wrong looking up your order. Please try again in a moment.";
+    msg.className = "error";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+});
+
+// pre-fill from the last order placed in this browser, if any
+(function prefillFromLastOrder(){
+  try {
+    const last = JSON.parse(localStorage.getItem("lz_last_order") || "null");
+    if (last && last.orderNum) {
+      document.getElementById("t-order-number").value = last.orderNum;
+    }
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>

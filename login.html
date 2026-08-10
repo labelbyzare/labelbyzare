@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .card {
+    background: #fff;
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 360px;
+  }
+  h1 {
+    font-size: 1.25rem;
+    margin: 0 0 1.5rem;
+    text-align: center;
+    color: #1a1a1a;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+    color: #444;
+  }
+  input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #d0d3d9;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  button {
+    width: 100%;
+    padding: 0.65rem;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #message {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+  #message.error { color: #c0392b; }
+  #message.success { color: #1e8449; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1 id="form-heading">Admin Login</h1>
+  <form id="login-form">
+    <label for="email">Email</label>
+    <input type="email" id="email" required autocomplete="username">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required autocomplete="current-password">
+
+    <button type="submit" id="submit-btn">Log In</button>
+  </form>
+
+  <form id="mfa-form" style="display:none">
+    <p style="font-size:0.85rem;color:#555;margin-bottom:1rem">Enter the 6-digit code from your authenticator app.</p>
+    <label for="mfa-code">Verification Code</label>
+    <input type="text" id="mfa-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+    <button type="submit" id="mfa-submit-btn">Verify</button>
+  </form>
+
+  <div id="message"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script>
+const form = document.getElementById("login-form");
+const mfaForm = document.getElementById("mfa-form");
+const formHeading = document.getElementById("form-heading");
+const messageEl = document.getElementById("message");
+const submitBtn = document.getElementById("submit-btn");
+const mfaSubmitBtn = document.getElementById("mfa-submit-btn");
+
+let pendingFactorId = null;
+let pendingChallengeId = null;
+
+// If already fully logged in as an admin (including 2FA if enrolled),
+// skip to admin page. Anyone else (e.g. a customer account) is left on
+// this screen instead of being bounced into the admin panel.
+(async () => {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) return;
+  const { data: adminRow } = await supabaseClient
+    .from("admins")
+    .select("email")
+    .eq("email", session.user.email)
+    .maybeSingle();
+  if (!adminRow) return;
+  const { data: aal } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
+    return; // needs 2FA — stay on login page, will show code step below
+  }
+  window.location.href = "admin.html";
+})();
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  submitBtn.disabled = true;
+  messageEl.textContent = "";
+  messageEl.className = "";
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    messageEl.textContent = error.message;
+    messageEl.className = "error";
+    submitBtn.disabled = false;
+    return;
+  }
+
+  // Reject anyone not on the admin allowlist — including any customer
+  // account — right here, before an MFA prompt or admin.html is ever shown.
+  const { data: adminRow } = await supabaseClient
+    .from("admins")
+    .select("email")
+    .eq("email", email)
+    .maybeSingle();
+  if (!adminRow) {
+    await supabaseClient.auth.signOut();
+    messageEl.textContent = "This account doesn't have admin access.";
+    messageEl.className = "error";
+    submitBtn.disabled = false;
+    return;
+  }
+
+  // Check if this account has 2FA enabled
+  const { data: factorsData } = await supabaseClient.auth.mfa.listFactors();
+  const totpFactor = factorsData?.totp?.find(f => f.status === "verified");
+
+  if (!totpFactor) {
+    messageEl.textContent = "Success — redirecting...";
+    messageEl.className = "success";
+    window.location.href = "admin.html";
+    return;
+  }
+
+  // 2FA required — start a challenge and show the code entry step
+  const { data: challenge, error: challengeError } = await supabaseClient.auth.mfa.challenge({ factorId: totpFactor.id });
+  if (challengeError) {
+    messageEl.textContent = challengeError.message;
+    messageEl.className = "error";
+    submitBtn.disabled = false;
+    return;
+  }
+
+  pendingFactorId = totpFactor.id;
+  pendingChallengeId = challenge.id;
+
+  form.style.display = "none";
+  mfaForm.style.display = "block";
+  formHeading.textContent = "Verification Code";
+  messageEl.textContent = "";
+  messageEl.className = "";
+  document.getElementById("mfa-code").focus();
+});
+
+mfaForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  mfaSubmitBtn.disabled = true;
+  messageEl.textContent = "";
+  messageEl.className = "";
+
+  const code = document.getElementById("mfa-code").value.trim();
+
+  const { error } = await supabaseClient.auth.mfa.verify({
+    factorId: pendingFactorId,
+    challengeId: pendingChallengeId,
+    code
+  });
+
+  if (error) {
+    messageEl.textContent = error.message;
+    messageEl.className = "error";
+    mfaSubmitBtn.disabled = false;
+    return;
+  }
+
+  messageEl.textContent = "Success — redirecting...";
+  messageEl.className = "success";
+  window.location.href = "admin.html";
+});
+</script>
+
+</body>
+</html>
