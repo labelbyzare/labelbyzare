@@ -506,6 +506,33 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
 @keyframes marquee{ from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
 
 /* ==========================================================================
+   QUICK LINKS
+   ========================================================================== */
+
+.quick-links{
+  background: var(--cream);
+  border-bottom: 1px solid var(--line);
+  padding: var(--sp-4) 0;
+}
+.quick-links-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.quick-links-row .btn{ flex: 0 0 auto; }
+
+@media (max-width: 640px){
+  .quick-links-row{ gap: var(--sp-2); }
+  .quick-links-row .btn{
+    flex: 1 1 calc(50% - var(--sp-2));
+    padding: 0.85rem 1rem;
+    font-size: 0.66rem;
+  }
+}
+
+/* ==========================================================================
    EDITORIAL / ABOUT BLOCKS
    ========================================================================== */
 
