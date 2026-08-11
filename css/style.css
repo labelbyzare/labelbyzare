@@ -324,8 +324,9 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
   position: fixed; inset:0; z-index: 890;
   background: var(--ink); color: var(--cream);
   display:flex; flex-direction:column;
-  justify-content:center;
-  padding: 0 var(--sp-4);
+  padding: calc(var(--nav-h) + var(--sp-3)) var(--sp-4) var(--sp-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transform: translateY(-100%);
   transition: transform .6s var(--ease);
 }
@@ -333,10 +334,77 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
 .mobile-menu ul{ display:flex; flex-direction:column; gap: var(--sp-3); }
 .mobile-menu a{
   font-family: var(--font-display);
-  font-size: 2.4rem;
+  font-size: 2.1rem;
   font-weight: 400;
 }
-.mobile-menu .eyebrow{ margin-bottom: var(--sp-4); }
+.mobile-menu .eyebrow{ margin-bottom: var(--sp-3); color: var(--gold-soft); }
+
+/* ---- Quick-access icon row (Account / Wishlist / Track Order / Bag) ---- */
+.mobile-menu-quick{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0;
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--line-inv);
+}
+.mobile-quick-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap: 8px;
+  padding: var(--sp-2) 4px;
+  border: 1px solid var(--line-inv);
+  border-radius: 10px;
+  color: var(--cream);
+  text-align:center;
+  background: none;
+  position: relative;
+}
+.mobile-quick-btn svg{ width:20px; height:20px; }
+.mobile-quick-btn span{
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mobile-quick-btn .badge{ top:2px; right:14%; }
+
+/* ---- Primary links list ---- */
+.mobile-menu-primary{ margin-bottom: var(--sp-4); }
+
+/* ---- Secondary footer-style links ---- */
+.mobile-menu-secondary{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-inv);
+}
+.mobile-menu-secondary h5{
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 var(--sp-2);
+}
+.mobile-menu-secondary ul{ gap: var(--sp-1); }
+.mobile-menu-secondary a{
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--beige);
+  padding: 6px 0;
+  display:inline-block;
+}
+.mobile-menu-bottom{
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line-inv);
+  font-size: 0.7rem;
+  color: var(--taupe);
+}
 
 /* ==========================================================================
    HERO
