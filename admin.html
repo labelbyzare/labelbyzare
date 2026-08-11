@@ -194,7 +194,7 @@
       </div>
 
       <div class="checkbox-group">
-        <label><input type="checkbox" id="f-isnew"> New</label>
+        <label><input type="checkbox" id="f-isnew"> New Collection (shows in New Arrivals)</label>
         <label><input type="checkbox" id="f-issale"> On Sale</label>
         <label><input type="checkbox" id="f-instock" checked> In Stock</label>
       </div>
@@ -215,6 +215,14 @@
         <div class="hint">Uploading replaces the current main image below.</div>
         <input type="hidden" id="f-img">
         <div class="image-preview" id="main-img-preview"></div>
+      </div>
+
+      <div class="field">
+        <label>Hover Image (shown on mouse hover / touch preview)</label>
+        <input type="file" id="f-img2-file" accept="image/*">
+        <div class="hint">This is the photo customers see when they hover over or touch the product photo on the shop grid. If left empty, the main image is used and no swap will be visible.</div>
+        <input type="hidden" id="f-img2">
+        <div class="image-preview" id="img2-preview"></div>
       </div>
 
       <div class="field">
@@ -291,6 +299,7 @@ const formMessage = document.getElementById("form-message");
 const saveBtn = document.getElementById("save-btn");
 
 let currentMainImg = "";
+let currentImg2 = "";
 let currentGallery = [];
 
 async function checkAccess() {
@@ -383,6 +392,7 @@ function openForm(product = null) {
   form.reset();
   formMessage.textContent = "";
   currentMainImg = product?.img || "";
+  currentImg2 = product?.img2 || "";
   currentGallery = product?.gallery || [];
   renderImagePreviews();
 
@@ -421,6 +431,8 @@ function closeForm() {
 function renderImagePreviews() {
   const mainPrev = document.getElementById("main-img-preview");
   mainPrev.innerHTML = currentMainImg ? `<img src="${currentMainImg}">` : "";
+  const img2Prev = document.getElementById("img2-preview");
+  img2Prev.innerHTML = currentImg2 ? `<img src="${currentImg2}">` : "";
   const galPrev = document.getElementById("gallery-preview");
   galPrev.innerHTML = currentGallery.map(url => `<img src="${url}">`).join("");
 }
@@ -443,6 +455,21 @@ document.getElementById("f-img-file").addEventListener("change", async (e) => {
   formMessage.className = "";
   try {
     currentMainImg = await uploadImage(file);
+    renderImagePreviews();
+    formMessage.textContent = "";
+  } catch (err) {
+    formMessage.textContent = "Image upload failed: " + err.message;
+    formMessage.className = "error";
+  }
+});
+
+document.getElementById("f-img2-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  formMessage.textContent = "Uploading image...";
+  formMessage.className = "";
+  try {
+    currentImg2 = await uploadImage(file);
     renderImagePreviews();
     formMessage.textContent = "";
   } catch (err) {
@@ -499,7 +526,7 @@ form.addEventListener("submit", async (e) => {
     sizes,
     colors,
     img: currentMainImg,
-    img2: currentMainImg,
+    img2: currentImg2 || currentMainImg,
     gallery: currentGallery,
     description: document.getElementById("f-description").value.trim(),
     fabric: document.getElementById("f-fabric").value.trim(),

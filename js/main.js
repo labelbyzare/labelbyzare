@@ -169,3 +169,40 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
+/* ==========================================================================
+   Touch-screen image preview
+   Desktop shows the second product photo on :hover (mouse moving over the
+   image, no click). Touch screens have no hover, so this mirrors it: the
+   instant a finger is touching/passing over a product photo — including
+   while scrolling — the card previews the second image, no tap required.
+   Lifting the finger reverts to the first photo. Tapping the photo still
+   opens the product as normal; nothing here intercepts clicks. Delegated
+   on document with elementFromPoint so it covers every page's product
+   grid (shop, homepage, wishlist, related products) however/whenever
+   those cards get rendered.
+   ========================================================================== */
+(function(){
+  const isTouchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  if(!isTouchDevice) return;
+
+  let current = null;
+
+  function setActive(card){
+    if(card === current) return;
+    if(current) current.classList.remove("is-touched");
+    current = card;
+    if(current) current.classList.add("is-touched");
+  }
+
+  function updateFromTouch(touch){
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const media = el && el.closest(".product-media");
+    setActive(media ? media.closest(".product-card") : null);
+  }
+
+  document.addEventListener("touchstart", (e) => updateFromTouch(e.touches[0]), { passive: true });
+  document.addEventListener("touchmove", (e) => updateFromTouch(e.touches[0]), { passive: true });
+  document.addEventListener("touchend", () => setActive(null), { passive: true });
+  document.addEventListener("touchcancel", () => setActive(null), { passive: true });
+})();

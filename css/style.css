@@ -584,8 +584,10 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
 .product-media .img-secondary{
   position:absolute; inset:0; opacity:0;
 }
-.product-card:hover .img-primary{ transform: scale(1.06); opacity:0; }
-.product-card:hover .img-secondary{ opacity:1; transform: scale(1.06); }
+.product-card:hover .img-primary,
+.product-card.is-touched .img-primary{ transform: scale(1.06); opacity:0; }
+.product-card:hover .img-secondary,
+.product-card.is-touched .img-secondary{ opacity:1; transform: scale(1.06); }
 
 .product-tags{
   position:absolute; top: var(--sp-2); left: var(--sp-2);
@@ -611,7 +613,7 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
   opacity:0; transform: translateY(-6px);
   transition: opacity .35s var(--ease), transform .35s var(--ease), background .3s ease;
 }
-.product-card:hover .wishlist-btn, .wishlist-btn.active{ opacity:1; transform: translateY(0); }
+.product-card:hover .wishlist-btn, .product-card.is-touched .wishlist-btn, .wishlist-btn.active{ opacity:1; transform: translateY(0); }
 .wishlist-btn svg{ width:16px; height:16px; stroke: var(--ink); fill:none; transition: fill .3s ease, stroke .3s ease; }
 .wishlist-btn.active svg{ fill: var(--gold); stroke: var(--gold); }
 
@@ -620,7 +622,7 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
   opacity:0; transform: translateY(10px);
   transition: opacity .4s var(--ease), transform .4s var(--ease);
 }
-.product-card:hover .quick-add{ opacity:1; transform: translateY(0); }
+.product-card:hover .quick-add, .product-card.is-touched .quick-add{ opacity:1; transform: translateY(0); }
 
 .product-info{ padding-top: var(--sp-2); display:flex; justify-content:space-between; gap: var(--sp-2); }
 .product-info h3{ font-size: 1rem; font-weight:500; font-family: var(--font-display); }
