@@ -24,8 +24,11 @@ function buildProductPage(root){
 
   root.innerHTML = `
     <div class="pdp-gallery reveal">
-      <div class="pdp-main-img">
+      <div class="pdp-main-img" id="pdp-main-img-wrap">
         <img id="pdp-main-img" src="${p.gallery[0]}" alt="${p.name}">
+        <button class="zoom-trigger" id="zoom-trigger" type="button" aria-label="Zoom image">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
+        </button>
       </div>
       <div class="pdp-thumbs">
         ${p.gallery.map((src, i) => `
@@ -107,10 +110,12 @@ function buildProductPage(root){
   `;
 
   // gallery thumbs
-  root.querySelectorAll(".pdp-thumbs button").forEach(btn => {
+  let currentIdx = 0;
+  root.querySelectorAll(".pdp-thumbs button").forEach((btn, i) => {
     btn.addEventListener("click", () => {
       root.querySelectorAll(".pdp-thumbs button").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      currentIdx = i;
       const img = document.getElementById("pdp-main-img");
       if(window.gsap){
         gsap.to(img, { opacity: 0, duration: .18, onComplete: () => {
@@ -120,6 +125,16 @@ function buildProductPage(root){
       } else { img.src = btn.dataset.src; }
     });
   });
+
+  // image zoom — click the main image (or the magnifier button) to open a
+  // full-screen zoomable view of the abaya photo
+  const openZoom = setupProductZoom(p.gallery, (i) => {
+    currentIdx = i;
+    root.querySelectorAll(".pdp-thumbs button").forEach((b, bi) => b.classList.toggle("active", bi === i));
+    const img = document.getElementById("pdp-main-img");
+    if(img) img.src = p.gallery[i];
+  });
+  document.getElementById("pdp-main-img-wrap")?.addEventListener("click", () => openZoom(currentIdx));
 
   // color
   root.querySelectorAll(".swatch-color").forEach(btn => {
@@ -191,4 +206,178 @@ function buildProductPage(root){
       </div>
     `).join("");
   }
+}
+
+/* ==========================================================================
+   PRODUCT IMAGE ZOOM LIGHTBOX
+   Full-screen viewer for abaya photos. Supports: mouse scroll to zoom,
+   click / double-click to toggle zoom, drag-to-pan once zoomed, pinch-to-zoom
+   and single-finger pan on touch, +/- buttons, arrow-key & swipe navigation
+   between the product's gallery images, and Esc / backdrop / close to exit.
+
+   Returns an `openZoom(index)` function the caller uses to launch it.
+   ========================================================================== */
+function setupProductZoom(gallery, onNavigate){
+  const MIN_SCALE = 1, MAX_SCALE = 4, ZOOM_STEP = 2.2;
+
+  // Build the lightbox DOM once and reuse it across opens.
+  let box = document.getElementById("lz-zoom-lightbox");
+  if(!box){
+    box = document.createElement("div");
+    box.id = "lz-zoom-lightbox";
+    box.className = "zoom-lightbox";
+    box.innerHTML = `
+      <div class="zoom-lightbox-hint">Scroll or pinch to zoom · Drag to pan</div>
+      <button class="zoom-lightbox-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <button class="zoom-lightbox-prev" type="button" aria-label="Previous image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="zoom-lightbox-next" type="button" aria-label="Next image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+      <div class="zoom-lightbox-stage">
+        <img class="zoom-lightbox-img" alt="">
+      </div>
+      <div class="zoom-lightbox-zoomctrl">
+        <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+        <span class="zoom-lightbox-counter">1 / 1</span>
+        <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+      </div>
+    `;
+    document.body.appendChild(box);
+  }
+
+  const stage = box.querySelector(".zoom-lightbox-stage");
+  const img = box.querySelector(".zoom-lightbox-img");
+  const closeBtn = box.querySelector(".zoom-lightbox-close");
+  const prevBtn = box.querySelector(".zoom-lightbox-prev");
+  const nextBtn = box.querySelector(".zoom-lightbox-next");
+  const counter = box.querySelector(".zoom-lightbox-counter");
+  const zoomInBtn = box.querySelector('[data-zoom="in"]');
+  const zoomOutBtn = box.querySelector('[data-zoom="out"]');
+
+  let index = 0, scale = 1, panX = 0, panY = 0;
+  let dragging = false, moved = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+  const pointers = new Map();
+  let pinchStartDist = 0, pinchStartScale = 1;
+
+  function clampPan(){
+    const maxX = Math.max(0, (img.offsetWidth * scale - img.offsetWidth) / 2);
+    const maxY = Math.max(0, (img.offsetHeight * scale - img.offsetHeight) / 2);
+    panX = Math.min(maxX, Math.max(-maxX, panX));
+    panY = Math.min(maxY, Math.max(-maxY, panY));
+  }
+
+  function render(){
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    img.classList.toggle("zoomed", scale > MIN_SCALE);
+    prevBtn.style.display = gallery.length > 1 ? "" : "none";
+    nextBtn.style.display = gallery.length > 1 ? "" : "none";
+    counter.textContent = `${index + 1} / ${gallery.length}`;
+  }
+
+  function setScale(next){
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
+    if(scale === MIN_SCALE){ panX = 0; panY = 0; }
+    clampPan();
+    render();
+  }
+
+  function showIndex(i){
+    index = (i + gallery.length) % gallery.length;
+    scale = 1; panX = 0; panY = 0;
+    img.src = gallery[index];
+    render();
+    if(typeof onNavigate === "function") onNavigate(index);
+  }
+
+  function open(i){
+    box.classList.add("active");
+    document.body.style.overflow = "hidden";
+    showIndex(i || 0);
+  }
+
+  function close(){
+    box.classList.remove("active");
+    document.body.style.overflow = "";
+    scale = 1; panX = 0; panY = 0;
+  }
+
+  closeBtn.addEventListener("click", close);
+  box.addEventListener("click", (e) => { if(e.target === box) close(); });
+  prevBtn.addEventListener("click", () => showIndex(index - 1));
+  nextBtn.addEventListener("click", () => showIndex(index + 1));
+  zoomInBtn.addEventListener("click", () => setScale(scale + 1));
+  zoomOutBtn.addEventListener("click", () => setScale(scale - 1));
+
+  document.addEventListener("keydown", (e) => {
+    if(!box.classList.contains("active")) return;
+    if(e.key === "Escape") close();
+    else if(e.key === "ArrowLeft") showIndex(index - 1);
+    else if(e.key === "ArrowRight") showIndex(index + 1);
+    else if(e.key === "+" || e.key === "=") setScale(scale + 1);
+    else if(e.key === "-") setScale(scale - 1);
+  });
+
+  stage.addEventListener("wheel", (e) => {
+    if(!box.classList.contains("active")) return;
+    e.preventDefault();
+    setScale(scale + (e.deltaY < 0 ? 0.4 : -0.4));
+  }, { passive: false });
+
+  img.addEventListener("dblclick", () => setScale(scale > MIN_SCALE ? MIN_SCALE : ZOOM_STEP));
+
+  img.addEventListener("pointerdown", (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    img.setPointerCapture(e.pointerId);
+    if(pointers.size === 1){
+      dragging = scale > MIN_SCALE;
+      moved = false;
+      startX = e.clientX; startY = e.clientY;
+      startPanX = panX; startPanY = panY;
+    } else if(pointers.size === 2){
+      dragging = false;
+      const pts = [...pointers.values()];
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      pinchStartScale = scale;
+    }
+  });
+
+  img.addEventListener("pointermove", (e) => {
+    if(!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if(pointers.size === 2){
+      const pts = [...pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if(pinchStartDist > 0) setScale(pinchStartScale * (dist / pinchStartDist));
+      return;
+    }
+    if(dragging){
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      panX = startPanX + dx; panY = startPanY + dy;
+      clampPan();
+      render();
+      img.classList.add("dragging");
+    }
+  });
+
+  function releasePointer(e){
+    pointers.delete(e.pointerId);
+    if(pointers.size < 2) pinchStartDist = 0;
+    if(pointers.size === 0){ dragging = false; img.classList.remove("dragging"); }
+  }
+  img.addEventListener("pointerup", releasePointer);
+  img.addEventListener("pointercancel", releasePointer);
+  img.addEventListener("pointerleave", releasePointer);
+
+  img.addEventListener("click", () => {
+    if(moved){ moved = false; return; }
+    setScale(scale > MIN_SCALE ? MIN_SCALE : ZOOM_STEP);
+  });
+
+  return open;
 }

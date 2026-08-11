@@ -13,10 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let sort = "featured";
 
   function productCard(p, i){
-    const feature = i === 0 && baseFilter === "all" ? " feature" : "";
     const stocked = isInStock(p);
     return `
-    <div class="product-card${feature}${stocked ? "" : " is-soldout"}">
+    <div class="product-card${stocked ? "" : " is-soldout"}">
       <a href="product.html?id=${p.id}">
         <div class="product-media">
           <div class="product-tags">
