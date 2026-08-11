@@ -159,10 +159,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ---------- Newsletter form (demo) ---------- */
+  /* ---------- Newsletter form ----------
+     Saves every subscriber to Supabase (visible in admin.html →
+     Subscribers). Runs on every page that includes this script, since
+     the "Be first to know" form appears on several pages. */
   document.querySelectorAll(".newsletter form").forEach(form => {
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const input = form.querySelector('input[type="email"]');
+      const email = input.value.trim();
+      if(!email) return;
+
+      const btn = form.querySelector('button[type="submit"]');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "…";
+
+      const { error } = await supabaseClient.from("newsletter_subscribers").insert({ email });
+
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      // A unique-constraint violation just means they're already
+      // subscribed — treat that as success rather than an error.
+      if(error && error.code !== "23505"){
+        console.error("Newsletter signup failed:", error.message);
+        LZ.showToast("Something went wrong — please try again.");
+        return;
+      }
+
       LZ.showToast("You're on the list. Welcome to Label by Zare.");
       form.reset();
     });

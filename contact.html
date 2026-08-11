@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Support | Label by Zare</title>
-<meta name="description" content="Size guide, shipping & returns information, and frequently asked questions for Label by Zare.">
+<title>Contact Us | Label by Zare</title>
+<meta name="description" content="Get in touch with Label by Zare — send us a message and our team will get back to you shortly.">
 <link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,7 +12,7 @@
 
 <div class="grain"></div>
 
-<nav class="site-nav is-light" id="site-nav">
+<nav class="site-nav is-dark scrolled" id="site-nav">
   <div class="wrap">
     <a href="index.html" class="nav-logo"><img src="images/logo.jpg" alt="Label by Zare logo">LABEL <span>by</span> ZARE</a>
     <ul class="nav-links">
@@ -21,7 +21,7 @@
       <li><a href="new-arrivals.html">New Arrivals</a></li>
       <li><a href="sale.html">Sale</a></li>
       <li><a href="about.html">About</a></li>
-      <li><a href="track-order.html">Track Order</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
     </ul>
     <div class="nav-actions">
       <button class="nav-icon-btn js-open-search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
@@ -107,123 +107,50 @@
   <div class="drawer-foot"></div>
 </div>
 
-<header class="about-hero">
-  <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?q=80&w=1600&auto=format&fit=crop" alt="Label by Zare">
-  <div class="wrap">
-    <div class="eyebrow">We're Here to Help</div>
-    <h1 class="display-1" style="margin-top:1rem">Support</h1>
-  </div>
-</header>
+<main class="wrap track-hero">
+  <div class="eyebrow" style="justify-content:center">We'd Love to Hear From You</div>
+  <h1 class="display-2" style="margin:1rem 0 .8rem">Contact Us</h1>
+  <p style="max-width:48ch;margin:0 auto var(--sp-5);color:var(--taupe)">Questions about an order, a piece, or anything else? Send us a message below and our team will get back to you shortly — or reach us anytime on WhatsApp or Instagram.</p>
 
-<!-- ================= SIZE GUIDE ================= -->
-<section class="section section-tight" id="size-guide">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <div>
-        <div class="eyebrow">01 — Fit</div>
-        <h2 class="display-2" style="margin-top:.8rem">Size Guide</h2>
+  <div class="track-form-card">
+    <form id="contact-form" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label for="c-name">Full Name</label>
+          <input type="text" id="c-name" placeholder="Your name" required>
+        </div>
+        <div class="field">
+          <label for="c-phone">Phone Number</label>
+          <input type="tel" id="c-phone" placeholder="03XX-XXXXXXX">
+        </div>
+        <div class="field full">
+          <label for="c-email">Email Address</label>
+          <input type="email" id="c-email" placeholder="you@example.com" required>
+        </div>
+        <div class="field full">
+          <label for="c-subject">Subject</label>
+          <input type="text" id="c-subject" placeholder="What's this about?" required>
+        </div>
+        <div class="field full">
+          <label for="c-message">Message</label>
+          <textarea id="c-message" rows="5" placeholder="Tell us how we can help…" required></textarea>
+        </div>
       </div>
-    </div>
-    <p class="lede reveal" style="margin-bottom:1rem;max-width:60ch">All measurements are in inches. If you're between sizes, we recommend sizing up for a more relaxed, comfortable drape.</p>
-    <div class="reveal" style="overflow-x:auto">
-      <table class="size-table">
-        <thead>
-          <tr><th>Size</th><th>Bust</th><th>Length</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>XS</td><td>32&Prime;</td><td>54&Prime;</td></tr>
-          <tr><td>S</td><td>34&Prime;</td><td>55&Prime;</td></tr>
-          <tr><td>M</td><td>36&Prime;</td><td>56&Prime;</td></tr>
-          <tr><td>L</td><td>38&Prime;</td><td>57&Prime;</td></tr>
-          <tr><td>XL</td><td>40&Prime;</td><td>58&Prime;</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="reveal" style="margin-top:1.2rem;color:var(--taupe);font-size:0.9rem">Still unsure of your size? <a href="https://wa.me/923288691979" target="_blank" rel="noopener" class="link-underline">Message us on WhatsApp</a> and we'll help you find the right fit.</p>
-  </div>
-</section>
+      <button type="submit" class="btn btn-solid btn-block" id="contact-submit-btn">Send Message</button>
+      <div id="contact-form-message"></div>
+    </form>
 
-<!-- ================= SHIPPING & RETURNS ================= -->
-<section class="section section-tight" id="shipping-returns" style="background:var(--sand)">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <div>
-        <div class="eyebrow">02 — Delivery</div>
-        <h2 class="display-2" style="margin-top:.8rem">Shipping &amp; Returns</h2>
+    <div id="contact-success" style="display:none;text-align:center;padding:var(--sp-3) 0">
+      <div class="check-ring" style="margin:0 auto var(--sp-3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:36px;height:36px"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
+      <h3 class="serif" style="font-size:1.3rem;margin-bottom:.6rem">Message Sent</h3>
+      <p style="color:var(--taupe);max-width:38ch;margin:0 auto">Thank you for reaching out — we've received your message and will get back to you as soon as we can.</p>
     </div>
-    <div class="value-grid reveal">
-      <div class="value-card">
-        <span class="num">I.</span>
-        <h3 class="display-3" style="font-size:1.3rem;margin-bottom:.6rem">Standard Delivery</h3>
-        <p>3–5 business days nationwide. PKR 350, free on orders over PKR 15,000.</p>
-      </div>
-      <div class="value-card">
-        <span class="num">II.</span>
-        <h3 class="display-3" style="font-size:1.3rem;margin-bottom:.6rem">Express Delivery</h3>
-        <p>1–2 business days in major cities. PKR 900, or free on orders over PKR 15,000.</p>
-      </div>
-      <div class="value-card">
-        <span class="num">III.</span>
-        <h3 class="display-3" style="font-size:1.3rem;margin-bottom:.6rem">Returns &amp; Exchanges</h3>
-        <p>Unworn pieces with tags attached may be returned within 7 days of delivery for a full refund or exchange.</p>
-      </div>
-    </div>
-    <p class="reveal" style="margin-top:2rem;color:var(--taupe);font-size:0.9rem">Orders are processed within 1–2 business days of being placed. To start a return or exchange, message us on WhatsApp with your order number.</p>
   </div>
-</section>
 
-<!-- ================= FAQS ================= -->
-<section class="section section-tight" id="faqs">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <div>
-        <div class="eyebrow">03 — Questions</div>
-        <h2 class="display-2" style="margin-top:.8rem">Frequently Asked Questions</h2>
-      </div>
-    </div>
-    <div class="reveal" style="max-width:760px">
-      <div class="accordion">
-        <div class="acc-item">
-          <button class="acc-head">How do I know which size to order? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">Check our <a href="#size-guide" class="link-underline">Size Guide</a> above for bust and length measurements. If you're between two sizes, we recommend sizing up for a more relaxed fit.</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">What payment methods do you accept? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">We currently accept Cash on Delivery (COD) only — you pay when your order arrives at your door.</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">How long does delivery take? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">Standard delivery takes 3–5 business days nationwide. Express delivery arrives in 1–2 business days in major cities. See <a href="#shipping-returns" class="link-underline">Shipping &amp; Returns</a> for full details.</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">Can I return or exchange an item? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">Yes — unworn pieces with tags attached can be returned or exchanged within 7 days of delivery. Message us on WhatsApp with your order number to get started.</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">How can I check the status of my order? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">Visit our <a href="track-order.html" class="link-underline">Track Order</a> page and enter your order number and email to see its current status. You're welcome to message us on WhatsApp too.</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">Do you ship nationwide? <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">Yes, we deliver across Pakistan, including Karachi, Lahore, and Islamabad.</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="newsletter">
-  <div class="wrap">
-    <div class="eyebrow" style="justify-content:center">Still Need Help?</div>
-    <h2 class="display-3" style="margin-top:.6rem">We're just a message away.</h2>
-    <p style="color:var(--taupe);max-width:40ch;margin:.8rem auto 0">Reach out on WhatsApp or Instagram and we'll get back to you shortly.</p>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.6rem">
-      <a href="https://wa.me/923288691979" target="_blank" rel="noopener" class="btn btn-solid">Chat on WhatsApp</a>
-      <a href="https://www.instagram.com/thelabelbyzare?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" class="btn btn-outline">Follow on Instagram</a>
-    </div>
-  </div>
-</div>
+  <p style="max-width:48ch;margin:var(--sp-5) auto 0;color:var(--taupe);font-size:0.9rem">Prefer a faster reply? Message us directly on <a href="https://wa.me/923288691979" target="_blank" rel="noopener" class="link-underline">WhatsApp</a> or <a href="https://www.instagram.com/thelabelbyzare?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" class="link-underline">Instagram</a>.</p>
+</main>
 
 <footer class="site-footer">
   <div class="wrap">
@@ -250,19 +177,10 @@
       <span>Designed for the modern abaya wardrobe.</span>
     </div>
   </div>
+
 </footer>
 
 <div class="toast"><span class="dot"></span><span class="toast-msg"></span></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="js/data.js"></script>
-<script src="js/cart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<script src="js/customer-auth.js"></script>
-<script src="js/main.js"></script>
 
 <div class="float-actions">
   <div class="float-label">Contact us anytime</div>
@@ -275,6 +193,17 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
   </a>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="js/data.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/customer-auth.js"></script>
+<script src="js/main.js"></script>
+<script src="js/contact.js"></script>
 
 </body>
 </html>

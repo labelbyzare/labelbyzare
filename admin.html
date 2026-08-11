@@ -131,6 +131,34 @@
       <p id="orders-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No orders yet.</p>
     </div>
 
+    <div class="card" id="messages-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <strong>Messages <span id="messages-unread-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
+        <button id="refresh-messages-btn">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th></th><th>Name</th><th>Subject</th><th>Email / Phone</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody id="messages-tbody"></tbody>
+      </table>
+      <p id="messages-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No messages yet.</p>
+    </div>
+
+    <div class="card" id="subscribers-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <strong>Subscribers <span id="subscribers-count-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
+        <button id="refresh-subscribers-btn">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Email</th><th>Subscribed</th><th></th></tr>
+        </thead>
+        <tbody id="subscribers-tbody"></tbody>
+      </table>
+      <p id="subscribers-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No subscribers yet.</p>
+    </div>
+
     <div class="card" id="security-card">
       <strong>Security — Two-Factor Authentication</strong>
       <p id="mfa-status" style="color:#888; margin:0.6rem 0;">Checking status...</p>
@@ -280,6 +308,17 @@
       <button type="button" id="order-close-btn">Close</button>
       <button type="button" class="btn-danger" id="order-delete-btn">Delete Order</button>
       <button type="button" class="btn-primary" id="order-save-status-btn">Save Status</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="message-overlay">
+  <div class="form-card">
+    <h2>Message</h2>
+    <div id="message-details-body"></div>
+    <div class="form-actions">
+      <button type="button" id="message-close-btn">Close</button>
+      <button type="button" class="btn-danger" id="message-delete-btn">Delete</button>
     </div>
   </div>
 </div>
@@ -753,6 +792,147 @@ document.getElementById("order-delete-btn").addEventListener("click", async () =
 
 document.getElementById("refresh-orders-btn").addEventListener("click", loadOrders);
 loadOrders();
+
+// ---------- MESSAGES (Contact form submissions) ----------
+const messagesTbody = document.getElementById("messages-tbody");
+const messagesEmptyMsg = document.getElementById("messages-empty-msg");
+const messagesUnreadBadge = document.getElementById("messages-unread-badge");
+const messageOverlay = document.getElementById("message-overlay");
+const messageDetailsBody = document.getElementById("message-details-body");
+let currentMessageId = null;
+
+async function loadMessages() {
+  const { data, error } = await supabaseClient
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    messagesTbody.innerHTML = "";
+    messagesEmptyMsg.style.display = "block";
+    messagesEmptyMsg.textContent = "Error loading messages: " + error.message;
+    messagesUnreadBadge.style.display = "none";
+    return;
+  }
+
+  if (!data.length) {
+    messagesTbody.innerHTML = "";
+    messagesEmptyMsg.style.display = "block";
+    messagesEmptyMsg.textContent = "No messages yet.";
+    messagesUnreadBadge.style.display = "none";
+    return;
+  }
+
+  const unreadCount = data.filter(m => m.status !== "read").length;
+  if (unreadCount > 0) {
+    messagesUnreadBadge.textContent = unreadCount + " new";
+    messagesUnreadBadge.style.display = "inline-block";
+  } else {
+    messagesUnreadBadge.style.display = "none";
+  }
+
+  messagesEmptyMsg.style.display = "none";
+  messagesTbody.innerHTML = data.map(m => `
+    <tr style="${m.status === "read" ? "" : "font-weight:600;"}">
+      <td>${m.status === "read" ? "" : '<span class="badge" style="background:#4a6fa5;color:#fff;">New</span>'}</td>
+      <td>${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.subject || "—")}</td>
+      <td>${escapeHtml(m.email)}${m.phone ? " · " + escapeHtml(m.phone) : ""}</td>
+      <td>${new Date(m.created_at).toLocaleDateString()}</td>
+      <td class="row-actions"><button onclick='viewMessage(${JSON.stringify(m).replace(/'/g, "&#39;")})'>View</button></td>
+    </tr>
+  `).join("");
+}
+
+window.viewMessage = async function(message) {
+  currentMessageId = message.id;
+  messageDetailsBody.innerHTML = `
+    <div style="font-size:0.9rem;line-height:1.8;">
+      <p><strong>${escapeHtml(message.name)}</strong> · ${escapeHtml(message.email)}${message.phone ? " · " + escapeHtml(message.phone) : ""}</p>
+      <p style="color:#888;font-size:0.8rem;">${new Date(message.created_at).toLocaleString()}</p>
+      <p style="margin-top:0.8rem;"><strong>Subject:</strong> ${escapeHtml(message.subject || "—")}</p>
+      <p style="margin-top:0.8rem;white-space:pre-wrap;">${escapeHtml(message.message)}</p>
+    </div>
+  `;
+  messageOverlay.classList.add("open");
+
+  // mark as read as soon as it's opened
+  if (message.status !== "read") {
+    await supabaseClient.from("messages").update({ status: "read" }).eq("id", message.id);
+    loadMessages();
+  }
+};
+
+document.getElementById("message-close-btn").addEventListener("click", () => {
+  messageOverlay.classList.remove("open");
+});
+
+document.getElementById("message-delete-btn").addEventListener("click", async () => {
+  if (!confirm("Delete this message permanently?")) return;
+  const { error } = await supabaseClient.from("messages").delete().eq("id", currentMessageId);
+  if (error) {
+    alert("Error deleting message: " + error.message);
+    return;
+  }
+  messageOverlay.classList.remove("open");
+  loadMessages();
+});
+
+document.getElementById("refresh-messages-btn").addEventListener("click", loadMessages);
+loadMessages();
+
+// ---------- SUBSCRIBERS (Newsletter signups) ----------
+const subscribersTbody = document.getElementById("subscribers-tbody");
+const subscribersEmptyMsg = document.getElementById("subscribers-empty-msg");
+const subscribersCountBadge = document.getElementById("subscribers-count-badge");
+
+async function loadSubscribers() {
+  const { data, error } = await supabaseClient
+    .from("newsletter_subscribers")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    subscribersTbody.innerHTML = "";
+    subscribersEmptyMsg.style.display = "block";
+    subscribersEmptyMsg.textContent = "Error loading subscribers: " + error.message;
+    subscribersCountBadge.style.display = "none";
+    return;
+  }
+
+  if (!data.length) {
+    subscribersTbody.innerHTML = "";
+    subscribersEmptyMsg.style.display = "block";
+    subscribersEmptyMsg.textContent = "No subscribers yet.";
+    subscribersCountBadge.style.display = "none";
+    return;
+  }
+
+  subscribersCountBadge.textContent = data.length;
+  subscribersCountBadge.style.display = "inline-block";
+
+  subscribersEmptyMsg.style.display = "none";
+  subscribersTbody.innerHTML = data.map(s => `
+    <tr>
+      <td>${escapeHtml(s.email)}</td>
+      <td>${new Date(s.created_at).toLocaleDateString()}</td>
+      <td class="row-actions"><button class="btn-danger" onclick="deleteSubscriber('${s.id}')">Delete</button></td>
+    </tr>
+  `).join("");
+}
+
+window.deleteSubscriber = async function(id) {
+  if (!confirm("Remove this subscriber?")) return;
+  const { error } = await supabaseClient.from("newsletter_subscribers").delete().eq("id", id);
+  if (error) {
+    alert("Error deleting subscriber: " + error.message);
+    return;
+  }
+  loadSubscribers();
+};
+
+document.getElementById("refresh-subscribers-btn").addEventListener("click", loadSubscribers);
+loadSubscribers();
 </script>
 
 </body>

@@ -72,9 +72,21 @@ const CustomerAuth = {
     await supabaseClient.auth.signOut();
   },
 
-  async sendPasswordReset(email){
-    const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: new URL("reset-password.html", window.location.href).toString()
+  // Step 1 of password reset: emails the customer a 6-digit code (same
+  // mechanism as sign-up verification — see notes at the top of this file
+  // and in customer-accounts-setup.sql about the "Reset Password" email
+  // template needing to include {{ .Token }}).
+  async sendPasswordResetCode(email){
+    const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email);
+    return { data, error };
+  },
+
+  // Step 2 of password reset: the customer enters the 6-digit code from
+  // their inbox. On success this briefly signs them into a recovery
+  // session, which updatePassword() below then uses to set the new password.
+  async verifyPasswordResetCode(email, code){
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+      email, token: code, type: "recovery"
     });
     return { data, error };
   },

@@ -172,7 +172,7 @@ function buildProductPage(root){
   });
 
   document.getElementById("size-guide-btn")?.addEventListener("click", () => {
-    alert("Size Guide\n\nXS — Bust 32\" / Length 54\"\nS — Bust 34\" / Length 55\"\nM — Bust 36\" / Length 56\"\nL — Bust 38\" / Length 57\"\nXL — Bust 40\" / Length 58\"");
+    openSizeGuideModal();
   });
 
   // accordion first item open height fix after render
@@ -380,4 +380,57 @@ function setupProductZoom(gallery, onNavigate){
   });
 
   return open;
+}
+
+/* ==========================================================================
+   SIZE GUIDE MODAL — mirrors the Size Guide section on support.html so
+   shoppers see the same measurements without leaving the product page.
+   ========================================================================== */
+function openSizeGuideModal(){
+  let box = document.getElementById("lz-size-guide-modal");
+
+  if(!box){
+    box = document.createElement("div");
+    box.id = "lz-size-guide-modal";
+    box.className = "size-guide-backdrop";
+    box.innerHTML = `
+      <div class="size-guide-modal" role="dialog" aria-modal="true" aria-label="Size Guide">
+        <button class="size-guide-modal-close" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="eyebrow">Fit</div>
+        <h3 class="serif" style="font-size:1.6rem;margin:.6rem 0 .8rem">Size Guide</h3>
+        <p style="color:var(--taupe);font-size:0.92rem;max-width:46ch">All measurements are in inches. If you're between sizes, we recommend sizing up for a more relaxed, comfortable drape.</p>
+        <div style="overflow-x:auto">
+          <table class="size-table">
+            <thead>
+              <tr><th>Size</th><th>Bust</th><th>Length</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>XS</td><td>32&Prime;</td><td>54&Prime;</td></tr>
+              <tr><td>S</td><td>34&Prime;</td><td>55&Prime;</td></tr>
+              <tr><td>M</td><td>36&Prime;</td><td>56&Prime;</td></tr>
+              <tr><td>L</td><td>38&Prime;</td><td>57&Prime;</td></tr>
+              <tr><td>XL</td><td>40&Prime;</td><td>58&Prime;</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="size-guide-modal-note">Still unsure of your size? <a href="https://wa.me/923288691979" target="_blank" rel="noopener" class="link-underline">Message us on WhatsApp</a> and we'll help you find the right fit.</p>
+      </div>
+    `;
+    document.body.appendChild(box);
+
+    const close = () => {
+      box.classList.remove("open");
+      document.body.style.overflow = "";
+    };
+    box.querySelector(".size-guide-modal-close").addEventListener("click", close);
+    box.addEventListener("click", (e) => { if(e.target === box) close(); });
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && box.classList.contains("open")) close();
+    });
+  }
+
+  box.classList.add("open");
+  document.body.style.overflow = "hidden";
 }
