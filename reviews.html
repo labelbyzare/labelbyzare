@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Product | Label by Zare</title>
-<meta name="description" content="Explore this piece from Label by Zare — premium fabric, considered construction, made to last.">
+<title>Customer Reviews | Label by Zare</title>
+<meta name="description" content="Real reviews from Label by Zare customers — ratings, photos, and honest feedback on our abayas.">
 <link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -107,25 +107,48 @@
   <div class="drawer-foot"></div>
 </div>
 
-<main class="wrap pdp" id="pdp-root">
-  <!-- populated by js/product.js -->
-</main>
-
-<section class="section section-tight">
-  <div class="wrap" style="max-width:900px" id="product-reviews-root">
-    <!-- populated by js/reviews.js -->
-  </div>
-</section>
-
-<section class="section related-strip">
+<header class="page-header">
   <div class="wrap">
-    <div class="section-head reveal">
-      <div>
-        <div class="eyebrow">You May Also Like</div>
-        <h2 class="display-3" style="margin-top:.6rem">Complete the Look</h2>
+    <div class="crumbs"><a href="index.html">Home</a> / Reviews</div>
+    <div class="eyebrow">Customer Voices</div>
+    <h1 class="display-2" style="margin-top:.8rem">Reviews</h1>
+    <p class="lede" style="margin-top:1rem">Real feedback from customers who've worn Label by Zare — <span class="js-reviews-total">0</span> reviews and counting.</p>
+  </div>
+</header>
+
+<section class="section-tight" id="all-reviews-root">
+  <div class="wrap" style="max-width:1000px">
+
+    <div class="reviews-summary reveal">
+      <div class="avg-block">
+        <div class="avg-num js-reviews-avg">—</div>
+        <div class="js-reviews-avg-stars"></div>
+        <div class="avg-meta"><span class="js-reviews-total">0</span> total reviews</div>
+      </div>
+      <div class="avg-divider"></div>
+      <div class="avg-copy">
+        <h3>Considered pieces, honestly reviewed</h3>
+        <p>Every review here comes from a verified Label by Zare customer with an account — photos included.</p>
       </div>
     </div>
-    <div class="collection-grid" id="related-grid"></div>
+
+    <div class="toolbar">
+      <div class="filter-bar">
+        <button class="chip js-reviews-filter active" data-rating="0">All Ratings</button>
+        <button class="chip js-reviews-filter" data-rating="5">5 Stars</button>
+        <button class="chip js-reviews-filter" data-rating="4">4 Stars</button>
+        <button class="chip js-reviews-filter" data-rating="3">3 Stars</button>
+        <button class="chip js-reviews-filter" data-rating="2">2 Stars</button>
+        <button class="chip js-reviews-filter" data-rating="1">1 Star</button>
+      </div>
+      <select class="select-min js-reviews-sort" aria-label="Sort reviews">
+        <option value="newest">Newest First</option>
+        <option value="highest">Highest Rated</option>
+        <option value="lowest">Lowest Rated</option>
+      </select>
+    </div>
+
+    <div id="all-reviews-grid"><p style="color:var(--taupe)">Loading reviews…</p></div>
   </div>
 </section>
 
@@ -179,7 +202,6 @@
 <script src="js/cart.js"></script>
 <script src="js/customer-auth.js"></script>
 <script src="js/main.js"></script>
-<script src="js/product.js"></script>
 <script src="js/reviews.js"></script>
 
 <div class="float-actions">

@@ -159,6 +159,20 @@
       <p id="subscribers-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No subscribers yet.</p>
     </div>
 
+    <div class="card" id="reviews-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <strong>Reviews <span id="reviews-count-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
+        <button id="refresh-reviews-btn">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Customer</th><th>Product</th><th>Rating</th><th>Review</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody id="reviews-tbody"></tbody>
+      </table>
+      <p id="reviews-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No reviews yet.</p>
+    </div>
+
     <div class="card" id="security-card">
       <strong>Security — Two-Factor Authentication</strong>
       <p id="mfa-status" style="color:#888; margin:0.6rem 0;">Checking status...</p>
@@ -933,6 +947,81 @@ window.deleteSubscriber = async function(id) {
 
 document.getElementById("refresh-subscribers-btn").addEventListener("click", loadSubscribers);
 loadSubscribers();
+
+// ---------- REVIEWS (moderation) ----------
+const reviewsTbody = document.getElementById("reviews-tbody");
+const reviewsEmptyMsg = document.getElementById("reviews-empty-msg");
+const reviewsCountBadge = document.getElementById("reviews-count-badge");
+
+function reviewStarsText(rating) {
+  return "★".repeat(rating) + "☆".repeat(5 - rating);
+}
+
+async function loadReviews() {
+  const { data: reviews, error } = await supabaseClient
+    .from("product_reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    reviewsTbody.innerHTML = "";
+    reviewsEmptyMsg.style.display = "block";
+    reviewsEmptyMsg.textContent = "Error loading reviews: " + error.message;
+    reviewsCountBadge.style.display = "none";
+    return;
+  }
+
+  if (!reviews.length) {
+    reviewsTbody.innerHTML = "";
+    reviewsEmptyMsg.style.display = "block";
+    reviewsEmptyMsg.textContent = "No reviews yet.";
+    reviewsCountBadge.style.display = "none";
+    return;
+  }
+
+  // Look up customer names and product names for display (no direct FK
+  // to embed these via a single select, so fetch both separately).
+  const userIds = [...new Set(reviews.map(r => r.user_id))];
+  const productIds = [...new Set(reviews.map(r => r.product_id))];
+
+  const [{ data: profiles }, { data: products }] = await Promise.all([
+    supabaseClient.from("profiles").select("id, full_name").in("id", userIds),
+    supabaseClient.from("products").select("id, name").in("id", productIds)
+  ]);
+  const profileMap = {}; (profiles || []).forEach(p => profileMap[p.id] = p.full_name);
+  const productMap = {}; (products || []).forEach(p => productMap[p.id] = p.name);
+
+  reviewsCountBadge.textContent = reviews.length;
+  reviewsCountBadge.style.display = "inline-block";
+  reviewsEmptyMsg.style.display = "none";
+
+  reviewsTbody.innerHTML = reviews.map(r => {
+    const snippet = (r.review_text || "").length > 80 ? r.review_text.slice(0, 80) + "…" : (r.review_text || "");
+    return `
+      <tr>
+        <td>${escapeHtml(profileMap[r.user_id] || "Unknown")}</td>
+        <td>${escapeHtml(productMap[r.product_id] || "Unknown product")}</td>
+        <td>${reviewStarsText(r.rating)}</td>
+        <td>${escapeHtml(snippet)}${r.photos && r.photos.length ? ` <span class="badge" style="background:#8a8a8a;color:#fff;">${r.photos.length} photo${r.photos.length > 1 ? "s" : ""}</span>` : ""}</td>
+        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+        <td class="row-actions"><button class="btn-danger" onclick="deleteReview('${r.id}')">Delete</button></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.deleteReview = async function(id) {
+  if (!confirm("Delete this review? This can't be undone.")) return;
+  const { error } = await supabaseClient.from("product_reviews").delete().eq("id", id);
+  if (error) {
+    alert("Error deleting review: " + error.message);
+    return;
+  }
+  loadReviews();
+};
+
+document.getElementById("refresh-reviews-btn").addEventListener("click", loadReviews);
+loadReviews();
 </script>
 
 </body>
