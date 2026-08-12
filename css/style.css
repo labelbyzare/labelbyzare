@@ -269,7 +269,7 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
 .nav-logo span{ font-style: italic; color: var(--gold); }
 
 .nav-links{
-  display:flex; gap: var(--sp-5);
+  display:flex; gap: 2.2rem;
   justify-self:center;
   font-size: 0.78rem;
   font-weight: 600;
