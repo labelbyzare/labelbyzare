@@ -404,14 +404,14 @@ function openSizeGuideModal(){
         <div style="overflow-x:auto">
           <table class="size-table">
             <thead>
-              <tr><th>Size</th><th>Bust</th><th>Length</th></tr>
+              <tr><th>Size</th><th>Abaya Length</th><th>Chest Width</th><th>Sleeve Length</th></tr>
             </thead>
             <tbody>
-              <tr><td>XS</td><td>32&Prime;</td><td>54&Prime;</td></tr>
-              <tr><td>S</td><td>34&Prime;</td><td>55&Prime;</td></tr>
-              <tr><td>M</td><td>36&Prime;</td><td>56&Prime;</td></tr>
-              <tr><td>L</td><td>38&Prime;</td><td>57&Prime;</td></tr>
-              <tr><td>XL</td><td>40&Prime;</td><td>58&Prime;</td></tr>
+              <tr><td>XS</td><td>52&Prime;</td><td>22&ndash;23&Prime;</td><td>27&Prime;</td></tr>
+              <tr><td>S</td><td>54&Prime;</td><td>24&ndash;25&Prime;</td><td>28&Prime;</td></tr>
+              <tr><td>M</td><td>54&Prime;</td><td>26&ndash;27&Prime;</td><td>29&Prime;</td></tr>
+              <tr><td>L</td><td>56&Prime;</td><td>28&ndash;29&Prime;</td><td>30&Prime;</td></tr>
+              <tr><td>XL</td><td>58&Prime;</td><td>30&ndash;31&Prime;</td><td>31&Prime;</td></tr>
             </tbody>
           </table>
         </div>
