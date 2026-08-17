@@ -89,8 +89,13 @@ function buildItem(p) {
     xml += `    <g:additional_image_link>${escapeXml(img)}</g:additional_image_link>\n`;
   });
   xml += `    <g:availability>${inStock ? "in_stock" : "out_of_stock"}</g:availability>\n`;
-  xml += `    <g:price>${price.toFixed(2)} PKR</g:price>\n`;
-  if (p.is_sale && oldPrice > price) {
+  const onSale = p.is_sale && oldPrice > price;
+  // g:price is always the regular (non-discounted) price. When an item is
+  // on sale, that's old_price, and the discounted price goes in g:sale_price
+  // instead — Google requires sale_price to be strictly lower than price,
+  // so these two must never be the same number.
+  xml += `    <g:price>${(onSale ? oldPrice : price).toFixed(2)} PKR</g:price>\n`;
+  if (onSale) {
     xml += `    <g:sale_price>${price.toFixed(2)} PKR</g:sale_price>\n`;
   }
   xml += `    <g:condition>new</g:condition>\n`;
