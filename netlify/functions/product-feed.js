@@ -65,12 +65,22 @@ async function fetchAllProducts() {
   return res.json();
 }
 
+function absoluteUrl(url) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${SITE_URL}/${String(url).replace(/^\/+/, "")}`;
+}
+
 function buildItem(p) {
   const name = p.name || "Abaya";
   const category = p.category || "Abaya";
   const gallery = (p.gallery && p.gallery.length) ? p.gallery : (p.img ? [p.img] : [DEFAULT_IMAGE]);
-  const mainImage = p.img || gallery[0] || DEFAULT_IMAGE;
-  const extraImages = gallery.filter((img) => img && img !== mainImage).slice(0, 10);
+  // p.img is sometimes a site-relative path (e.g. "images/products/x.jpg")
+  // while gallery entries are already full Supabase storage URLs — Google
+  // rejects relative URLs outright, so every image_link must be made
+  // absolute before it goes in the feed.
+  const mainImage = absoluteUrl(p.img || gallery[0] || DEFAULT_IMAGE);
+  const extraImages = gallery.map(absoluteUrl).filter((img) => img && img !== mainImage).slice(0, 10);
   const description = p.description
     || `${name} — premium ${category} abaya by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = p.in_stock !== false;
