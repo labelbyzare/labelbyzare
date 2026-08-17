@@ -1,2 +1,3 @@
 /index.html   /        301!
 /*.html       /:splat  301!
+ /product-feed.xml /.netlify/functions/product-feed 200 
