@@ -27,7 +27,7 @@ function escapeXml(value) {
 exports.handler = async () => {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=id,name,updated_at,created_at&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,created_at&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
@@ -43,7 +43,7 @@ exports.handler = async () => {
     const products = await res.json();
     const urls = (products || [])
       .map((p) => {
-        const lastmod = (p.updated_at || p.created_at || new Date().toISOString()).slice(0, 10);
+        const lastmod = (p.created_at || new Date().toISOString()).slice(0, 10);
         const loc = `${SITE_URL}/product/${slugify(p.name)}/${encodeURIComponent(p.id)}`;
         return `  <url><loc>${escapeXml(loc)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>`;
       })
