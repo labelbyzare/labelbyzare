@@ -22,9 +22,9 @@ window.renderCartPage = function(){
     const p = getProductById(line.id);
     if(!p) return "";
     return `<div class="cart-line">
-      <a href="product.html?id=${p.id}"><img src="${p.img}" alt="${p.name}"></a>
+      <a href="${productUrl(p)}"><img src="${p.img}" alt="${p.name}" loading="lazy"></a>
       <div>
-        <a href="product.html?id=${p.id}" class="cart-line-name serif">${p.name}</a>
+        <a href="${productUrl(p)}" class="cart-line-name serif">${p.name}</a>
         <div class="cart-line-meta">${line.size} · ${line.color}</div>
         <div class="cart-line-controls">
           <div class="qty-stepper">
@@ -46,8 +46,8 @@ window.renderCartPage = function(){
     <div class="summary-row"><span class="muted">Subtotal</span><span>${formatPKR(subtotal)}</span></div>
     <div class="summary-row"><span class="muted">Shipping</span><span>${shipping === 0 ? "Free" : formatPKR(shipping)}</span></div>
     <div class="summary-row total"><span>Total</span><span>${formatPKR(subtotal + shipping)}</span></div>
-    <a href="checkout.html" class="btn btn-solid btn-block" style="margin-top:1.4rem">Proceed to Checkout</a>
-    <a href="shop.html" class="btn btn-outline btn-block" style="margin-top:.8rem">Continue Shopping</a>
+    <a href="/checkout" class="btn btn-solid btn-block" style="margin-top:1.4rem">Proceed to Checkout</a>
+    <a href="/shop" class="btn btn-outline btn-block" style="margin-top:.8rem">Continue Shopping</a>
   `;
 };
 
@@ -68,13 +68,13 @@ window.renderWishlistPage = function(){
     if(!p) return "";
     const stocked = isInStock(p);
     return `<div class="product-card ${stocked ? "" : "is-soldout"}">
-      <a href="product.html?id=${p.id}">
+      <a href="${productUrl(p)}">
         <div class="product-media">
           <div class="product-tags">
             ${!stocked ? '<span class="tag tag-soldout">Sold Out</span>' : ""}
           </div>
-          <img class="img-primary" src="${p.img}" alt="${p.name}">
-          <img class="img-secondary" src="${p.img2}" alt="">
+          <img class="img-primary" src="${p.img}" alt="${p.name}" loading="lazy">
+          <img class="img-secondary" src="${p.img2}" alt="${p.name} alternate view" loading="lazy">
         </div>
       </a>
       <button class="wishlist-btn active" data-wish-id="${p.id}" aria-label="Remove from wishlist">
@@ -83,7 +83,7 @@ window.renderWishlistPage = function(){
       <div class="quick-add">
         <button class="btn btn-solid btn-block btn-sm" ${stocked ? `onclick="LZ.addToCart('${p.id}','${p.sizes[0]}','${p.colors[0].name}',1)"` : "disabled"}>${stocked ? "Add to Cart" : "Sold Out"}</button>
       </div>
-      <a href="product.html?id=${p.id}">
+      <a href="${productUrl(p)}">
         <div class="product-info">
           <div><h3>${p.name}</h3><div class="cat">${p.category}</div></div>
           <div class="price-row"><span class="price">${formatPKR(p.price)}</span></div>

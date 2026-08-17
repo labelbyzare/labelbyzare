@@ -21,7 +21,7 @@ function setAvatar(el, url, name){
 async function boot(){
   currentUser = await CustomerAuth.getUser();
   if(!currentUser){
-    window.location.href = "account-login.html?redirect=account.html";
+    window.location.href = "/account-login?redirect=/account";
     return;
   }
 
@@ -70,7 +70,7 @@ document.querySelectorAll(".tab-link").forEach(link => {
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
   await CustomerAuth.logout();
-  window.location.href = "index.html";
+  window.location.href = "/";
 });
 
 /* ---------------- PROFILE ---------------- */
@@ -321,7 +321,7 @@ document.getElementById("delete-account-btn").addEventListener("click", async ()
     errEl.classList.add("show");
     return;
   }
-  window.location.href = "index.html";
+  window.location.href = "/";
 });
 
 document.addEventListener("DOMContentLoaded", boot);

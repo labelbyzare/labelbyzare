@@ -11,18 +11,30 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function buildProductPage(root){
-  const params = new URLSearchParams(location.search);
-  const id = params.get("id") || PRODUCTS[0].id;
+  const id = getProductIdFromLocation() || (PRODUCTS[0] && PRODUCTS[0].id);
   const p = getProductById(id) || PRODUCTS[0];
+
+  // Self-heal the URL to its canonical slug (e.g. an old /product?id=xyz
+  // link, or a stale/renamed slug) without a page reload, so anyone who
+  // lands here shares/bookmarks the correct keyword-rich URL from now on.
+  if(p && window.history && window.history.replaceState){
+    const canonical = productUrl(p);
+    if(location.pathname + location.search !== canonical){
+      window.history.replaceState(null, "", canonical);
+    }
+  }
 
   let selectedSize = p.sizes[Math.floor(p.sizes.length/2)] || p.sizes[0];
   let selectedColor = p.colors[0].name;
   let qty = 1;
   const stocked = isInStock(p);
 
-  document.title = `${p.name} — Label by Zare`;
+  if (window.LZSEO) LZSEO.applyProduct(p);
 
   root.innerHTML = `
+    <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
+      <a href="/">Home</a> &rsaquo; <a href="/shop">Shop Abayas Online</a> &rsaquo; <a href="/shop?cat=${encodeURIComponent(p.category)}">${p.category}</a> &rsaquo; <span aria-current="page">${p.name}</span>
+    </nav>
     <div class="pdp-gallery reveal">
       <div class="pdp-main-img" id="pdp-main-img-wrap">
         <img id="pdp-main-img" src="${p.gallery[0]}" alt="${p.name}">
@@ -33,7 +45,7 @@ function buildProductPage(root){
       <div class="pdp-thumbs">
         ${p.gallery.map((src, i) => `
           <button class="${i === 0 ? "active" : ""}" data-src="${src}" aria-label="View image ${i+1}">
-            <img src="${src}" alt="">
+            <img src="${src}" alt="${p.name} — view ${i + 1}">
           </button>`).join("")}
       </div>
     </div>
@@ -133,7 +145,7 @@ function buildProductPage(root){
     root.querySelectorAll(".pdp-thumbs button").forEach((b, bi) => b.classList.toggle("active", bi === i));
     const img = document.getElementById("pdp-main-img");
     if(img) img.src = p.gallery[i];
-  });
+  }, p.name);
   document.getElementById("pdp-main-img-wrap")?.addEventListener("click", () => openZoom(currentIdx));
 
   // color
@@ -168,7 +180,7 @@ function buildProductPage(root){
   document.getElementById("buy-now").addEventListener("click", () => {
     if(!stocked) return;
     LZ.addToCart(p.id, selectedSize, selectedColor, qty);
-    location.href = "checkout.html";
+    location.href = "/checkout";
   });
 
   document.getElementById("size-guide-btn")?.addEventListener("click", () => {
@@ -188,16 +200,16 @@ function buildProductPage(root){
     const fallback = related.length ? related : PRODUCTS.filter(rp => rp.id !== p.id).slice(0,4);
     relatedGrid.innerHTML = fallback.map(rp => `
       <div class="product-card ${isInStock(rp) ? "" : "is-soldout"}">
-        <a href="product.html?id=${rp.id}">
+        <a href="${productUrl(rp)}">
           <div class="product-media">
             <div class="product-tags">
               ${!isInStock(rp) ? '<span class="tag tag-soldout">Sold Out</span>' : (rp.isNew ? '<span class="tag tag-new">New</span>' : "")}
             </div>
-            <img class="img-primary" src="${rp.img}" alt="${rp.name}">
-            <img class="img-secondary" src="${rp.img2}" alt="">
+            <img class="img-primary" src="${rp.img}" alt="${rp.name}" loading="lazy">
+            <img class="img-secondary" src="${rp.img2}" alt="${rp.name} alternate view" loading="lazy">
           </div>
         </a>
-        <a href="product.html?id=${rp.id}">
+        <a href="${productUrl(rp)}">
           <div class="product-info">
             <div><h3>${rp.name}</h3><div class="cat">${rp.category}</div></div>
             <div class="price-row"><span class="price">${formatPKR(rp.price)}</span></div>
@@ -217,7 +229,7 @@ function buildProductPage(root){
 
    Returns an `openZoom(index)` function the caller uses to launch it.
    ========================================================================== */
-function setupProductZoom(gallery, onNavigate){
+function setupProductZoom(gallery, onNavigate, productName){
   const MIN_SCALE = 1, MAX_SCALE = 4, ZOOM_STEP = 2.2;
 
   // Build the lightbox DOM once and reuse it across opens.
@@ -289,6 +301,7 @@ function setupProductZoom(gallery, onNavigate){
     index = (i + gallery.length) % gallery.length;
     scale = 1; panX = 0; panY = 0;
     img.src = gallery[index];
+    img.alt = gallery.length > 1 ? `${productName} — photo ${index + 1} of ${gallery.length}` : productName;
     render();
     if(typeof onNavigate === "function") onNavigate(index);
   }

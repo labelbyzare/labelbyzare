@@ -1,0 +1,106 @@
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/sitemap-products.xml"
+  to = "/.netlify/functions/sitemap-products"
+  status = 200
+
+# Server-rendered product pages — real title/meta/JSON-LD baked in per
+# product so crawlers and social-preview bots don't need to run JS.
+# New keyword-slug URLs: /product/<slug>/<id>
+[[redirects]]
+  from = "/product/*"
+  to = "/.netlify/functions/product-page"
+  status = 200
+
+# Legacy /product?id=<id> links (already shared/bookmarked before the
+# slug scheme existed) still render via the same function, which then
+# 301s them to their canonical slug URL.
+[[redirects]]
+  from = "/product"
+  to = "/.netlify/functions/product-page"
+  status = 200
+  force = true
+  query = {id = ":id"}
+
+# Pretty URLs — matches labelbyzare.com live routes
+[[redirects]]
+  from = "/shop"
+  to = "/shop.html"
+  status = 200
+
+[[redirects]]
+  from = "/about"
+  to = "/about.html"
+  status = 200
+
+[[redirects]]
+  from = "/new-arrivals"
+  to = "/new-arrivals.html"
+  status = 200
+
+[[redirects]]
+  from = "/sale"
+  to = "/sale.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/support"
+  to = "/support.html"
+  status = 200
+
+[[redirects]]
+  from = "/reviews"
+  to = "/reviews.html"
+  status = 200
+
+[[redirects]]
+  from = "/track-order"
+  to = "/track-order.html"
+  status = 200
+
+[[redirects]]
+  from = "/cart"
+  to = "/cart.html"
+  status = 200
+
+[[redirects]]
+  from = "/checkout"
+  to = "/checkout.html"
+  status = 200
+
+[[redirects]]
+  from = "/wishlist"
+  to = "/wishlist.html"
+  status = 200
+
+[[redirects]]
+  from = "/account"
+  to = "/account.html"
+  status = 200
+
+[[redirects]]
+  from = "/account-login"
+  to = "/account-login.html"
+  status = 200
+
+[[redirects]]
+  from = "/account-signup"
+  to = "/account-signup.html"
+  status = 200
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/reset-password.html"
+  status = 200
+
+[[redirects]]
+  from = "/product"
+  to = "/product.html"
+  status = 200

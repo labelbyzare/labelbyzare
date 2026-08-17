@@ -142,6 +142,7 @@ const Reviews = {
     function show(idx){
       i = (idx + urls.length) % urls.length;
       img.src = urls[i];
+      img.alt = urls.length > 1 ? `Customer review photo ${i + 1} of ${urls.length}` : "Customer review photo";
       counter.textContent = `${i + 1} / ${urls.length}`;
       prevBtn.style.display = urls.length > 1 ? "" : "none";
       nextBtn.style.display = urls.length > 1 ? "" : "none";
@@ -180,7 +181,7 @@ const Reviews = {
           </div>
         </div>
         ${this.starsHTML(r.rating)}
-        ${showProduct && product ? `<div class="review-card-product" style="margin-top:.5rem">On <a href="product.html?id=${product.id}">${this.escapeHtml(product.name)}</a></div>` : ""}
+        ${showProduct && product ? `<div class="review-card-product" style="margin-top:.5rem">On <a href="${productUrl(product)}">${this.escapeHtml(product.name)}</a></div>` : ""}
         ${r.review_text ? `<p class="review-text" style="margin-top:.6rem">${this.escapeHtml(r.review_text)}</p>` : ""}
         ${r.photos && r.photos.length ? `
           <div class="review-photos">
@@ -231,6 +232,7 @@ async function initProductReviews(root, product){
 
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
   const myReview = user ? reviews.find(r => r.user_id === user.id) : null;
+  if (window.LZSEO) LZSEO.setProductAggregateRating(avg, reviews.length);
 
   root.innerHTML = `
     <div class="section-head reveal">
@@ -294,7 +296,7 @@ function renderReviewActionSlot(product, user, myReview, forceOpenForm){
     actionSlot.innerHTML = "";
     formSlot.innerHTML = `
       <div class="reviews-login-prompt">
-        <a href="account-login.html">Log in</a> to write a review of this piece.
+        <a href="/account-login">Log in</a> to write a review of this piece.
       </div>
     `;
     return;
@@ -372,7 +374,7 @@ function wireReviewForm(product, existing){
       slot.className = "review-photo-slot";
       if(p){
         const previewSrc = p.type === "existing" ? p.url : p._previewUrl;
-        slot.innerHTML = `<img src="${previewSrc}" alt=""><button type="button" class="remove-photo" aria-label="Remove photo">✕</button>`;
+        slot.innerHTML = `<img src="${previewSrc}" alt="Photo ${i + 1} to attach to your review"><button type="button" class="remove-photo" aria-label="Remove photo">✕</button>`;
         slot.querySelector(".remove-photo").addEventListener("click", (e) => {
           e.stopPropagation();
           photos.splice(i, 1);
@@ -516,7 +518,7 @@ function renderAllReviewsList(reviews, user){
     btn.addEventListener("click", (e) => {
       const id = e.target.closest(".review-card").dataset.reviewId;
       const review = (window.__allReviews || []).find(r => r.id === id);
-      location.href = `product.html?id=${review.product_id}#product-reviews-root`;
+      location.href = `${productUrl(getProductById(review.product_id))}#product-reviews-root`;
     });
   });
 }

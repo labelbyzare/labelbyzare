@@ -3,7 +3,19 @@
    Luxury abaya e-commerce. Ink / Cream / Brass palette.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+/* Fraunces + Manrope are loaded via <link rel="preconnect"/stylesheet"> in each
+   page's <head> rather than @import here — @import blocks CSS parsing until the
+   imported stylesheet round-trips, delaying every style on the page. */
+
+.sr-only{
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
 
 :root{
   /* ---- color tokens ---- */

@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const accountLinks = document.querySelectorAll('.js-account-link, [aria-label="Account"]');
   if(accountLinks.length === 0) return;
 
-  accountLinks.forEach(el => el.setAttribute("href", "account.html"));
+  accountLinks.forEach(el => el.setAttribute("href", "/account"));
 
   try{
     const user = await CustomerAuth.getUser();

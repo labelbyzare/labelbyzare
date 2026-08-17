@@ -181,7 +181,7 @@ const LZ = {
       body.innerHTML = `<div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>
         <p>Your bag is empty.</p>
-        <a href="shop.html" class="btn btn-solid btn-sm">Shop the Collection</a>
+        <a href="/shop" class="btn btn-solid btn-sm">Shop the Collection</a>
       </div>`;
       if(foot) foot.style.display = "none";
       return;
@@ -191,7 +191,7 @@ const LZ = {
       const p = getProductById(line.id);
       if(!p) return "";
       return `<div class="drawer-line">
-        <img src="${p.img}" alt="${p.name}">
+        <img src="${p.img}" alt="${p.name}" loading="lazy">
         <div>
           <div class="drawer-line-name">${p.name}</div>
           <div class="drawer-line-meta">${line.size} · ${line.color}</div>
@@ -212,8 +212,8 @@ const LZ = {
       foot.innerHTML = `
         <div class="summary-row"><span class="muted">Subtotal</span><span>${formatPKR(subtotal)}</span></div>
         <div class="summary-row"><span class="muted">Shipping</span><span>Calculated at checkout</span></div>
-        <a href="checkout.html" class="btn btn-solid btn-block" style="margin-top:1rem">Checkout</a>
-        <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:.7rem">View Bag</a>
+        <a href="/checkout" class="btn btn-solid btn-block" style="margin-top:1rem">Checkout</a>
+        <a href="/cart" class="btn btn-outline btn-block" style="margin-top:.7rem">View Bag</a>
       `;
     }
   }

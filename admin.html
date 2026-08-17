@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>Admin Dashboard</title>
+<link rel="icon" type="image/jpeg" href="images/logo-mark.jpg">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -415,7 +417,7 @@ async function loadProducts() {
   emptyMsg.style.display = "none";
   tbody.innerHTML = data.map(p => `
     <tr>
-      <td><img src="${p.img || ''}" onerror="this.style.visibility='hidden'"></td>
+      <td><img src="${p.img || ''}" alt="${escapeHtml(p.name || 'Product')}" onerror="this.style.visibility='hidden'"></td>
       <td>${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.category || '')}</td>
       <td>Rs. ${p.price}${p.old_price ? ` <s style="color:#999">${p.old_price}</s>` : ''}</td>
@@ -483,11 +485,11 @@ function closeForm() {
 
 function renderImagePreviews() {
   const mainPrev = document.getElementById("main-img-preview");
-  mainPrev.innerHTML = currentMainImg ? `<img src="${currentMainImg}">` : "";
+  mainPrev.innerHTML = currentMainImg ? `<img src="${currentMainImg}" alt="Main product image preview">` : "";
   const img2Prev = document.getElementById("img2-preview");
-  img2Prev.innerHTML = currentImg2 ? `<img src="${currentImg2}">` : "";
+  img2Prev.innerHTML = currentImg2 ? `<img src="${currentImg2}" alt="Secondary product image preview">` : "";
   const galPrev = document.getElementById("gallery-preview");
-  galPrev.innerHTML = currentGallery.map(url => `<img src="${url}">`).join("");
+  galPrev.innerHTML = currentGallery.map((url, i) => `<img src="${url}" alt="Gallery image ${i + 1} preview">`).join("");
 }
 
 window.editProduct = openForm;

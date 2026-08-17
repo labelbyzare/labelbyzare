@@ -64,6 +64,40 @@ window.PRODUCTS_READY = (async () => {
 function getProductById(id){ return PRODUCTS.find(p => p.id === id); }
 function formatPKR(n){ return "PKR " + n.toLocaleString("en-PK"); }
 
+/* ==========================================================================
+   SEO-FRIENDLY PRODUCT URLS
+   Product links use a keyword-rich slug + the product's real id:
+     /product/silk-kaftan-abaya/<id>
+   The slug carries the search-relevant keywords in the URL itself (a real
+   ranking signal query-string URLs don't get); the id after it is what
+   actually looks the product up, so slugs never need to be unique on
+   their own and old links never break even if a name changes.
+   Used everywhere a product link is built (cards, search, cart, related,
+   reviews, sitemap) so there is exactly one place this logic lives.
+   ========================================================================== */
+function slugify(text){
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "abaya";
+}
+function productUrl(p){
+  if(!p || !p.id) return "/shop";
+  return `/product/${slugify(p.name)}/${encodeURIComponent(p.id)}`;
+}
+/* Reads the product id off the current URL — supports the new
+   /product/<slug>/<id> path as well as the legacy /product?id=<id>
+   query form, so any old bookmarked or shared links keep working. */
+function getProductIdFromLocation(){
+  const params = new URLSearchParams(location.search);
+  if(params.get("id")) return params.get("id");
+  const parts = location.pathname.split("/").filter(Boolean);
+  const i = parts.indexOf("product");
+  if(i !== -1 && parts.length >= i + 3) return decodeURIComponent(parts[i + 2]);
+  return null;
+}
+
 /* Stock helper — a product with inStock left unset defaults to true (in stock) */
 function isInStock(p){ return !!p && p.inStock !== false; }
 

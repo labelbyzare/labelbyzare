@@ -64,7 +64,7 @@ function initCheckout(form){
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>
         <h3 class="serif" style="margin-bottom:1rem">Your bag is empty</h3>
-        <a href="shop.html" class="btn btn-solid">Shop the Collection</a>
+        <a href="/shop" class="btn btn-solid">Shop the Collection</a>
       </div>`;
     return;
   }

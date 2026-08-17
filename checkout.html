@@ -3,9 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>Checkout | Label by Zare</title>
 <meta name="description" content="Complete your Label by Zare order.">
-<link rel="icon" type="image/jpeg" href="images/logo.jpg">
+<link rel="icon" type="image/jpeg" href="images/logo-mark.jpg">
+<link rel="apple-touch-icon" href="images/logo-mark.jpg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f5efe6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://ldpzgtjbnbdsggaqmuvs.supabase.co">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -14,9 +22,9 @@
 
 <nav class="site-nav is-dark scrolled" id="site-nav">
   <div class="wrap">
-    <a href="index.html" class="nav-logo"><img src="images/logo.jpg" alt="Label by Zare logo">LABEL <span>by</span> ZARE</a>
+    <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44">LABEL <span>by</span> ZARE</a>
     <ul class="nav-links">
-      <li><a href="shop.html">Continue Shopping</a></li>
+      <li><a href="/shop">Continue Shopping</a></li>
     </ul>
     <div class="nav-actions">
       <button class="nav-icon-btn js-open-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span class="badge js-cart-count">0</span></button>
@@ -32,6 +40,7 @@
 </div>
 
 <main class="wrap cart-page" id="checkout-view" style="padding-top:calc(var(--nav-h) + 2.4rem)">
+  <h1 class="sr-only">Checkout</h1>
   <div class="checkout-steps">
     <span>Bag</span> / <span class="active">Checkout</span> / <span>Confirmation</span>
   </div>
@@ -119,8 +128,8 @@
   <div class="order-num">Order № <span id="conf-order-num"></span></div>
   <p style="font-weight:600;margin-bottom:2rem">Total amount to be paid: <span id="conf-total"></span></p>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
-    <a href="shop.html" class="btn btn-solid">Continue Shopping</a>
-    <a href="track-order.html" class="btn btn-outline">Track This Order</a>
+    <a href="/shop" class="btn btn-solid">Continue Shopping</a>
+    <a href="/track-order" class="btn btn-outline">Track This Order</a>
   </div>
 </div>
 

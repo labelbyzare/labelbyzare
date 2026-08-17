@@ -113,8 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     searchResults.innerHTML = matches.map(p => `
-      <a href="product.html?id=${p.id}" class="search-result-card">
-        <img src="${p.img}" alt="${p.name}">
+      <a href="${productUrl(p)}" class="search-result-card">
+        <img src="${p.img}" alt="${p.name}" loading="lazy">
         <h4>${p.name}</h4>
         <div class="price">${formatPKR(p.price)}</div>
       </a>

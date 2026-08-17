@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /login
+Disallow: /login.html
+Disallow: /checkout
+Disallow: /checkout.html
+Disallow: /cart
+Disallow: /cart.html
+Disallow: /account
+Disallow: /account.html
+Disallow: /account-login
+Disallow: /account-login.html
+Disallow: /account-signup
+Disallow: /account-signup.html
+Disallow: /reset-password
+Disallow: /reset-password.html
+Disallow: /wishlist
+Disallow: /wishlist.html
+Disallow: /track-order
+Disallow: /track-order.html
+
+Sitemap: https://labelbyzare.com/sitemap.xml
