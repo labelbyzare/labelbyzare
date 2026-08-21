@@ -993,6 +993,26 @@ p{ margin: 0 0 1em; line-height: 1.7; color: var(--ink-soft); }
 .value-card .num{ font-family:var(--font-display); font-style:italic; color: var(--beige); margin-bottom: var(--sp-2); display:block; }
 
 /* ==========================================================================
+   SHOP CTA BANNER
+   ========================================================================== */
+
+.shop-cta{ background: var(--ink); padding: var(--sp-6) 0; }
+.shop-cta-inner{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  color: var(--cream);
+}
+.shop-cta-inner h2{ margin:0; }
+.shop-cta-btn{ flex: 0 0 auto; }
+
+@media (max-width: 640px){
+  .shop-cta-inner{ flex-direction:column; text-align:center; }
+}
+
+/* ==========================================================================
    NEWSLETTER / FOOTER
    ========================================================================== */
 

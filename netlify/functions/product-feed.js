@@ -65,22 +65,25 @@ async function fetchAllProducts() {
   return res.json();
 }
 
-function absoluteUrl(url) {
-  if (!url) return "";
-  if (/^https?:\/\//i.test(url)) return url;
-  return `${SITE_URL}/${String(url).replace(/^\/+/, "")}`;
+function buildFullGallery(p) {
+  const raw = [p.img, p.img2, ...(Array.isArray(p.gallery) ? p.gallery : [])];
+  const seen = new Set();
+  const clean = [];
+  for (const src of raw) {
+    if (typeof src === "string" && src.trim() && !seen.has(src)) {
+      seen.add(src);
+      clean.push(src);
+    }
+  }
+  return clean.length ? clean : [DEFAULT_IMAGE];
 }
 
 function buildItem(p) {
   const name = p.name || "Abaya";
   const category = p.category || "Abaya";
-  const gallery = (p.gallery && p.gallery.length) ? p.gallery : (p.img ? [p.img] : [DEFAULT_IMAGE]);
-  // p.img is sometimes a site-relative path (e.g. "images/products/x.jpg")
-  // while gallery entries are already full Supabase storage URLs — Google
-  // rejects relative URLs outright, so every image_link must be made
-  // absolute before it goes in the feed.
-  const mainImage = absoluteUrl(p.img || gallery[0] || DEFAULT_IMAGE);
-  const extraImages = gallery.map(absoluteUrl).filter((img) => img && img !== mainImage).slice(0, 10);
+  const gallery = buildFullGallery(p);
+  const mainImage = gallery[0];
+  const extraImages = gallery.filter((img) => img && img !== mainImage).slice(0, 10);
   const description = p.description
     || `${name} — premium ${category} abaya by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = p.in_stock !== false;

@@ -120,11 +120,24 @@ function notFoundPage() {
 </html>`;
 }
 
+function buildFullGallery(p) {
+  const raw = [p.img, p.img2, ...(Array.isArray(p.gallery) ? p.gallery : [])];
+  const seen = new Set();
+  const clean = [];
+  for (const src of raw) {
+    if (typeof src === "string" && src.trim() && !seen.has(src)) {
+      seen.add(src);
+      clean.push(src);
+    }
+  }
+  return clean.length ? clean : [DEFAULT_IMAGE];
+}
+
 function renderPage(p, rating) {
   const name = p.name || "Abaya";
   const category = p.category || "Abaya";
-  const gallery = (p.gallery && p.gallery.length) ? p.gallery : (p.img ? [p.img] : [DEFAULT_IMAGE]);
-  const img = p.img || gallery[0] || DEFAULT_IMAGE;
+  const gallery = buildFullGallery(p);
+  const img = gallery[0];
   const description = p.description || `${name} — premium ${category} abaya by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = p.in_stock !== false;
   const slug = slugify(name);
@@ -282,7 +295,7 @@ function renderPage(p, rating) {
     <a href="/">Home</a> &rsaquo; <a href="/shop">Shop Abayas Online</a> &rsaquo; <a href="/shop?cat=${encodeURIComponent(category)}">${escapeHtml(category)}</a> &rsaquo; <span aria-current="page">${escapeHtml(name)}</span>
   </nav>
   <div class="pdp-gallery reveal">
-    <div class="pdp-main-img"><img src="${escapeHtml(img)}" alt="${escapeHtml(name)}"></div>
+    <div class="pdp-main-img"><img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" onerror="this.onerror=null;this.src='${escapeHtml(DEFAULT_IMAGE)}';"></div>
   </div>
   <div class="pdp-info reveal">
     <div class="cat-label">${escapeHtml(category)}${p.is_new ? " · New Arrival" : ""}</div>
@@ -339,6 +352,7 @@ function renderPage(p, rating) {
     <div class="footer-bottom">
       <span>&copy; 2026 Label by Zare. All rights reserved.</span>
       <span>Designed for the modern abaya wardrobe.</span>
+      <span><a href="/sitemap.html" style="color:inherit">Full Product Index</a></span>
     </div>
   </div>
 </footer>

@@ -6,6 +6,13 @@
   to = "/.netlify/functions/sitemap-products"
   status = 200
 
+# Crawlable HTML product index — a real linked page (not just an XML
+# feed) pointing at every product URL.
+[[redirects]]
+  from = "/sitemap.html"
+  to = "/.netlify/functions/sitemap-html"
+  status = 200
+
 # Server-rendered product pages — real title/meta/JSON-LD baked in per
 # product so crawlers and social-preview bots don't need to run JS.
 # New keyword-slug URLs: /product/<slug>/<id>

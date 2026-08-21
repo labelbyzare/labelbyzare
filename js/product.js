@@ -10,9 +10,29 @@ document.addEventListener("DOMContentLoaded", () => {
   (window.PRODUCTS_READY || Promise.resolve()).then(() => buildProductPage(root));
 });
 
+/* Merge the three separate image fields your admin panel writes
+   (img, img2, gallery[]) into one deduped, validated list — the PDP used
+   to render p.gallery alone, so a product whose Main/Secondary Image was
+   never pushed into the gallery array (or whose gallery[0] pointed at a
+   deleted/failed upload) showed a broken first thumbnail even though the
+   Main Image itself was perfectly fine on the shop grid. */
+function buildFullGallery(p) {
+  const raw = [p.img, p.img2, ...(Array.isArray(p.gallery) ? p.gallery : [])];
+  const seen = new Set();
+  const clean = [];
+  for (const src of raw) {
+    if (typeof src === "string" && src.trim() && !seen.has(src)) {
+      seen.add(src);
+      clean.push(src);
+    }
+  }
+  return clean.length ? clean : ["/images/logo.jpg"];
+}
+
 function buildProductPage(root){
   const id = getProductIdFromLocation() || (PRODUCTS[0] && PRODUCTS[0].id);
   const p = getProductById(id) || PRODUCTS[0];
+  p.gallery = buildFullGallery(p);
 
   // Self-heal the URL to its canonical slug (e.g. an old /product?id=xyz
   // link, or a stale/renamed slug) without a page reload, so anyone who
@@ -37,7 +57,7 @@ function buildProductPage(root){
     </nav>
     <div class="pdp-gallery reveal">
       <div class="pdp-main-img" id="pdp-main-img-wrap">
-        <img id="pdp-main-img" src="${p.gallery[0]}" alt="${p.name}">
+        <img id="pdp-main-img" src="${p.gallery[0]}" alt="${p.name}" onerror="this.onerror=null;this.src='/images/logo.jpg';">
         <button class="zoom-trigger" id="zoom-trigger" type="button" aria-label="Zoom image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
         </button>
@@ -45,10 +65,11 @@ function buildProductPage(root){
       <div class="pdp-thumbs">
         ${p.gallery.map((src, i) => `
           <button class="${i === 0 ? "active" : ""}" data-src="${src}" aria-label="View image ${i+1}">
-            <img src="${src}" alt="${p.name} — view ${i + 1}">
+            <img src="${src}" alt="${p.name} — view ${i + 1}" onerror="this.closest('button').style.display='none';">
           </button>`).join("")}
       </div>
     </div>
+
     <div class="pdp-info reveal">
       <div class="cat-label">${p.category} ${p.isNew ? "· New Arrival" : ""}</div>
       <h1 class="serif">${p.name}</h1>
