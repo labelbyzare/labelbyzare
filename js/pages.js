@@ -68,20 +68,20 @@ window.renderWishlistPage = function(){
     if(!p) return "";
     const stocked = isInStock(p);
     return `<div class="product-card ${stocked ? "" : "is-soldout"}">
-      <a href="${productUrl(p)}">
-        <div class="product-media">
+      <div class="product-media">
+        <a href="${productUrl(p)}">
           <div class="product-tags">
             ${!stocked ? '<span class="tag tag-soldout">Sold Out</span>' : ""}
           </div>
           <img class="img-primary" src="${p.img}" alt="${p.name}" loading="lazy">
           <img class="img-secondary" src="${p.img2}" alt="${p.name} alternate view" loading="lazy">
-        </div>
-      </a>
+        </a>
       <button class="wishlist-btn active" data-wish-id="${p.id}" aria-label="Remove from wishlist">
         <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>
       </button>
       <div class="quick-add">
         <button class="btn btn-solid btn-block btn-sm" ${stocked ? `onclick="LZ.addToCart('${p.id}','${p.sizes[0]}','${p.colors[0].name}',1)"` : "disabled"}>${stocked ? "Add to Cart" : "Sold Out"}</button>
+      </div>
       </div>
       <a href="${productUrl(p)}">
         <div class="product-info">

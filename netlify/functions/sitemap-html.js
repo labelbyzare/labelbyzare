@@ -57,7 +57,7 @@ exports.handler = async () => {
 <head>
 <meta charset="UTF-8">
 <title>Full Product Index | Label by Zare</title>
-<meta name="description" content="Browse every abaya and product in the Label by Zare catalog.">
+<meta name="description" content="Browse every abaya and shawl in the Label by Zare catalog.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${SITE_URL}/sitemap.html">
 <link rel="stylesheet" href="/css/style.css">

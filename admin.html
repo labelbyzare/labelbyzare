@@ -90,6 +90,33 @@
   #form-message.error { color: #c0392b; }
   .image-preview { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
   .image-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+  .admin-products-heading h2 { font-size: 1.25rem; margin: 0 0 .4rem; }
+  .admin-products-heading p { color: #666; font-size: .9rem; margin: 0 0 1.3rem; }
+  .admin-product-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-bottom: 1.5rem; }
+  .admin-product-tab { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .6rem; text-align: left; padding: 1.1rem 1.2rem; border-color: #ddd5c8; background: #faf7f1; color: #28251f; border-radius: 8px; }
+  .admin-product-tab[aria-selected="true"] { background: #24231f; color: #fffaf0; border-color: #24231f; }
+  .admin-product-tab .type-name { font-size: 1.1rem; font-weight: 650; }
+  .admin-product-tab .type-count { min-width: 2rem; text-align: center; padding: .2rem .45rem; border-radius: 4px; background: rgba(163,130,78,.14); font-size: .85rem; }
+  .admin-product-tab small { grid-column: 1 / -1; color: #6d6253; font-size: .8rem; line-height: 1.5; }
+  .admin-product-tab[aria-selected="true"] small { color: #d8cab4; }
+  .admin-product-tab[aria-selected="true"] .type-count { background: #b99457; color: #171512; }
+  .admin-product-tab:focus-visible { outline: 2px solid #b99457; outline-offset: 3px; }
+  .admin-products-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .admin-products-toolbar h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
+  .admin-products-toolbar p { margin: 0; color: #6b6b6b; font-size: .82rem; line-height: 1.5; }
+  .admin-products-toolbar button { min-height: 44px; flex-shrink: 0; }
+  .admin-products-table { overflow-x: auto; }
+  .admin-products-table table { min-width: 600px; }
+  .checkbox-group { flex-wrap: wrap; }
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    .card { padding: 1rem; }
+    .admin-product-tab { padding: .9rem .8rem; }
+    .admin-products-toolbar { align-items: flex-start; flex-direction: column; }
+    .admin-products-toolbar button { width: 100%; }
+    .field-row { flex-direction: column; gap: 0; }
+    .form-card { padding: 1.25rem; }
+  }
 </style>
 </head>
 <body>
@@ -104,19 +131,36 @@
 
   <div id="content" style="display:none;">
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <strong>Products</strong>
-        <button class="btn-primary" id="add-product-btn">+ Add Product</button>
+      <div class="admin-products-heading">
+        <h2>Product collections</h2>
+        <p>Choose a collection to manage its products or add a new piece.</p>
       </div>
-      <table>
+      <div class="admin-product-tabs" id="admin-product-tabs" role="tablist" aria-label="Product collections">
+        <button class="admin-product-tab" type="button" id="admin-tab-abayas" role="tab" aria-selected="true" aria-controls="admin-product-panel" tabindex="0" data-admin-type="abayas">
+          <span class="type-name">Abayas</span><span class="type-count" aria-label="Abaya product count">…</span>
+          <small>Everyday, occasion and prayer styles</small>
+        </button>
+        <button class="admin-product-tab" type="button" id="admin-tab-shawls" role="tab" aria-selected="false" aria-controls="admin-product-panel" tabindex="-1" data-admin-type="shawls">
+          <span class="type-name">Shawls</span><span class="type-count" aria-label="Shawl product count">…</span>
+          <small>Your separate shawl collection</small>
+        </button>
+      </div>
+      <div id="admin-product-panel" role="tabpanel" aria-labelledby="admin-tab-abayas" tabindex="0">
+        <div class="admin-products-toolbar">
+          <div><h3 id="product-list-title">Abayas</h3><p id="product-list-description">Manage your abaya collection.</p></div>
+          <button class="btn-primary" id="add-product-btn" type="button">+ Add Abaya</button>
+        </div>
+        <div class="admin-products-table"><table>
         <thead>
           <tr>
             <th></th><th>Name</th><th>Category</th><th>Price</th><th>Status</th><th></th>
           </tr>
         </thead>
         <tbody id="products-tbody"></tbody>
-      </table>
-      <p id="empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No products yet. Click "+ Add Product" to create your first one.</p>
+        </table></div>
+        <p id="empty-msg" role="status" style="display:none; color:#666; text-align:center; padding:1rem;"></p>
+        <button id="retry-products-btn" type="button" hidden>Retry loading products</button>
+      </div>
     </div>
 
     <div class="card" id="orders-card">
@@ -213,7 +257,7 @@
       <input type="hidden" id="edit-id">
 
       <div class="field">
-        <label>Product ID (unique, e.g. "aby-005" — cannot be changed later)</label>
+        <label for="f-id">Product ID (unique — cannot be changed later)</label>
         <input type="text" id="f-id" required>
       </div>
 
@@ -224,9 +268,19 @@
 
       <div class="field-row">
         <div class="field">
-          <label>Category</label>
+          <label for="f-product-type">Product Type</label>
+          <select id="f-product-type">
+            <option value="abayas">Abaya</option>
+            <option value="shawls">Shawl</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-category" id="category-field-label">Abaya style</label>
           <input type="text" id="f-category" placeholder="Everyday, Occasion...">
         </div>
+      </div>
+      <p class="hint" id="product-type-hint">Choose where this piece belongs in your collection.</p>
+      <div class="field-row">
         <div class="field">
           <label>Price</label>
           <input type="number" id="f-price" step="0.01" required>
@@ -240,6 +294,8 @@
       <div class="checkbox-group">
         <label><input type="checkbox" id="f-isnew"> New Collection (shows in New Arrivals)</label>
         <label><input type="checkbox" id="f-issale"> On Sale</label>
+        <label><input type="checkbox" id="f-isbestseller"> Best Seller (homepage)</label>
+        <label><input type="checkbox" id="f-isfeatured"> Featured Product (homepage)</label>
         <label><input type="checkbox" id="f-instock" checked> In Stock</label>
       </div>
 
@@ -341,11 +397,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
+<script src="js/product-types.js"></script>
 <script>
 const statusEl = document.getElementById("status");
 const contentEl = document.getElementById("content");
 const tbody = document.getElementById("products-tbody");
 const emptyMsg = document.getElementById("empty-msg");
+const productTabs = [...document.querySelectorAll("[data-admin-type]")];
+const productPanel = document.getElementById("admin-product-panel");
+let activeProductType = "abayas";
+let adminProducts = [];
+let productsLoaded = false;
+let productsError = "";
+let productsLoading = null;
 
 const overlay = document.getElementById("form-overlay");
 const form = document.getElementById("product-form");
@@ -394,28 +458,30 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   window.location.href = "login.html";
 });
 
-async function loadProducts() {
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
+function renderAdminProducts() {
+  const label = LZProductTypes.label(activeProductType);
+  const singular = activeProductType === "shawls" ? "Shawl" : "Abaya";
+  productTabs.forEach(tab => {
+    const active = tab.dataset.adminType === activeProductType;
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+    tab.querySelector(".type-count").textContent = productsLoaded ? adminProducts.filter(p => LZProductTypes.key(p) === tab.dataset.adminType).length : productsError ? "—" : "…";
+  });
+  productPanel.setAttribute("aria-labelledby", `admin-tab-${activeProductType}`);
+  productPanel.setAttribute("aria-busy", String(!productsLoaded && !productsError));
+  document.getElementById("product-list-title").textContent = label;
+  document.getElementById("product-list-description").textContent = `Manage your ${label.toLowerCase()} here. Best Seller and Featured selections appear on the homepage.`;
+  document.getElementById("add-product-btn").textContent = `+ Add ${singular}`;
+  document.getElementById("retry-products-btn").hidden = !productsError;
+  const visible = adminProducts.filter(p => LZProductTypes.key(p) === activeProductType);
+  if(!productsLoaded || productsError || !visible.length){
     tbody.innerHTML = "";
     emptyMsg.style.display = "block";
-    emptyMsg.textContent = "Error loading products: " + error.message;
+    emptyMsg.textContent = productsError ? "We couldn’t load the products. Please try again." : !productsLoaded ? "Loading products…" : `No ${label.toLowerCase()} yet. Click “+ Add ${singular}” to create your first one.`;
     return;
   }
-
-  if (!data.length) {
-    tbody.innerHTML = "";
-    emptyMsg.style.display = "block";
-    emptyMsg.textContent = 'No products yet. Click "+ Add Product" to create your first one.';
-    return;
-  }
-
   emptyMsg.style.display = "none";
-  tbody.innerHTML = data.map(p => `
+  tbody.innerHTML = visible.map(p => `
     <tr>
       <td><img src="${p.img || ''}" alt="${escapeHtml(p.name || 'Product')}" onerror="this.style.visibility='hidden'"></td>
       <td>${escapeHtml(p.name)}</td>
@@ -424,7 +490,9 @@ async function loadProducts() {
       <td>
         ${p.is_sale ? '<span class="badge badge-sale">Sale</span>' : ''}
         ${p.is_new ? '<span class="badge badge-new">New</span>' : ''}
-        ${!p.in_stock ? '<span class="badge badge-out">Out of stock</span>' : ''}
+        ${p.is_bestseller ? '<span class="badge badge-new">Best Seller</span>' : ''}
+        ${p.is_featured ? '<span class="badge badge-new">Featured</span>' : ''}
+        ${p.in_stock === false ? '<span class="badge badge-out">Out of stock</span>' : ''}
       </td>
       <td class="row-actions">
         <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Edit</button>
@@ -433,6 +501,55 @@ async function loadProducts() {
     </tr>
   `).join("");
 }
+
+function loadProducts() {
+  if(productsLoading) return productsLoading;
+  productsLoaded = false;
+  productsError = "";
+  renderAdminProducts();
+  productsLoading = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const all = [];
+      for(let offset = 0; ; offset += 500){
+        const { data, error } = await supabaseClient.from("products").select("*")
+          .order("created_at", { ascending: false }).order("id", { ascending: true })
+          .range(offset, offset + 499).abortSignal(controller.signal);
+        if(error) throw error;
+        all.push(...(data || []));
+        if(!data || data.length < 500) break;
+      }
+      adminProducts = all;
+      productsLoaded = true;
+    } catch(error) {
+      productsError = error.message || "Products unavailable";
+    } finally {
+      clearTimeout(timeout);
+      renderAdminProducts();
+    }
+  })().finally(() => { productsLoading = null; });
+  return productsLoading;
+}
+
+function selectAdminType(type){
+  activeProductType = LZProductTypes.key(type);
+  renderAdminProducts();
+}
+document.getElementById("admin-product-tabs").addEventListener("click", event => {
+  const tab = event.target.closest("[data-admin-type]");
+  if(tab) selectAdminType(tab.dataset.adminType);
+});
+document.getElementById("admin-product-tabs").addEventListener("keydown", event => {
+  const tab = event.target.closest("[data-admin-type]");
+  if(!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const index = productTabs.indexOf(tab);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? productTabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + productTabs.length) % productTabs.length;
+  productTabs[next].focus();
+  selectAdminType(productTabs[next].dataset.adminType);
+});
+document.getElementById("retry-products-btn").addEventListener("click", loadProducts);
 
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -445,6 +562,8 @@ document.getElementById("cancel-btn").addEventListener("click", closeForm);
 
 function openForm(product = null) {
   form.reset();
+  document.getElementById("f-product-type").value = product ? LZProductTypes.key(product) : activeProductType;
+  lastAbayaCategory = LZProductTypes.key(product) === "abayas" ? product?.category || "Everyday" : "Everyday";
   formMessage.textContent = "";
   currentMainImg = product?.img || "";
   currentImg2 = product?.img2 || "";
@@ -462,6 +581,8 @@ function openForm(product = null) {
     document.getElementById("f-oldprice").value = product.old_price || "";
     document.getElementById("f-isnew").checked = !!product.is_new;
     document.getElementById("f-issale").checked = !!product.is_sale;
+    document.getElementById("f-isbestseller").checked = !!product.is_bestseller;
+    document.getElementById("f-isfeatured").checked = !!product.is_featured;
     document.getElementById("f-instock").checked = product.in_stock !== false;
     document.getElementById("f-sizes").value = (product.sizes || []).join(", ");
     document.getElementById("f-colors").value = (product.colors || []).map(c => `${c.name}:${c.hex}`).join(", ");
@@ -476,8 +597,30 @@ function openForm(product = null) {
     document.getElementById("f-instock").checked = true;
   }
 
+  syncProductType();
   overlay.classList.add("open");
 }
+
+let lastAbayaCategory = "Everyday";
+function syncProductType(){
+  const type = document.getElementById("f-product-type").value;
+  const category = document.getElementById("f-category");
+  const isShawl = type === "shawls";
+  formTitle.textContent = `${document.getElementById("edit-id").value ? "Edit" : "Add"} ${isShawl ? "Shawl" : "Abaya"}`;
+  document.getElementById("category-field-label").textContent = isShawl ? "Collection" : "Abaya style";
+  document.getElementById("f-id").placeholder = isShawl ? "e.g. shl-001" : "e.g. aby-011";
+  if(isShawl){
+    if(category.value.trim() && LZProductTypes.key(category.value) !== "shawls") lastAbayaCategory = category.value.trim();
+    category.value = "Shawls";
+    const sizes = document.getElementById("f-sizes");
+    if(!sizes.value.trim()) sizes.value = "One Size";
+  } else if(LZProductTypes.key(category.value) === "shawls") category.value = lastAbayaCategory;
+  category.readOnly = isShawl;
+  document.getElementById("product-type-hint").textContent = isShawl
+    ? "This piece appears under Shawls. Tick Best Seller or Featured below to include it in the homepage edits."
+    : "This piece appears under Abayas. Tick Best Seller or Featured below to include it in the homepage edits.";
+}
+document.getElementById("f-product-type").addEventListener("change", syncProductType);
 
 function closeForm() {
   overlay.classList.remove("open");
@@ -572,11 +715,13 @@ form.addEventListener("submit", async (e) => {
   const payload = {
     id,
     name: document.getElementById("f-name").value.trim(),
-    category: document.getElementById("f-category").value.trim(),
+    category: LZProductTypes.categoryFor(document.getElementById("f-product-type").value, document.getElementById("f-category").value),
     price: parseFloat(document.getElementById("f-price").value) || 0,
     old_price: document.getElementById("f-oldprice").value ? parseFloat(document.getElementById("f-oldprice").value) : null,
     is_new: document.getElementById("f-isnew").checked,
     is_sale: document.getElementById("f-issale").checked,
+    is_bestseller: document.getElementById("f-isbestseller").checked,
+    is_featured: document.getElementById("f-isfeatured").checked,
     in_stock: document.getElementById("f-instock").checked,
     sizes,
     colors,
@@ -604,7 +749,9 @@ form.addEventListener("submit", async (e) => {
   }
 
   saveBtn.disabled = false;
+  activeProductType = LZProductTypes.key(payload);
   closeForm();
+  await productsLoading;
   loadProducts();
 });
 

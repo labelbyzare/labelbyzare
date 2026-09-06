@@ -1,3 +1,5 @@
+const LZProductTypes = require("../../js/product-types");
+
 /* ==========================================================================
    LABEL BY ZARE — SERVER-RENDERED PRODUCT PAGE
    ==========================================================================
@@ -134,17 +136,17 @@ function buildFullGallery(p) {
 }
 
 function renderPage(p, rating) {
-  const name = p.name || "Abaya";
-  const category = p.category || "Abaya";
+  const name = p.name || LZProductTypes.label(p);
+  const category = p.category || LZProductTypes.label(p);
   const gallery = buildFullGallery(p);
   const img = gallery[0];
-  const description = p.description || `${name} — premium ${category} abaya by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
+  const description = p.description || `${name} — premium ${LZProductTypes.singular(p)} by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = p.in_stock !== false;
   const slug = slugify(name);
   const canonicalPath = `/product/${slug}/${encodeURIComponent(p.id)}`;
   const canonical = `${SITE_URL}${canonicalPath}`;
   const title = `${name} — Buy Online | ${SITE_NAME}`;
-  const metaDescription = truncate(`${name} — ${category} abaya by ${SITE_NAME}. ${description} Shop abayas online.`, 160);
+  const metaDescription = truncate(`${name} — ${LZProductTypes.singular(p)} by ${SITE_NAME}. ${description}`, 160);
   const priceText = formatPKR(p.price);
 
   const productSchema = {
@@ -181,8 +183,8 @@ function renderPage(p, rating) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "Shop Abayas Online", item: `${SITE_URL}/shop` },
-      { "@type": "ListItem", position: 3, name: category, item: `${SITE_URL}/shop?cat=${encodeURIComponent(category)}` },
+      { "@type": "ListItem", position: 2, name: "Collection", item: `${SITE_URL}/#collection` },
+      { "@type": "ListItem", position: 3, name: category, item: `${SITE_URL}${LZProductTypes.collectionUrl(p)}` },
       { "@type": "ListItem", position: 4, name, item: canonical },
     ],
   };
@@ -194,7 +196,7 @@ function renderPage(p, rating) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(metaDescription)}">
-<meta name="keywords" content="buy abayas online, ${escapeHtml(category.toLowerCase())} abaya, ${escapeHtml(name.toLowerCase())}, abayas online Pakistan, luxury abaya, modest wear">
+<meta name="keywords" content="buy ${LZProductTypes.label(p).toLowerCase()} online, ${escapeHtml(name.toLowerCase())}, modest wear Pakistan, Label by Zare">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${canonical}">
 <meta property="og:site_name" content="${SITE_NAME}">
@@ -228,10 +230,10 @@ function renderPage(p, rating) {
 
 <nav class="site-nav is-dark scrolled" id="site-nav">
   <div class="wrap">
-    <a href="/" class="nav-logo"><img src="/images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44">LABEL <span>by</span> ZARE</a>
+    <a href="/" class="nav-logo"><img src="/images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44"><span class="nav-wordmark">LABEL <em>by</em> ZARE</span></a>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li><a href="/shop">Collection</a></li>
+      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
       <li><a href="/new-arrivals">New Arrivals</a></li>
       <li><a href="/sale">Sale</a></li>
       <li><a href="/about">About</a></li>
@@ -257,7 +259,7 @@ function renderPage(p, rating) {
   </div>
   <ul class="mobile-menu-primary">
     <li><a href="/">Home</a></li>
-    <li><a href="/shop">Collection</a></li>
+    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
     <li><a href="/new-arrivals">New Arrivals</a></li>
     <li><a href="/sale">Sale</a></li>
     <li><a href="/about">About</a></li>
@@ -269,14 +271,27 @@ function renderPage(p, rating) {
   <div class="mobile-menu-bottom">&copy; 2026 Label by Zare. All rights reserved.</div>
 </div>
 
-<div class="search-overlay">
+<div class="search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" aria-hidden="true" inert>
+  <p class="search-heading" id="site-search-title">Search the collection</p>
   <div class="search-top">
-    <input type="text" placeholder="Search for abayas, collections…" aria-label="Search">
-    <button class="search-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <form class="search-form" role="search" action="/#collection" method="get">
+      <input type="search" name="q" placeholder="Search pieces, colours, fabrics…" aria-label="Search products" autocomplete="off" maxlength="120" enterkeyhint="search">
+      <button class="search-clear" type="button" aria-label="Clear search" hidden>Clear</button>
+    </form>
+    <button class="search-close" type="button" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="search-body">
-    <p class="search-hint">Try &ldquo;Noir Luxe&rdquo;, &ldquo;Evening&rdquo;, or &ldquo;Sale&rdquo;.</p>
-    <div class="search-results"></div>
+    <p class="search-hint">Discover your next favourite by name, colour, fabric or collection.</p>
+    <div class="search-suggestions" role="group" aria-label="Search suggestions">
+      <button type="button" data-search-query="Abayas">Abayas</button>
+      <button type="button" data-search-query="Shawls">Shawls</button>
+      <button type="button" data-search-query="New arrivals">New arrivals</button>
+      <button type="button" data-search-query="Sale">Sale</button>
+    </div>
+    <p class="search-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <div class="search-results" aria-busy="false"></div>
+    <button class="search-more" type="button" hidden>Show more pieces</button>
+    <button class="search-retry" type="button" hidden>Try again</button>
   </div>
 </div>
 
@@ -292,7 +307,7 @@ function renderPage(p, rating) {
        immediately. js/product.js hydrates over this with the full
        interactive gallery, size/colour selectors and cart controls. -->
   <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
-    <a href="/">Home</a> &rsaquo; <a href="/shop">Shop Abayas Online</a> &rsaquo; <a href="/shop?cat=${encodeURIComponent(category)}">${escapeHtml(category)}</a> &rsaquo; <span aria-current="page">${escapeHtml(name)}</span>
+    <a href="/">Home</a> &rsaquo; <a href="/#collection">Collection</a> &rsaquo; <a href="${escapeHtml(LZProductTypes.collectionUrl(p))}">${escapeHtml(category)}</a> &rsaquo; <span aria-current="page">${escapeHtml(name)}</span>
   </nav>
   <div class="pdp-gallery reveal">
     <div class="pdp-main-img"><img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" onerror="this.onerror=null;this.src='${escapeHtml(DEFAULT_IMAGE)}';"></div>
@@ -343,15 +358,15 @@ function renderPage(p, rating) {
     <div class="footer-grid">
       <div>
         <div class="footer-brand"><img src="/images/logo-mark.jpg" alt="Label by Zare logo" width="46" height="46">Label <em>by</em> Zare</div>
-        <p style="max-width:32ch;color:var(--beige)">Considered abayas for the modern woman — cut with intention, worn with quiet confidence.</p>
+        <p style="max-width:32ch;color:var(--beige)">Considered abayas and shawls for the modern woman — cut with intention, worn with quiet confidence.</p>
       </div>
-      <div><h4>Shop</h4><ul><li><a href="/shop">Collection</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul></div>
+      <div><h4>Shop</h4><ul><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul></div>
       <div><h4>About</h4><ul><li><a href="/about">Our Story</a></li><li><a href="/about#values">Craftsmanship</a></li><li><a href="/about">Sustainability</a></li><li><a href="/contact">Contact</a></li></ul></div>
       <div><h4>Support</h4><ul><li><a href="/track-order">Track Order</a></li><li><a href="/support#size-guide">Size Guide</a></li><li><a href="/support#shipping-returns">Shipping &amp; Returns</a></li><li><a href="/support#faqs">FAQs</a></li></ul></div>
     </div>
     <div class="footer-bottom">
       <span>&copy; 2026 Label by Zare. All rights reserved.</span>
-      <span>Designed for the modern abaya wardrobe.</span>
+      <span>Abayas and shawls, considered together.</span>
       <span><a href="/sitemap.html" style="color:inherit">Full Product Index</a></span>
     </div>
   </div>
@@ -364,11 +379,14 @@ function renderPage(p, rating) {
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-client.js"></script>
+<script src="/js/product-types.js"></script>
+<script src="/js/search.js"></script>
 <script src="/js/seo.js"></script>
 <script src="/js/data.js"></script>
 <script src="/js/cart.js"></script>
 <script src="/js/customer-auth.js"></script>
 <script src="/js/main.js"></script>
+<script src="/js/search-ui.js"></script>
 <script src="/js/product.js"></script>
 <script src="/js/reviews.js"></script>
 

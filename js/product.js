@@ -53,7 +53,7 @@ function buildProductPage(root){
 
   root.innerHTML = `
     <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
-      <a href="/">Home</a> &rsaquo; <a href="/shop">Shop Abayas Online</a> &rsaquo; <a href="/shop?cat=${encodeURIComponent(p.category)}">${p.category}</a> &rsaquo; <span aria-current="page">${p.name}</span>
+      <a href="/">Home</a> &rsaquo; <a href="/#collection">Collection</a> &rsaquo; <a href="${LZProductTypes.collectionUrl(p)}">${p.category || LZProductTypes.label(p)}</a> &rsaquo; <span aria-current="page">${p.name}</span>
     </nav>
     <div class="pdp-gallery reveal">
       <div class="pdp-main-img" id="pdp-main-img-wrap">
@@ -90,7 +90,7 @@ function buildProductPage(root){
       </div>
 
       <div class="option-block">
-        <div class="option-label"><span>Size</span><span class="muted link-underline" style="cursor:pointer" id="size-guide-btn">Size Guide</span></div>
+        <div class="option-label"><span>Size</span>${LZProductTypes.key(p) === "abayas" ? '<span class="muted link-underline" style="cursor:pointer" id="size-guide-btn">Size Guide</span>' : ""}</div>
         <div class="swatches" id="size-swatches">
           ${p.sizes.map(s => `
             <button class="swatch-size ${s === selectedSize ? "active" : ""}" data-size="${s}">${s}</button>

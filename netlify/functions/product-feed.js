@@ -1,3 +1,5 @@
+const LZProductTypes = require("../../js/product-types");
+
 /* ==========================================================================
    LABEL BY ZARE — GOOGLE MERCHANT CENTER PRODUCT FEED
    ==========================================================================
@@ -17,11 +19,8 @@
    - link uses the exact same slug+id URL scheme as product-page.js and
      data.js's productUrl(), so Merchant Center always points at the live,
      server-rendered product page.
-   - google_product_category is left as a placeholder string — Google's
-     taxonomy IDs change over time; pick the right one for "Dresses" or
-     modest wear at https://support.google.com/merchants/answer/6324436
-     and hardcode the numeric ID once decided (faster + more precise than
-     the text version).
+   - Existing abayas retain their dress classification. Shawls use product_type
+     without inheriting the abaya-only google_product_category value.
    ========================================================================== */
 
 const SUPABASE_URL = "https://ldpzgtjbnbdsggaqmuvs.supabase.co";
@@ -79,13 +78,13 @@ function buildFullGallery(p) {
 }
 
 function buildItem(p) {
-  const name = p.name || "Abaya";
-  const category = p.category || "Abaya";
+  const name = p.name || LZProductTypes.label(p);
+  const category = p.category || LZProductTypes.label(p);
   const gallery = buildFullGallery(p);
   const mainImage = gallery[0];
   const extraImages = gallery.filter((img) => img && img !== mainImage).slice(0, 10);
   const description = p.description
-    || `${name} — premium ${category} abaya by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
+    || `${name} — premium ${LZProductTypes.singular(p)} by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = p.in_stock !== false;
   const link = productUrl(p);
   const price = Number(p.price) || 0;
@@ -114,9 +113,10 @@ function buildItem(p) {
   xml += `    <g:condition>new</g:condition>\n`;
   xml += `    <g:brand>${escapeXml(SITE_NAME)}</g:brand>\n`;
   xml += `    <g:identifier_exists>no</g:identifier_exists>\n`;
-  // TODO: replace with the exact numeric Google taxonomy ID for your
-  // category (see file header comment) once you've picked it.
-  xml += `    <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Dresses</g:google_product_category>\n`;
+  // Retain the existing abaya classification; shawls must not be sent as dresses.
+  if(LZProductTypes.key(p) === "abayas") {
+    xml += `    <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Dresses</g:google_product_category>\n`;
+  }
   xml += `    <g:product_type>${escapeXml(category)}</g:product_type>\n`;
   xml += `    <g:shipping>\n`;
   xml += `      <g:country>PK</g:country>\n`;

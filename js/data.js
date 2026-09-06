@@ -23,27 +23,44 @@ const SHOP_DEFAULTS = {
   returns: "Unworn pieces with tags attached may be returned within 7 days of delivery for a full refund or exchange."
 };
 
-window.PRODUCTS_READY = (async () => {
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*")
-    .order("created_at", { ascending: false });
+window.PRODUCTS = PRODUCTS;
+window.PRODUCTS_LOAD_ERROR = null;
+let productsRequest = null;
 
-  if (error) {
-    console.error("Failed to load products from Supabase:", error.message);
-    PRODUCTS = [];
-    window.PRODUCTS = PRODUCTS;
-    return PRODUCTS;
-  }
-
-  PRODUCTS = data.map(p => ({
+// Page through the catalog so a growing collection is never silently truncated.
+// A retry reuses this loader; the cart, search and product pages keep the same API.
+window.loadProducts = function () {
+  if (productsRequest) return productsRequest;
+  productsRequest = (async () => {
+    window.PRODUCTS_LOAD_ERROR = null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const data = [];
+      const pageSize = 500;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data: page, error } = await supabaseClient
+          .from("products")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(offset, offset + pageSize - 1)
+          .abortSignal(controller.signal);
+        if (error) throw error;
+        data.push(...(page || []));
+        if (!page || page.length < pageSize) break;
+      }
+      PRODUCTS = data.map(p => ({
     id: p.id,
     name: p.name,
     category: p.category,
+    productType: LZProductTypes.key(p),
     price: p.price,
     oldPrice: p.old_price,
     isNew: p.is_new,
     isSale: p.is_sale,
+    isFeatured: p.is_featured === true,
+    isBestseller: p.is_bestseller === true,
     inStock: p.in_stock,
     colors: (p.colors && p.colors.length) ? p.colors : [{ name: "Default", hex: "#c2b09c" }],
     sizes: (p.sizes && p.sizes.length) ? p.sizes : ["One Size"],
@@ -54,11 +71,24 @@ window.PRODUCTS_READY = (async () => {
     fabric: p.fabric || "",
     shipping: p.shipping || "",
     returns: p.returns || "",
-  }));
+      }));
+      window.PRODUCTS = PRODUCTS;
+      return PRODUCTS;
+    } catch (error) {
+      console.error("Failed to load products:", error.message || "Request unavailable");
+      window.PRODUCTS_LOAD_ERROR = error;
+      PRODUCTS = [];
+      window.PRODUCTS = PRODUCTS;
+      return PRODUCTS;
+    } finally {
+      clearTimeout(timeout);
+    }
+  })().finally(() => { productsRequest = null; });
+  window.PRODUCTS_READY = productsRequest;
+  return productsRequest;
+};
 
-  window.PRODUCTS = PRODUCTS;
-  return PRODUCTS;
-})();
+window.PRODUCTS_READY = window.loadProducts();
 
 /* Helper accessors used across pages */
 function getProductById(id){ return PRODUCTS.find(p => p.id === id); }

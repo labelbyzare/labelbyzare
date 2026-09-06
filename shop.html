@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shop Abayas Online in Pakistan | Label by Zare Collection</title>
-<meta name="description" content="Browse and buy abayas online at Label by Zare. Everyday, occasion, kaftan &amp; prayer abayas with premium fabric, modern silhouettes &amp; delivery across Pakistan.">
-<meta name="keywords" content="shop abayas online, buy abayas online Pakistan, abaya collection, luxury abayas, modest wear online">
+<title>Abayas &amp; Shawls Collection | Label by Zare</title>
+<meta name="description" content="Explore the full Label by Zare collection. Discover abayas and shawls, with considered modest wear and nationwide delivery across Pakistan.">
+<meta name="keywords" content="abayas, shawls, modest wear Pakistan, Label by Zare, abaya collection, shawl collection">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://labelbyzare.com/shop">
 <meta property="og:site_name" content="Label by Zare">
-<meta property="og:title" content="Shop Abayas Online | Label by Zare">
-<meta property="og:description" content="Buy premium abayas online — full collection with nationwide delivery across Pakistan.">
+<meta property="og:title" content="Abayas &amp; Shawls Collection | Label by Zare">
+<meta property="og:description" content="Explore the full Label by Zare collection. Discover abayas and shawls, with considered modest wear and nationwide delivery across Pakistan.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://labelbyzare.com/shop">
 <meta property="og:image" content="https://labelbyzare.com/images/logo.jpg">
 <meta property="og:locale" content="en_PK">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Shop Abayas Online | Label by Zare">
-<meta name="twitter:description" content="Buy premium abayas online with nationwide delivery across Pakistan.">
+<meta name="twitter:title" content="Abayas &amp; Shawls Collection | Label by Zare">
+<meta name="twitter:description" content="Explore the full Label by Zare collection. Discover abayas and shawls, with considered modest wear and nationwide delivery across Pakistan.">
 <meta name="twitter:image" content="https://labelbyzare.com/images/logo.jpg">
 <link rel="icon" type="image/jpeg" href="images/logo-mark.jpg">
 <link rel="apple-touch-icon" href="images/logo-mark.jpg">
@@ -28,6 +28,7 @@
 <link rel="preconnect" href="https://ldpzgtjbnbdsggaqmuvs.supabase.co">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body data-filter="all">
 
@@ -36,10 +37,10 @@
 
 <nav class="site-nav is-dark scrolled" id="site-nav">
   <div class="wrap">
-    <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44">LABEL <span>by</span> ZARE</a>
+    <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44"><span class="nav-wordmark">LABEL <em>by</em> ZARE</span></a>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li><a href="/shop" class="active">Collection</a></li>
+      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
       <li><a href="/new-arrivals">New Arrivals</a></li>
       <li><a href="/sale">Sale</a></li>
       <li><a href="/about">About</a></li>
@@ -81,7 +82,7 @@
 
   <ul class="mobile-menu-primary">
     <li><a href="/">Home</a></li>
-    <li><a href="/shop">Collection</a></li>
+    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
     <li><a href="/new-arrivals">New Arrivals</a></li>
     <li><a href="/sale">Sale</a></li>
     <li><a href="/about">About</a></li>
@@ -111,14 +112,27 @@
   <div class="mobile-menu-bottom">&copy; 2026 Label by Zare. All rights reserved.</div>
 </div>
 
-<div class="search-overlay">
+<div class="search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" aria-hidden="true" inert>
+  <p class="search-heading" id="site-search-title">Search the collection</p>
   <div class="search-top">
-    <input type="text" placeholder="Search for abayas, collections…" aria-label="Search">
-    <button class="search-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <form class="search-form" role="search" action="/#collection" method="get">
+      <input type="search" name="q" placeholder="Search pieces, colours, fabrics…" aria-label="Search products" autocomplete="off" maxlength="120" enterkeyhint="search">
+      <button class="search-clear" type="button" aria-label="Clear search" hidden>Clear</button>
+    </form>
+    <button class="search-close" type="button" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="search-body">
-    <p class="search-hint">Try &ldquo;Noir Luxe&rdquo;, &ldquo;Evening&rdquo;, or &ldquo;Sale&rdquo;.</p>
-    <div class="search-results"></div>
+    <p class="search-hint">Discover your next favourite by name, colour, fabric or collection.</p>
+    <div class="search-suggestions" role="group" aria-label="Search suggestions">
+      <button type="button" data-search-query="Abayas">Abayas</button>
+      <button type="button" data-search-query="Shawls">Shawls</button>
+      <button type="button" data-search-query="New arrivals">New arrivals</button>
+      <button type="button" data-search-query="Sale">Sale</button>
+    </div>
+    <p class="search-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <div class="search-results" aria-busy="false"></div>
+    <button class="search-more" type="button" hidden>Show more pieces</button>
+    <button class="search-retry" type="button" hidden>Try again</button>
   </div>
 </div>
 
@@ -133,13 +147,26 @@
   <div class="wrap">
     <div class="crumbs"><a href="/">Home</a> / Collection</div>
     <div class="eyebrow">Collection № 01 — SS26</div>
-    <h1 class="display-2" style="margin-top:.8rem">Shop Abayas Online — Full Collection</h1>
-    <p class="lede" style="margin-top:1rem">Buy premium abayas online at Label by Zare — everyday, occasion, kaftan and prayer pieces with delivery across Pakistan. <span class="js-result-count">12</span> pieces in this season's edit.</p>
+    <h1 class="display-2" style="margin-top:.8rem">The full collection.</h1>
+    <p class="lede" style="margin-top:1rem">Abayas for every occasion. Shawls for the finishing touch. Explore the Label by Zare wardrobe. <span class="js-result-count">…</span> pieces in this season's edit.</p>
   </div>
 </header>
 
 <section class="section-tight">
   <div class="wrap">
+    <div class="collection-type-tabs" id="shop-type-tabs" role="tablist" aria-label="Choose a collection">
+      <button class="collection-type-tab" id="shop-tab-abayas" type="button" role="tab" aria-selected="true" aria-controls="shop-type-panel" tabindex="0" data-product-type="abayas">
+        <span class="collection-tab-top"><span class="collection-tab-number" aria-hidden="true">01</span><span class="collection-tab-count">Explore the collection</span></span>
+        <span class="collection-tab-name">Abayas</span>
+        <span class="collection-tab-detail">Elegance in every silhouette</span>
+      </button>
+      <button class="collection-type-tab" id="shop-tab-shawls" type="button" role="tab" aria-selected="false" aria-controls="shop-type-panel" tabindex="-1" data-product-type="shawls">
+        <span class="collection-tab-top"><span class="collection-tab-number" aria-hidden="true">02</span><span class="collection-tab-count">Explore the collection</span></span>
+        <span class="collection-tab-name">Shawls</span>
+        <span class="collection-tab-detail">The art of the finishing touch</span>
+      </button>
+    </div>
+    <div id="shop-type-panel" role="tabpanel" aria-labelledby="shop-tab-abayas" tabindex="0" data-product-type="abayas">
     <div class="toolbar">
       <div class="filter-bar">
         <button class="chip active" data-cat="All">All</button>
@@ -149,13 +176,14 @@
         <button class="chip" data-cat="Prayer">Prayer</button>
       </div>
       <select class="select-min" data-role="sort" aria-label="Sort products">
-        <option value="featured">Featured</option>
+        <option value="featured">Recommended</option>
         <option value="new">New Arrivals</option>
         <option value="price-asc">Price: Low to High</option>
         <option value="price-desc">Price: High to Low</option>
       </select>
     </div>
     <div class="collection-grid" id="collection-grid"></div>
+    </div>
   </div>
 </section>
 
@@ -176,11 +204,11 @@
     <div class="footer-grid">
       <div>
         <div class="footer-brand"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44">Label <em>by</em> Zare</div>
-        <p style="max-width:32ch;color:var(--beige)">Considered abayas for the modern woman — cut with intention, worn with quiet confidence.</p>
+        <p style="max-width:32ch;color:var(--beige)">Considered abayas and shawls for the modern woman — cut with intention, worn with quiet confidence.</p>
       </div>
       <div>
         <h4>Shop</h4>
-        <ul><li><a href="/shop">Collection</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul>
+        <ul><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul>
       </div>
       <div>
         <h4>About</h4>
@@ -193,7 +221,7 @@
     </div>
     <div class="footer-bottom">
       <span>&copy; 2026 Label by Zare. All rights reserved.</span>
-      <span>Designed for the modern abaya wardrobe.</span>
+      <span>Abayas and shawls, considered together.</span>
       <span><a href="/sitemap.html" style="color:inherit">Full Product Index</a></span>
     </div>
   </div>
@@ -206,11 +234,14 @@
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
+<script src="js/product-types.js"></script>
+<script src="js/search.js"></script>
 <script src="js/seo.js"></script>
 <script src="js/data.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/customer-auth.js"></script>
 <script src="js/main.js"></script>
+<script src="js/search-ui.js"></script>
 <script src="js/shop.js"></script>
 
 <div class="float-actions">

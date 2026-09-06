@@ -6,43 +6,118 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- Smooth scroll (Lenis) ---------- */
-  // Lenis only smooths wheel/trackpad input — on touch devices the browser
-  // already handles native touch scrolling, so skip it there. That also
-  // removes one more thing competing with the phone's own scroll thread.
-  const isTouchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  // One animation clock keeps wheel scrolling fluid without double updates.
+  // Touch retains native momentum; reduced-motion users retain instant anchors.
+  const touchMedia = window.matchMedia("(hover: none), (pointer: coarse)");
+  const motionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
   let lenis;
-  if(window.Lenis && !isTouchDevice && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-    lenis = new Lenis({ duration: 1.1, smoothWheel: true, syncTouch: false });
-    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-    if(window.gsap && window.ScrollTrigger){
-      lenis.on("scroll", ScrollTrigger.update);
-      gsap.ticker.add((time) => lenis.raf(time * 1000));
-      gsap.ticker.lagSmoothing(0);
-    }
+  let scrollFrame;
+  let scrollTicker;
+  const scrollPanels = [...document.querySelectorAll(".mobile-menu, .search-overlay, .cart-drawer, .zoom-overlay")];
+  scrollPanels.forEach(panel => panel.setAttribute("data-lenis-prevent", ""));
+  function syncScrollLock(){
+    if(!lenis) return;
+    const locked = document.body.style.overflow === "hidden" || scrollPanels.some(panel => panel.classList.contains("open"));
+    if(locked) lenis.stop();
+    else lenis.start();
   }
-  window._lzLenis = lenis;
+  function setupSmoothScroll(){
+    if(scrollTicker) window.gsap?.ticker.remove(scrollTicker);
+    if(scrollFrame) cancelAnimationFrame(scrollFrame);
+    lenis?.destroy();
+    lenis = undefined;
+    scrollTicker = undefined;
+    scrollFrame = undefined;
+    if(window.Lenis && !touchMedia.matches && !motionMedia.matches){
+      lenis = new Lenis({ duration: .9, smoothWheel: true, syncTouch: false, wheelMultiplier: 1 });
+      if(window.gsap && window.ScrollTrigger){
+        lenis.on("scroll", ScrollTrigger.update);
+        scrollTicker = time => lenis.raf(time * 1000);
+        gsap.ticker.add(scrollTicker);
+        gsap.ticker.lagSmoothing(0);
+      } else {
+        const raf = time => { lenis.raf(time); scrollFrame = requestAnimationFrame(raf); };
+        scrollFrame = requestAnimationFrame(raf);
+      }
+      syncScrollLock();
+    }
+    window._lzLenis = lenis;
+  }
+  setupSmoothScroll();
+  touchMedia.addEventListener("change", setupSmoothScroll);
+  motionMedia.addEventListener("change", setupSmoothScroll);
+  const scrollLockObserver = new MutationObserver(syncScrollLock);
+  scrollLockObserver.observe(document.body, { attributes:true, attributeFilter:["style"] });
+  scrollPanels.forEach(panel => scrollLockObserver.observe(panel, { attributes:true, attributeFilter:["class"] }));
+
+  window.LZScrollTo = function(target, { immediate = false } = {}){
+    if(!target) return;
+    const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 100;
+    const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - margin);
+    syncScrollLock();
+    if(lenis){
+      lenis.resize();
+      lenis.scrollTo(top, { duration:.9, immediate, force:true });
+    } else {
+      window.scrollTo({ top, behavior: immediate || motionMedia.matches ? "instant" : "smooth" });
+    }
+  };
+  document.addEventListener("click", event => {
+    if(event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href*="#"]');
+    if(!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+    const url = new URL(link.href, location.href);
+    if(url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || !url.hash) return;
+    let target;
+    try { target = document.getElementById(decodeURIComponent(url.hash.slice(1))); } catch { return; }
+    if(!target) return;
+    event.preventDefault();
+    if(location.hash !== url.hash) history.pushState(null, "", url);
+    window.LZScrollTo(target);
+  });
 
   /* ---------- Loader ---------- */
+  let resolvePageReady;
+  window.LZ_PAGE_READY = new Promise(resolve => { resolvePageReady = resolve; });
   const loader = document.getElementById("loader");
-  if(loader){
-    window.addEventListener("load", () => {
-      setTimeout(() => {
-        loader.classList.add("hidden");
-        document.body.style.overflow = "";
-        runHeroIntro();
-      }, 900);
-    });
+  if(loader && getComputedStyle(loader).visibility !== "hidden"){
+    const previousOverflow = document.body.style.overflow;
+    const minimumTime = motionMedia.matches ? 0 : 800;
+    let finished = false;
+    let dismissTimer;
+    const safetyTimer = setTimeout(finishLoader, Math.max(0, 4500 - performance.now()));
     document.body.style.overflow = "hidden";
-    if(window.gsap){
-      gsap.to(".loader-mark", { opacity: 1, duration: .8, delay: .2 });
+    function finishLoader(){
+      if(finished) return;
+      finished = true;
+      clearTimeout(safetyTimer);
+      clearTimeout(dismissTimer);
+      loader.classList.add("hidden");
+      loader.setAttribute("aria-hidden", "true");
+      if(!scrollPanels.some(panel => panel.classList.contains("open"))) document.body.style.overflow = previousOverflow;
+      syncScrollLock();
+      runHeroIntro();
+      window.ScrollTrigger?.refresh();
+      resolvePageReady();
     }
+    function requestDismiss(){
+      if(finished) return;
+      clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(finishLoader, Math.max(0, minimumTime - performance.now()));
+    }
+    const heroImage = document.querySelector(".hero-fallback-img");
+    if(heroImage){
+      Promise.allSettled([heroImage.decode ? heroImage.decode() : Promise.resolve(), document.fonts?.ready || Promise.resolve()]).then(requestDismiss);
+    } else if(document.readyState === "complete") requestDismiss();
+    else window.addEventListener("load", requestDismiss, { once:true });
   } else {
+    loader?.classList.add("hidden");
     runHeroIntro();
+    resolvePageReady();
   }
 
   function runHeroIntro(){
-    if(!window.gsap) return;
+    if(!window.gsap || motionMedia.matches || !document.querySelector(".hero-title")) return;
     gsap.set(".hero-title .line span", { yPercent: 110 });
     gsap.to(".hero-title .line span", {
       yPercent: 0, duration: 1.1, stagger: 0.08, ease: "power4.out", delay: 0.15
@@ -66,61 +141,45 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Mobile menu ---------- */
   const burger = document.querySelector(".nav-burger");
   const mobileMenu = document.querySelector(".mobile-menu");
+  const collectionMenus = [...document.querySelectorAll(".collection-menu")];
+  function closeCollectionMenus(except){
+    collectionMenus.forEach(menu => { if(menu !== except) menu.open = false; });
+  }
+  collectionMenus.forEach(menu => {
+    menu.addEventListener("toggle", () => { if(menu.open) closeCollectionMenus(menu); });
+    menu.addEventListener("focusout", event => { if(event.relatedTarget && !menu.contains(event.relatedTarget)) menu.open = false; });
+  });
+  document.addEventListener("click", event => {
+    closeCollectionMenus(event.target.closest(".collection-menu"));
+    if(event.target.closest(".collection-submenu a")) closeCollectionMenus();
+  });
+  document.addEventListener("keydown", event => {
+    if(event.key !== "Escape" || document.querySelector(".search-overlay.open")) return;
+    const openMenu = collectionMenus.find(menu => menu.open);
+    if(openMenu){
+      event.preventDefault();event.stopImmediatePropagation();
+      openMenu.open = false;
+      openMenu.querySelector("summary").focus();
+    } else if(mobileMenu?.classList.contains("open")){
+      event.preventDefault();event.stopImmediatePropagation();
+      burger?.classList.remove("open");
+      mobileMenu.classList.remove("open");
+      document.body.style.overflow = "";
+      burger?.focus();
+    }
+  });
   burger?.addEventListener("click", () => {
+    closeCollectionMenus();
     burger.classList.toggle("open");
     mobileMenu?.classList.toggle("open");
     document.body.style.overflow = mobileMenu?.classList.contains("open") ? "hidden" : "";
   });
   mobileMenu?.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
+    closeCollectionMenus();
     burger?.classList.remove("open");
     mobileMenu?.classList.remove("open");
     document.body.style.overflow = "";
   }));
-
-  /* ---------- Search overlay ---------- */
-  const searchOverlay = document.querySelector(".search-overlay");
-  const searchInput = document.querySelector(".search-top input");
-  const searchResults = document.querySelector(".search-results");
-  const searchHint = document.querySelector(".search-hint");
-
-  function openSearch(){
-    searchOverlay?.classList.add("open");
-    document.body.style.overflow = "hidden";
-    setTimeout(() => searchInput?.focus(), 400);
-  }
-  function closeSearch(){
-    searchOverlay?.classList.remove("open");
-    document.body.style.overflow = "";
-  }
-  document.querySelectorAll(".js-open-search").forEach(b => b.addEventListener("click", (e) => { e.preventDefault(); openSearch(); }));
-  document.querySelector(".search-close")?.addEventListener("click", closeSearch);
-  document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeSearch(); });
-
-  function runSearch(q){
-    if(!searchResults) return;
-    q = q.trim().toLowerCase();
-    if(q.length === 0){
-      searchResults.innerHTML = "";
-      if(searchHint) searchHint.style.display = "block";
-      return;
-    }
-    if(searchHint) searchHint.style.display = "none";
-    const matches = (window.PRODUCTS || []).filter(p =>
-      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-    );
-    if(matches.length === 0){
-      searchResults.innerHTML = `<p class="search-hint">No pieces found for "${q}". Try “abaya”, “black”, or “evening”.</p>`;
-      return;
-    }
-    searchResults.innerHTML = matches.map(p => `
-      <a href="${productUrl(p)}" class="search-result-card">
-        <img src="${p.img}" alt="${p.name}" loading="lazy">
-        <h4>${p.name}</h4>
-        <div class="price">${formatPKR(p.price)}</div>
-      </a>
-    `).join("");
-  }
-  searchInput?.addEventListener("input", (e) => runSearch(e.target.value));
 
   /* ---------- Generic accordion (used on product page) ---------- */
   document.querySelectorAll(".acc-head").forEach(head => {
@@ -140,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* ---------- Scroll reveal animations ---------- */
-  if(window.gsap && window.ScrollTrigger){
+  if(window.gsap && window.ScrollTrigger && !motionMedia.matches){
     gsap.registerPlugin(ScrollTrigger);
     document.querySelectorAll(".reveal").forEach((el, i) => {
       el.classList.add("js-animatable");

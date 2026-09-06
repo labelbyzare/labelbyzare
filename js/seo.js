@@ -144,7 +144,7 @@ window.LZSEO = (() => {
       publisher: { "@type": "Organization", name: SITE.name, logo: SITE.logo },
       potentialAction: {
         "@type": "SearchAction",
-        target: `${SITE.url}/shop?q={search_term_string}`,
+        target: `${SITE.url}/?q={search_term_string}#collection`,
         "query-input": "required name=search_term_string",
       },
     };
@@ -186,7 +186,7 @@ window.LZSEO = (() => {
       "@context": "https://schema.org",
       "@type": "Product",
       name: p.name,
-      description: p.description || `${p.name} — premium ${p.category} abaya by ${SITE.name}.`,
+      description: p.description || `${p.name} — premium ${LZProductTypes.singular(p)} by ${SITE.name}.`,
       image: (p.gallery && p.gallery.length ? p.gallery : [p.img]).filter(Boolean),
       sku: p.id,
       brand: { "@type": "Brand", name: SITE.name },
@@ -274,7 +274,7 @@ window.LZSEO = (() => {
   function applyProduct(p) {
     const title = `${p.name} — Buy Online | ${SITE.name}`;
     const description = truncate(
-      `${p.name} — ${p.category} abaya by ${SITE.name}. ${p.description || "Premium fabric, considered construction, nationwide delivery across Pakistan."} Shop abayas online.`,
+      `${p.name} — ${LZProductTypes.singular(p)} by ${SITE.name}. ${p.description || "Premium fabric, considered construction, nationwide delivery across Pakistan."}`,
       160
     );
     const canonical = productUrl(p);
@@ -291,8 +291,8 @@ window.LZSEO = (() => {
     appendJsonLd(
       breadcrumbSchema([
         { name: "Home", url: "/" },
-        { name: "Shop Abayas Online", url: "/shop" },
-        { name: p.category, url: `/shop?cat=${encodeURIComponent(p.category)}` },
+        { name: "Collection", url: "/#collection" },
+        { name: p.category || LZProductTypes.label(p), url: LZProductTypes.collectionUrl(p) },
         { name: p.name, url: productPath(p) },
       ]),
       "lz-breadcrumb-schema"

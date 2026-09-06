@@ -22,9 +22,9 @@
 
 <nav class="site-nav is-dark scrolled" id="site-nav">
   <div class="wrap">
-    <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44">LABEL <span>by</span> ZARE</a>
+    <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44"><span class="nav-wordmark">LABEL <em>by</em> ZARE</span></a>
     <ul class="nav-links">
-      <li><a href="/shop">Continue Shopping</a></li>
+      <li><a href="/#collection">Continue Shopping</a></li>
     </ul>
     <div class="nav-actions">
       <button class="nav-icon-btn js-open-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 6Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span class="badge js-cart-count">0</span></button>
@@ -128,7 +128,7 @@
   <div class="order-num">Order № <span id="conf-order-num"></span></div>
   <p style="font-weight:600;margin-bottom:2rem">Total amount to be paid: <span id="conf-total"></span></p>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
-    <a href="/shop" class="btn btn-solid">Continue Shopping</a>
+    <a href="/#collection" class="btn btn-solid">Continue Shopping</a>
     <a href="/track-order" class="btn btn-outline">Track This Order</a>
   </div>
 </div>
@@ -145,9 +145,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
+<script src="js/product-types.js"></script>
+<script src="js/search.js"></script>
 <script src="js/data.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/main.js"></script>
+<script src="js/search-ui.js"></script>
 <script src="js/customer-auth.js"></script>
 <script src="js/checkout.js"></script>
 
