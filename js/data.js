@@ -18,10 +18,7 @@ let PRODUCTS = [];
 /* Site-wide fallback text for Shipping & Returns.
    Used automatically for any product that doesn't set its own "shipping"
    or "returns" text. Edit here to change the copy everywhere at once. */
-const SHOP_DEFAULTS = {
-  shipping: "Orders are processed within 1–2 business days. Standard delivery takes 3–5 business days nationwide; express delivery arrives in 1–2 business days in major cities.",
-  returns: "Unworn pieces with tags attached may be returned within 7 days of delivery for a full refund or exchange."
-};
+const SHOP_DEFAULTS = { shipping:LZPolicy.shippingText, returns:LZPolicy.returnsText };
 
 window.PRODUCTS = PRODUCTS;
 window.PRODUCTS_LOAD_ERROR = null;
@@ -50,35 +47,16 @@ window.loadProducts = function () {
         data.push(...(page || []));
         if (!page || page.length < pageSize) break;
       }
-      PRODUCTS = data.map(p => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    productType: LZProductTypes.key(p),
-    price: p.price,
-    oldPrice: p.old_price,
-    isNew: p.is_new,
-    isSale: p.is_sale,
-    isFeatured: p.is_featured === true,
-    isBestseller: p.is_bestseller === true,
-    inStock: p.in_stock,
-    colors: (p.colors && p.colors.length) ? p.colors : [{ name: "Default", hex: "#c2b09c" }],
-    sizes: (p.sizes && p.sizes.length) ? p.sizes : ["One Size"],
-    img: p.img || "",
-    img2: p.img2 || p.img || "",
-    gallery: (p.gallery && p.gallery.length) ? p.gallery : (p.img ? [p.img] : []),
-    description: p.description || "",
-    fabric: p.fabric || "",
-    shipping: p.shipping || "",
-    returns: p.returns || "",
-      }));
+      PRODUCTS = data.map(LZCatalog.normalize);
       window.PRODUCTS = PRODUCTS;
+      window.CATALOG_COMPLETE = true;
+      window.dispatchEvent(new CustomEvent("lz:catalog-ready"));
       return PRODUCTS;
     } catch (error) {
       console.error("Failed to load products:", error.message || "Request unavailable");
       window.PRODUCTS_LOAD_ERROR = error;
-      PRODUCTS = [];
       window.PRODUCTS = PRODUCTS;
+      window.CATALOG_COMPLETE = false;
       return PRODUCTS;
     } finally {
       clearTimeout(timeout);
@@ -88,34 +66,32 @@ window.loadProducts = function () {
   return productsRequest;
 };
 
-window.PRODUCTS_READY = window.loadProducts();
+const initialCatalog = document.getElementById("lz-catalog-data");
+window.CATALOG_COMPLETE = initialCatalog?.dataset.complete === "true";
+let validInitialCatalog = false;
+if(initialCatalog){
+  try { PRODUCTS = JSON.parse(initialCatalog.textContent).map(LZCatalog.normalize); window.PRODUCTS = PRODUCTS; validInitialCatalog = true; }
+  catch { PRODUCTS = []; window.PRODUCTS = PRODUCTS; }
+}
+window.PRODUCTS_READY = validInitialCatalog ? Promise.resolve(PRODUCTS) : window.loadProducts();
+window.ensureFullCatalog = () => window.CATALOG_COMPLETE ? Promise.resolve(PRODUCTS) : window.loadProducts();
 
 /* Helper accessors used across pages */
 function getProductById(id){ return PRODUCTS.find(p => p.id === id); }
-function formatPKR(n){ return "PKR " + n.toLocaleString("en-PK"); }
+function formatPKR(n){ return LZCatalog.money(n); }
 
 /* ==========================================================================
    SEO-FRIENDLY PRODUCT URLS
    Product links use a keyword-rich slug + the product's real id:
      /product/silk-kaftan-abaya/<id>
-   The slug carries the search-relevant keywords in the URL itself (a real
-   ranking signal query-string URLs don't get); the id after it is what
+   The descriptive slug keeps shared links readable; the id after it is what
    actually looks the product up, so slugs never need to be unique on
    their own and old links never break even if a name changes.
    Used everywhere a product link is built (cards, search, cart, related,
    reviews, sitemap) so there is exactly one place this logic lives.
    ========================================================================== */
-function slugify(text){
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "abaya";
-}
-function productUrl(p){
-  if(!p || !p.id) return "/shop";
-  return `/product/${slugify(p.name)}/${encodeURIComponent(p.id)}`;
-}
+function slugify(text){ return LZCatalog.slug(text); }
+function productUrl(p){ return LZCatalog.productUrl(p); }
 /* Reads the product id off the current URL — supports the new
    /product/<slug>/<id> path as well as the legacy /product?id=<id>
    query form, so any old bookmarked or shared links keep working. */
@@ -129,9 +105,9 @@ function getProductIdFromLocation(){
 }
 
 /* Stock helper — a product with inStock left unset defaults to true (in stock) */
-function isInStock(p){ return !!p && p.inStock !== false; }
+function isInStock(p){ return LZCatalog.stocked(p) && Number(p.price)>0; }
 
 /* Shipping / Returns text helpers — use the product's own text if set,
    otherwise fall back to the site-wide SHOP_DEFAULTS text above. */
-function getShippingText(p){ return (p && p.shipping) ? p.shipping : SHOP_DEFAULTS.shipping; }
+function getShippingText(p){ return SHOP_DEFAULTS.shipping; }
 function getReturnsText(p){ return (p && p.returns) ? p.returns : SHOP_DEFAULTS.returns; }

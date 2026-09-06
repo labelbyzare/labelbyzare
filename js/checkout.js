@@ -69,11 +69,16 @@ function initCheckout(form){
     return;
   }
 
-  let deliveryFee = 350;
+  let deliveryFee = LZPolicy.standardFee;
+  let deliveryMethod = "standard";
   let deliveryType = "Standard Delivery";
   let paymentType = "Cash on Delivery";
 
   function renderSummary(){
+    document.querySelectorAll('input[name="delivery"]').forEach(input => {
+      const fee=LZPolicy.shippingFee(LZ.cartTotal(), input.value === "900" ? "express" : "standard");
+      input.closest(".option-card").querySelector(".price").textContent=fee ? formatPKR(fee) : "Free";
+    });
     summaryList.innerHTML = cart.map(line => {
       const p = getProductById(line.id);
       if(!p) return "";
@@ -87,6 +92,7 @@ function initCheckout(form){
     }).join("");
 
     const subtotal = LZ.cartTotal();
+    deliveryFee = LZPolicy.shippingFee(subtotal, deliveryMethod);
     const total = subtotal + deliveryFee;
     summaryTotals.innerHTML = `
       <div class="summary-row"><span class="muted">Subtotal</span><span>${formatPKR(subtotal)}</span></div>
@@ -95,13 +101,14 @@ function initCheckout(form){
     `;
   }
   renderSummary();
+  window.LZAnalytics?.track('begin_checkout',{value:LZ.cartTotal(),items:cart.map(line=>{const p=getProductById(line.id);return p ? LZAnalytics.item(p,line.qty,line.size,line.color) : null;}).filter(Boolean)});
 
   // delivery option cards
   document.querySelectorAll('input[name="delivery"]').forEach(input => {
     input.addEventListener("change", () => {
       document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove("active"));
       input.closest(".option-card").classList.add("active");
-      deliveryFee = parseInt(input.value, 10);
+      deliveryMethod = input.value === "900" ? "express" : "standard";
       deliveryType = input.closest(".option-card").querySelector(".title").textContent.trim();
       renderSummary();
     });
@@ -124,7 +131,21 @@ function initCheckout(form){
     }
 
     const submitBtn = form.querySelector('button[type="submit"]');
+    if(submitBtn.disabled) return;
     const originalBtnText = submitBtn.textContent;
+    const previousTotal = LZ.cartTotal();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Checking availability…';
+    await window.loadProducts();
+    const invalid=cart.some(line=>{
+      const p=getProductById(line.id);
+      return !p || !isInStock(p) || !Number.isInteger(line.qty) || line.qty<1 || !p.sizes.includes(line.size) || !p.colors.some(c=>c.name===line.color);
+    });
+    if(window.PRODUCTS_LOAD_ERROR || invalid || LZ.cartTotal()!==previousTotal){
+      renderSummary();
+      LZ.showToast(window.PRODUCTS_LOAD_ERROR ? 'We couldn’t check availability. Please try again.' : invalid ? 'A piece or option is unavailable. Please review your bag.' : 'A price has changed. Please review the updated total.');
+      submitBtn.disabled=false;submitBtn.textContent=originalBtnText;return;
+    }
 
     const orderNum = "LZ-" + Math.floor(100000 + Math.random() * 899999);
     const name = document.getElementById("fullName").value;
@@ -136,6 +157,7 @@ function initCheckout(form){
     const postal = document.getElementById("postal").value;
     const address = document.getElementById("address").value;
     const subtotal = LZ.cartTotal();
+    deliveryFee = LZPolicy.shippingFee(subtotal, deliveryMethod);
     const finalTotal = subtotal + deliveryFee;
     const itemCount = LZ.cartCount();
 
@@ -187,6 +209,8 @@ function initCheckout(form){
       return;
     }
 
+    window.LZAnalytics?.track('purchase',{transaction_id:orderNum,value:subtotal,shipping:deliveryFee,items:cart.map(line=>LZAnalytics.item(getProductById(line.id),line.qty,line.size,line.color))});
+
     // 2. Send the order to your email via Formspree, same as before.
     const fd = new FormData();
     fd.append("_subject", `New Order ${orderNum} — Label by Zare`);
@@ -226,7 +250,7 @@ function initCheckout(form){
         full_name: name, phone, country, city, area,
         postal_code: postal || null, address,
         is_default: false
-      });
+      }).catch(()=>{});
     }
 
     localStorage.setItem("lz_last_order", JSON.stringify({

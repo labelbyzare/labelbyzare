@@ -40,7 +40,7 @@ window.renderCartPage = function(){
   }).join("");
 
   const subtotal = LZ.cartTotal();
-  const shipping = subtotal >= 15000 || subtotal === 0 ? 0 : 350;
+  const shipping = subtotal === 0 ? 0 : LZPolicy.shippingFee(subtotal, "standard");
   summary.innerHTML = `
     <h3 class="serif" style="font-size:1.3rem;margin-bottom:1.2rem">Order Summary</h3>
     <div class="summary-row"><span class="muted">Subtotal</span><span>${formatPKR(subtotal)}</span></div>

@@ -98,7 +98,7 @@ window.LZSEO = (() => {
   }) {
     if (title) document.title = title;
     upsertMeta("name", "description", description);
-    upsertMeta("name", "keywords", keywords);
+
     upsertMeta("name", "robots", robots);
     upsertLink("canonical", canonical);
 
@@ -116,107 +116,10 @@ window.LZSEO = (() => {
     upsertMeta("name", "twitter:image", absoluteUrl(image));
   }
 
-  function organizationSchema() {
-    return {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      name: SITE.name,
-      url: SITE.url,
-      logo: SITE.logo,
-      sameAs: [SITE.instagram],
-      contactPoint: {
-        "@type": "ContactPoint",
-        contactType: "customer service",
-        telephone: SITE.whatsapp,
-        availableLanguage: ["English", "Urdu"],
-        areaServed: "PK",
-      },
-    };
-  }
-
-  function websiteSchema() {
-    return {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      name: SITE.name,
-      url: SITE.url,
-      inLanguage: "en-PK",
-      publisher: { "@type": "Organization", name: SITE.name, logo: SITE.logo },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: `${SITE.url}/?q={search_term_string}#collection`,
-        "query-input": "required name=search_term_string",
-      },
-    };
-  }
-
-  function localBusinessSchema() {
-    return {
-      "@context": "https://schema.org",
-      "@type": "ClothingStore",
-      name: SITE.name,
-      url: SITE.url,
-      image: SITE.defaultImage,
-      priceRange: "$$",
-      currenciesAccepted: SITE.currency,
-      areaServed: {
-        "@type": "Country",
-        name: "Pakistan",
-      },
-      sameAs: [SITE.instagram],
-    };
-  }
-
-  function breadcrumbSchema(items) {
-    return {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: items.map((item, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: item.name,
-        item: absoluteUrl(item.url),
-      })),
-    };
-  }
-
-  function productSchema(p, rating) {
-    const inStock = typeof isInStock === "function" ? isInStock(p) : p.inStock !== false;
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "Product",
-      name: p.name,
-      description: p.description || `${p.name} — premium ${LZProductTypes.singular(p)} by ${SITE.name}.`,
-      image: (p.gallery && p.gallery.length ? p.gallery : [p.img]).filter(Boolean),
-      sku: p.id,
-      brand: { "@type": "Brand", name: SITE.name },
-      category: p.category,
-      offers: {
-        "@type": "Offer",
-        url: productUrl(p),
-        priceCurrency: SITE.currency,
-        price: p.price,
-        availability: inStock
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-        itemCondition: "https://schema.org/NewCondition",
-        seller: { "@type": "Organization", name: SITE.name },
-      },
-    };
-    // Only ever include a rating that reflects a real, non-zero count of
-    // genuine customer reviews (Google prohibits placeholder/self-serving
-    // aggregateRating values) — omit the field entirely otherwise.
-    if (rating && rating.count > 0) {
-      schema.aggregateRating = {
-        "@type": "AggregateRating",
-        ratingValue: Math.round(rating.value * 10) / 10,
-        reviewCount: rating.count,
-        bestRating: 5,
-        worstRating: 1,
-      };
-    }
-    return schema;
-  }
+  function organizationSchema(){ return LZSchema.organization(); }
+  function websiteSchema(){ return LZSchema.website(); }
+  function breadcrumbSchema(items){ return LZSchema.breadcrumbs(items,location.pathname); }
+  function productSchema(p,rating){ return LZSchema.product(p,rating); }
 
   // Called by reviews.js once it has fetched a product's real reviews and
   // computed the visible average — patches aggregateRating into the
@@ -226,7 +129,7 @@ window.LZSEO = (() => {
     if (!el) return;
     try {
       const data = JSON.parse(el.textContent);
-      if (reviewCount > 0) {
+      if (Number.isInteger(reviewCount) && reviewCount > 0 && Number.isFinite(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
         data.aggregateRating = {
           "@type": "AggregateRating",
           ratingValue: Math.round(ratingValue * 10) / 10,
@@ -288,15 +191,8 @@ window.LZSEO = (() => {
     });
 
     setJsonLd(productSchema(p), "lz-product-schema");
-    appendJsonLd(
-      breadcrumbSchema([
-        { name: "Home", url: "/" },
-        { name: "Collection", url: "/#collection" },
-        { name: p.category || LZProductTypes.label(p), url: LZProductTypes.collectionUrl(p) },
-        { name: p.name, url: productPath(p) },
-      ]),
-      "lz-breadcrumb-schema"
-    );
+    appendJsonLd(LZSchema.productBreadcrumbs(p), "lz-breadcrumb-schema");
+    appendJsonLd(organizationSchema(), "lz-org-schema");
   }
 
   function applyItemList(products, listName, pageUrl) {
@@ -307,36 +203,10 @@ window.LZSEO = (() => {
   function injectHomeSchema() {
     appendJsonLd(organizationSchema(), "lz-org-schema");
     appendJsonLd(websiteSchema(), "lz-website-schema");
-    appendJsonLd(localBusinessSchema(), "lz-store-schema");
+    document.getElementById("lz-store-schema")?.remove();
   }
 
-  function injectSupportFaqSchema() {
-    appendJsonLd(
-      faqSchema([
-        {
-          q: "How do I know which size to order?",
-          a: "Check our Size Guide for bust and length measurements. If you're between two sizes, we recommend sizing up for a more relaxed fit.",
-        },
-        {
-          q: "What payment methods do you accept?",
-          a: "We currently accept Cash on Delivery (COD) only — you pay when your order arrives at your door.",
-        },
-        {
-          q: "How long does delivery take?",
-          a: "Standard delivery takes 3–5 business days nationwide. Express delivery arrives in 1–2 business days in major cities.",
-        },
-        {
-          q: "Can I return or exchange an item?",
-          a: "Yes — unworn pieces with tags attached can be returned or exchanged within 7 days of delivery.",
-        },
-        {
-          q: "Do you ship nationwide?",
-          a: "Yes, we deliver abayas online across Pakistan, including Karachi, Lahore, and Islamabad.",
-        },
-      ]),
-      "lz-faq-schema"
-    );
-  }
+  function injectSupportFaqSchema() {}
 
   return {
     SITE,

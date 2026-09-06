@@ -16,7 +16,8 @@
     collectionUrl(product){
       const type = key(product);
       const category = typeof product === "object" ? String(product?.category || "").trim() : "";
-      return `/?type=${type}${type === "abayas" && category ? `&cat=${encodeURIComponent(category)}` : ""}#collection`;
+      const slugs={Everyday:"everyday-abayas",Occasion:"occasion-abayas",Kaftan:"kaftans",Prayer:"prayer-abayas"};
+      return `/collections/${type === "shawls" ? "shawls" : slugs[category] || "abayas"}/`;
     }
   };
   if(typeof module === "object" && module.exports) module.exports = types;

@@ -1,0 +1,23 @@
+const Journal=require('../lib/journal');
+const C=require('../../js/catalog-core');
+const Collections=require('../../js/collections');
+const Schema=require('../../js/structured-data');
+const R=require('../lib/render');
+const e=C.escape;
+exports.handler=async event=>{
+ const path=event.path || '/journal/';
+ const match=path.match(/^\/journal(?:\/([^/]+))?\/?$/);
+ if(!match) return R.notFound();
+ const article=match[1] && Journal.get(match[1]);
+ if(match[1] && !article) return R.notFound();
+ if(!path.endsWith('/')) return {statusCode:301,headers:{Location:path+'/'},body:''};
+ const title=article ? article.title : 'The modest wardrobe journal';
+ const description=article?.summary || 'Thoughtful guides to abaya sizing, fabrics, kaftan silhouettes, prayer pieces and shawl styling, from Label by Zare.';
+ const crumbs=[{name:'Home',url:'/'},{name:'Journal',url:'/journal/'},...(article ? [{name:title,url:path}] : [])];
+ const related=article ? Journal.articles.filter(a=>a.slug!==article.slug && (a.collection===article.collection || ['abaya-sizing-guide','abaya-fabric-guide'].includes(a.slug))).slice(0,3) : Journal.articles;
+ const cards=related.map(a=>`<article class="journal-card"><p class="eyebrow">${e(Collections.get(a.collection).name)}</p><h2><a href="/journal/${a.slug}/">${e(a.title)}</a></h2><p>${e(a.summary)}</p><a class="link-underline" href="/journal/${a.slug}/">Read the guide</a></article>`).join('');
+ const content=`<main id="main-content"><header class="page-header"><div class="wrap">${R.crumbs(crumbs)}<p class="eyebrow">The Label by Zare journal</p><h1 class="display-2">${e(title)}</h1><p class="lede">${e(description)}</p>${article ? '<p class="journal-meta">By Label by Zare · Buying &amp; styling guidance</p>' : ''}</div></header><section class="section-tight"><div class="wrap">${article ? `<div class="journal-layout"><article class="journal-body">${article.sections.map(([heading,body],i)=>`<section id="guide-${i+1}"><h2>${e(heading)}</h2>${body}</section>`).join('')}<div class="journal-note"><p>Explore the current ${e(Collections.get(article.collection).name.toLowerCase())} edit. Product pages show each piece’s current price, availability and details.</p><a class="link-underline" href="${Collections.url(article.collection)}">Shop ${e(Collections.get(article.collection).name)}</a></div></article><aside class="journal-toc"><p class="eyebrow">In this guide</p>${article.sections.map(([heading],i)=>`<a href="#guide-${i+1}">${e(heading)}</a>`).join('')}<a href="/support#size-guide">Size guide</a><a href="/support#shipping-returns">Delivery &amp; returns</a><a href="/contact">Ask us a question</a></aside></div><div class="journal-related"><h2 class="display-3">Continue reading</h2><div class="journal-grid" style="margin-top:1.5rem">${cards}</div></div>` : `<div class="journal-grid">${cards}</div>`}</div></section></main>`;
+ const schemas=[R.jsonld('lz-breadcrumb-schema',Schema.breadcrumbs(crumbs,path))];
+ if(article) schemas.push(R.jsonld('lz-article-schema',{'@context':'https://schema.org','@type':'Article','@id':C.site+path+'#article',headline:title,description,url:C.site+path,mainEntityOfPage:C.site+path,inLanguage:'en-PK',author:{'@type':'Organization',name:'Label by Zare',url:C.site+'/about'},publisher:{'@id':C.site+'/#organization'},about:{'@type':'Thing',name:Collections.get(article.collection).name}}));
+ return R.response(R.page({title:title+' | Label by Zare',description,path,content,schemas}));
+};

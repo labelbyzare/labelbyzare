@@ -1,5 +1,65 @@
+[build]
+  command = "node scripts/build-site.js"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[images]
+  remote_images = ['https://ldpzgtjbnbdsggaqmuvs\.supabase\.co/storage/v1/object/public/product-images/.*']
+
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/"
+  to = "/.netlify/functions/home-page"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/collections/*"
+  to = "/.netlify/functions/collection-page"
+  status = 200
+
+[[redirects]]
+  from = "/journal/*"
+  to = "/.netlify/functions/journal-page"
+  status = 200
+
+[[redirects]]
+  from = "/journal"
+  to = "/.netlify/functions/journal-page"
+  status = 200
+
+[[redirects]]
+  from = "/search"
+  to = "/.netlify/functions/collection-page"
+  status = 200
+
+[[redirects]]
+  from = "/sitemap-pages.xml"
+  to = "/.netlify/functions/sitemap-pages"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/product-feed.xml"
+  to = "/.netlify/functions/product-feed"
+  status = 200
+
+[[redirects]]
+  from = "/product.html"
+  to = "/.netlify/functions/product-page"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/sitemap-products.xml"
@@ -34,8 +94,9 @@
 # Pretty URLs — matches labelbyzare.com live routes
 [[redirects]]
   from = "/shop"
-  to = "/shop.html"
+  to = "/.netlify/functions/collection-page"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/about"
@@ -44,13 +105,15 @@
 
 [[redirects]]
   from = "/new-arrivals"
-  to = "/new-arrivals.html"
+  to = "/.netlify/functions/collection-page"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/sale"
-  to = "/sale.html"
+  to = "/.netlify/functions/collection-page"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/contact"
@@ -109,5 +172,45 @@
 
 [[redirects]]
   from = "/product"
-  to = "/product.html"
+  to = "/.netlify/functions/product-page"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/shop.html"
+  to = "/shop"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/new-arrivals.html"
+  to = "/new-arrivals"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/sale.html"
+  to = "/sale"
+  status = 301
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"

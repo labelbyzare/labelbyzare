@@ -93,8 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return `<article class="product-card home-product-card${stocked ? "" : " is-soldout"}">
       <div class="product-media${alternate ? "" : " no-alt"}">
         <a href="${href}" aria-label="View ${name}">
-          ${primary ? `<img class="img-primary" src="${primary}" alt="${name}" loading="lazy" decoding="async" width="600" height="800">` : '<span class="home-image-placeholder">Image coming soon</span>'}
-          ${alternate ? `<img class="img-secondary" src="${secondary}" alt="" loading="lazy" decoding="async" width="600" height="800">` : ""}
+          ${primary ? `<img class="img-primary" src="${primary}" ${LZCatalog.responsive(p.img)} alt="${name}" loading="lazy" decoding="async" width="600" height="800">` : '<span class="home-image-placeholder">Image coming soon</span>'}
+          ${alternate ? `<img class="img-secondary" src="${secondary}" ${LZCatalog.responsive(p.img2)} alt="" loading="lazy" decoding="async" width="600" height="800">` : ""}
         </a>
         <div class="product-tags">${!stocked ? '<span class="tag tag-soldout">Sold out</span>' : p.isSale ? '<span class="tag tag-sale">Sale</span>' : p.isNew ? '<span class="tag tag-new">New</span>' : ""}</div>
         <button type="button" class="wishlist-btn${wished ? " active" : ""}" data-wish-id="${escape(p.id)}" aria-label="Save ${name} to wishlist" aria-pressed="${wished}">
@@ -220,6 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
   [grid, bestGrid, featuredGrid].forEach(target => target.addEventListener("error", event => {
     const img = event.target;
     if (!(img instanceof HTMLImageElement)) return;
+    if(img.hasAttribute('srcset')){img.removeAttribute('srcset');img.src=img.getAttribute('src');return;}
     const media = img.closest(".product-media");
     if (img.classList.contains("img-secondary")) { media.classList.add("no-alt"); img.remove(); }
     else {
@@ -232,11 +233,13 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadCatalog(retry = false) {
     loaded = false;
     renderCollection();
+    if(!document.getElementById("lz-catalog-data") || retry){
     count.textContent = "Loading collection…";
     [grid, bestGrid, featuredGrid].forEach(target => {
       target.setAttribute("aria-busy", "true");
       target.innerHTML = '<div class="home-loading" role="status"><p>Loading pieces…</p></div>';
     });
+    }
     try {
       await (retry ? window.loadProducts() : window.PRODUCTS_READY);
       if (window.PRODUCTS_LOAD_ERROR) throw window.PRODUCTS_LOAD_ERROR;

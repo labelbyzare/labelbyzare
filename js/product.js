@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const root = document.getElementById("pdp-root");
   if(!root) return;
 
-  root.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Loading…</p></div>`;
+  if(!document.getElementById("lz-catalog-data")) root.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Loading…</p></div>`;
   (window.PRODUCTS_READY || Promise.resolve()).then(() => buildProductPage(root));
 });
 
@@ -30,8 +30,14 @@ function buildFullGallery(p) {
 }
 
 function buildProductPage(root){
-  const id = getProductIdFromLocation() || (PRODUCTS[0] && PRODUCTS[0].id);
-  const p = getProductById(id) || PRODUCTS[0];
+  const e = LZCatalog.escape;
+  const id = getProductIdFromLocation();
+  const p = getProductById(id);
+  if(!p){
+    root.innerHTML = '<div class="empty-state"><h1>This piece is unavailable.</h1><p>' + (window.PRODUCTS_LOAD_ERROR ? 'Please try again shortly.' : 'Explore our current collection to find your next piece.') + '</p><a class="btn btn-outline" href="/collections/abayas/">Explore abayas</a></div>';
+    return;
+  }
+  const collection = LZCollections.forProduct(p);
   p.gallery = buildFullGallery(p);
 
   // Self-heal the URL to its canonical slug (e.g. an old /product?id=xyz
@@ -53,38 +59,38 @@ function buildProductPage(root){
 
   root.innerHTML = `
     <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
-      <a href="/">Home</a> &rsaquo; <a href="/#collection">Collection</a> &rsaquo; <a href="${LZProductTypes.collectionUrl(p)}">${p.category || LZProductTypes.label(p)}</a> &rsaquo; <span aria-current="page">${p.name}</span>
+      ${LZSchema.productBreadcrumbs(p).itemListElement.map((item,i,items)=>i===items.length-1 ? `<span aria-current="page">${e(item.name)}</span>` : `<a href="${e(new URL(item.item).pathname)}">${e(item.name)}</a>`).join(' &rsaquo; ')}
     </nav>
     <div class="pdp-gallery reveal">
       <div class="pdp-main-img" id="pdp-main-img-wrap">
-        <img id="pdp-main-img" src="${p.gallery[0]}" alt="${p.name}" onerror="this.onerror=null;this.src='/images/logo.jpg';">
+        <img id="pdp-main-img" src="${e(p.gallery[0])}" width="832" height="1248" fetchpriority="high" decoding="async" ${LZCatalog.responsive(p.gallery[0], "(max-width:768px) 100vw, 50vw", [480,832,1248])} alt="${e(p.name)}">
         <button class="zoom-trigger" id="zoom-trigger" type="button" aria-label="Zoom image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
         </button>
       </div>
       <div class="pdp-thumbs">
         ${p.gallery.map((src, i) => `
-          <button class="${i === 0 ? "active" : ""}" data-src="${src}" aria-label="View image ${i+1}">
-            <img src="${src}" alt="${p.name} — view ${i + 1}" onerror="this.closest('button').style.display='none';">
+          <button class="${i === 0 ? "active" : ""}" data-src="${e(src)}" aria-label="View image ${i+1}">
+            <img width="80" height="120" loading="lazy" decoding="async" src="${e(src)}" ${LZCatalog.responsive(src,"80px",[80,160])} alt="${e(p.name)} — view ${i + 1}">
           </button>`).join("")}
       </div>
     </div>
 
     <div class="pdp-info reveal">
-      <div class="cat-label">${p.category} ${p.isNew ? "· New Arrival" : ""}</div>
-      <h1 class="serif">${p.name}</h1>
+      <div class="cat-label">${e(p.category)} ${p.isNew ? "· New Arrival" : ""}</div>
+      <h1 class="serif">${e(p.name)}</h1>
       <div class="pdp-price">
         ${p.oldPrice ? `<span class="price-old">${formatPKR(p.oldPrice)}</span>` : ""}
         <span class="${p.isSale ? "price-sale" : ""}">${formatPKR(p.price)}</span>
       </div>
-      <p class="lede">${p.description}</p>
+      <p class="lede">${e(p.description)}</p>
       <div class="pdp-stock ${stocked ? "" : "out"}">${stocked ? "In Stock" : "Sold Out"}</div>
 
       <div class="option-block">
-        <div class="option-label"><span>Color</span><span class="muted" id="color-label">${selectedColor}</span></div>
+        <div class="option-label"><span>Color</span><span class="muted" id="color-label">${e(selectedColor)}</span></div>
         <div class="swatches" id="color-swatches">
           ${p.colors.map(c => `
-            <button class="swatch-color ${c.name === selectedColor ? "active" : ""}" style="background:${c.hex}" data-color="${c.name}" aria-label="${c.name}"></button>
+            <button class="swatch-color ${c.name === selectedColor ? "active" : ""}" style="background:${c.hex}" data-color="${e(c.name)}" aria-label="${e(c.name)}"></button>
           `).join("")}
         </div>
       </div>
@@ -93,7 +99,7 @@ function buildProductPage(root){
         <div class="option-label"><span>Size</span>${LZProductTypes.key(p) === "abayas" ? '<span class="muted link-underline" style="cursor:pointer" id="size-guide-btn">Size Guide</span>' : ""}</div>
         <div class="swatches" id="size-swatches">
           ${p.sizes.map(s => `
-            <button class="swatch-size ${s === selectedSize ? "active" : ""}" data-size="${s}">${s}</button>
+            <button class="swatch-size ${s === selectedSize ? "active" : ""}" data-size="${e(s)}">${e(s)}</button>
           `).join("")}
         </div>
       </div>
@@ -111,7 +117,7 @@ function buildProductPage(root){
 
       <div class="pdp-actions">
         <button class="btn btn-solid" id="add-to-cart" ${stocked ? "" : "disabled"}>${stocked ? `Add to Cart — ${formatPKR(p.price)}` : "Sold Out"}</button>
-        <button class="icon-btn-round ${LZ.isWished(p.id) ? "active" : ""}" data-wish-id="${p.id}" aria-label="Save to wishlist">
+        <button class="icon-btn-round ${LZ.isWished(p.id) ? "active" : ""}" data-wish-id="${e(p.id)}" aria-label="Save to wishlist">
           <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>
         </button>
       </div>
@@ -121,26 +127,33 @@ function buildProductPage(root){
         Free nationwide delivery on orders over PKR 15,000
       </p>
 
+      <p class="pdp-note"><a class="link-underline" href="/journal/${collection.guide}/">Read our ${e(collection.name.toLowerCase())} guide</a></p>
       <div class="accordion">
         <div class="acc-item open">
           <button class="acc-head">Details <span class="plus"></span></button>
-          <div class="acc-body" style="max-height:200px"><div class="acc-body-inner">${p.description}</div></div>
+          <div class="acc-body" style="max-height:200px"><div class="acc-body-inner">${e(p.description)}</div></div>
         </div>
         <div class="acc-item">
           <button class="acc-head">Fabric &amp; Care <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${p.fabric}</div></div>
+          <div class="acc-body"><div class="acc-body-inner">${e(p.fabric)}</div></div>
         </div>
         <div class="acc-item">
           <button class="acc-head">Shipping <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${getShippingText(p)}</div></div>
+          <div class="acc-body"><div class="acc-body-inner">${e(getShippingText(p))}</div></div>
         </div>
         <div class="acc-item">
           <button class="acc-head">Returns <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${getReturnsText(p)}</div></div>
+          <div class="acc-body"><div class="acc-body-inner">${e(getReturnsText(p))}</div></div>
         </div>
       </div>
     </div>
   `;
+
+  root.querySelectorAll('.acc-head').forEach(button=>button.addEventListener('click',()=>{
+    const item=button.closest('.acc-item'); const body=item.querySelector('.acc-body');
+    item.classList.toggle('open');button.setAttribute('aria-expanded',String(item.classList.contains('open')));
+    body.style.maxHeight=item.classList.contains('open') ? body.scrollHeight+'px' : '0px';
+  }));
 
   // gallery thumbs
   let currentIdx = 0;
@@ -152,10 +165,10 @@ function buildProductPage(root){
       const img = document.getElementById("pdp-main-img");
       if(window.gsap){
         gsap.to(img, { opacity: 0, duration: .18, onComplete: () => {
-          img.src = btn.dataset.src;
+          img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src;
           gsap.to(img, { opacity: 1, duration: .28 });
         }});
-      } else { img.src = btn.dataset.src; }
+      } else { img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; }
     });
   });
 
@@ -165,7 +178,7 @@ function buildProductPage(root){
     currentIdx = i;
     root.querySelectorAll(".pdp-thumbs button").forEach((b, bi) => b.classList.toggle("active", bi === i));
     const img = document.getElementById("pdp-main-img");
-    if(img) img.src = p.gallery[i];
+    if(img){ img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = p.gallery[i]; }
   }, p.name);
   document.getElementById("pdp-main-img-wrap")?.addEventListener("click", () => openZoom(currentIdx));
 
@@ -216,7 +229,8 @@ function buildProductPage(root){
 
   // related products
   const relatedGrid = document.getElementById("related-grid");
-  if(relatedGrid){
+  function renderRelated(){
+    if(!relatedGrid) return;
     const related = PRODUCTS.filter(rp => rp.id !== p.id && rp.category === p.category).slice(0,4);
     const fallback = related.length ? related : PRODUCTS.filter(rp => rp.id !== p.id).slice(0,4);
     relatedGrid.innerHTML = fallback.map(rp => `
@@ -226,18 +240,27 @@ function buildProductPage(root){
             <div class="product-tags">
               ${!isInStock(rp) ? '<span class="tag tag-soldout">Sold Out</span>' : (rp.isNew ? '<span class="tag tag-new">New</span>' : "")}
             </div>
-            <img class="img-primary" src="${rp.img}" alt="${rp.name}" loading="lazy">
-            <img class="img-secondary" src="${rp.img2}" alt="${rp.name} alternate view" loading="lazy">
+            <img class="img-primary" width="600" height="800" src="${e(rp.img)}" ${LZCatalog.responsive(rp.img)} alt="${e(rp.name)}" loading="lazy">
+            <img class="img-secondary" width="600" height="800" src="${e(rp.img2)}" ${LZCatalog.responsive(rp.img2)} alt="${e(rp.name)} alternate view" loading="lazy">
           </div>
         </a>
         <a href="${productUrl(rp)}">
           <div class="product-info">
-            <div><h3>${rp.name}</h3><div class="cat">${rp.category}</div></div>
+            <div><h3>${e(rp.name)}</h3><div class="cat">${e(rp.category)}</div></div>
             <div class="price-row"><span class="price">${formatPKR(rp.price)}</span></div>
           </div>
         </a>
       </div>
     `).join("");
+  }
+  renderRelated();
+  if(relatedGrid && !window.CATALOG_COMPLETE){
+    const load=()=>window.ensureFullCatalog().then(renderRelated);
+    if('IntersectionObserver' in window){
+      const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();load();}},{rootMargin:'500px'});
+      observer.observe(relatedGrid);
+    } else load();
+    window.addEventListener('lz:catalog-ready',renderRelated);
   }
 }
 

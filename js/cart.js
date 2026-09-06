@@ -19,6 +19,7 @@ const LZ = {
   },
   addToCart(productId, size, color, qty = 1){
     const product = getProductById(productId);
+    if(!product || !Number.isInteger(qty) || qty<1) return;
     if(product && typeof isInStock === "function" && !isInStock(product)){
       this.showToast("Sorry, this piece is currently sold out");
       return;
@@ -30,6 +31,7 @@ const LZ = {
     this.saveCart(cart);
     this.openDrawer();
     this.showToast("Added to your bag");
+    window.LZAnalytics?.track("add_to_cart",{value:product.price*qty,items:[LZAnalytics.item(product,qty,size,color)]});
   },
   removeFromCart(index){
     const cart = this.getCart();
@@ -166,6 +168,16 @@ const LZ = {
     this.renderDrawer();
     document.querySelector(".cart-drawer")?.classList.add("open");
     document.querySelector(".cart-drawer-backdrop")?.classList.add("open");
+    if(!window.CATALOG_COMPLETE && this.getCart().length){
+      const body=document.querySelector('.drawer-body');
+      const foot=document.querySelector('.drawer-foot');
+      if(body) body.innerHTML='<p role="status">Checking the latest prices…</p>';
+      if(foot) foot.style.display='none';
+      window.ensureFullCatalog().then(()=>{
+        if(window.PRODUCTS_LOAD_ERROR){if(body) body.innerHTML='<p>We couldn’t check your bag. Please close it and try again.</p>';return;}
+        this.renderDrawer();
+      });
+    }
   },
   closeDrawer(){
     document.querySelector(".cart-drawer")?.classList.remove("open");

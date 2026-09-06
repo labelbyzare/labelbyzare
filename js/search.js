@@ -9,9 +9,12 @@
     kaftans:"kaftan", caftan:"kaftan", caftans:"kaftan", silks:"silk",
     sales:"sale", discount:"sale", discounted:"sale", offers:"sale", offer:"sale",
     newest:"new", latest:"new", arrivals:"arrival", bestselling:"bestseller", bestsellers:"bestseller",
-    featuredproducts:"featured", collections:"collection", pieces:"piece", products:"product"
+    featuredproducts:"featured", collections:"collection", pieces:"piece", products:"product",
+    namaz:"prayer", namaaz:"prayer", salah:"prayer", rozana:"everyday", rozmarra:"everyday", daily:"everyday",
+    kala:"black", kaala:"black", kali:"black", kaali:"black", siyah:"black", sabz:"green", hara:"green", hari:"green",
+    safed:"white", safaid:"white", shamoz:"shamooz", shamoze:"shamooz"
   };
-  const stop = new Set(["a","an","the","and","for","with","in","of","to","on","me","show","find","please","i","want","looking","color","product","piece","collection"]);
+  const stop = new Set(["a","an","the","and","for","with","in","of","to","on","me","show","find","please","i","want","looking","color","product","piece","collection","online","buy","shop","pakistan","karachi","lahore","islamabad","rawalpindi","faisalabad","peshawar","best","design","designs","ka","ki","ke","liye","chahiye","chahye","mein","mai","mujhe","pehnne","pehnay"]);
   function normalize(value){
     return String(value || "").normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase()
       .replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
@@ -63,8 +66,14 @@
     return rows[a.length][b.length];
   }
   function lookup(products,query){
-    const queryTerms=terms(query);
-    if(!queryTerms.length) return {products:[],usedFuzzy:false};
+    let min=-Infinity,max=Infinity,hasPrice=false;
+    let text=String(query || '').slice(0,120).toLowerCase().replace(/(\d),(?=\d{3}\b)/g,'$1');
+    const amount=v=>Number(v.replace(/k$/,''))*(v.endsWith('k')?1000:1);
+    text=text.replace(/\b(under|below|less than|above|over|more than)\s*(?:pkr\s*|rs\.?\s*)?(\d+(?:\.\d+)?k?)\b/g,(_,word,value)=>{hasPrice=true;if(['under','below','less than'].includes(word))max=Math.min(max,amount(value));else min=Math.max(min,amount(value));return ' ';});
+    text=text.replace(/\b(\d+(?:\.\d+)?k?)\s*se\s*(kam|zyada)\b/g,(_,value,word)=>{hasPrice=true;if(word==='kam')max=Math.min(max,amount(value));else min=Math.max(min,amount(value));return ' ';});
+    const queryTerms=terms(text);
+    if(!queryTerms.length && !hasPrice) return {products:[],usedFuzzy:false};
+    products=products.filter(p=>Number(p.price)>0 && Number(p.price)>min && Number(p.price)<max);
     const distances = new Map();
     function rank(fuzzy){
       const ranked=[];

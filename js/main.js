@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   scrollPanels.forEach(panel => panel.setAttribute("data-lenis-prevent", ""));
   function syncScrollLock(){
     if(!lenis) return;
-    const locked = document.body.style.overflow === "hidden" || scrollPanels.some(panel => panel.classList.contains("open"));
+    const locked = document.documentElement.classList.contains("lz-home-loading") || document.body.style.overflow === "hidden" || scrollPanels.some(panel => panel.classList.contains("open"));
     if(locked) lenis.stop();
     else lenis.start();
   }
@@ -76,51 +76,24 @@ document.addEventListener("DOMContentLoaded", () => {
     window.LZScrollTo(target);
   });
 
-  /* ---------- Loader ---------- */
-  let resolvePageReady;
-  window.LZ_PAGE_READY = new Promise(resolve => { resolvePageReady = resolve; });
+  /* Let the full-screen homepage intro finish before the hero animates. */
+  window.LZ_PAGE_READY = window.LZ_PAGE_READY || Promise.resolve();
   const loader = document.getElementById("loader");
-  if(loader && getComputedStyle(loader).visibility !== "hidden"){
-    const previousOverflow = document.body.style.overflow;
-    const minimumTime = motionMedia.matches ? 0 : 800;
-    let finished = false;
-    let dismissTimer;
-    const safetyTimer = setTimeout(finishLoader, Math.max(0, 4500 - performance.now()));
-    document.body.style.overflow = "hidden";
-    function finishLoader(){
-      if(finished) return;
-      finished = true;
-      clearTimeout(safetyTimer);
-      clearTimeout(dismissTimer);
-      loader.classList.add("hidden");
-      loader.setAttribute("aria-hidden", "true");
-      if(!scrollPanels.some(panel => panel.classList.contains("open"))) document.body.style.overflow = previousOverflow;
-      syncScrollLock();
-      runHeroIntro();
-      window.ScrollTrigger?.refresh();
-      resolvePageReady();
-    }
-    function requestDismiss(){
-      if(finished) return;
-      clearTimeout(dismissTimer);
-      dismissTimer = setTimeout(finishLoader, Math.max(0, minimumTime - performance.now()));
-    }
-    const heroImage = document.querySelector(".hero-fallback-img");
-    if(heroImage){
-      Promise.allSettled([heroImage.decode ? heroImage.decode() : Promise.resolve(), document.fonts?.ready || Promise.resolve()]).then(requestDismiss);
-    } else if(document.readyState === "complete") requestDismiss();
-    else window.addEventListener("load", requestDismiss, { once:true });
-  } else {
-    loader?.classList.add("hidden");
-    runHeroIntro();
-    resolvePageReady();
+  if(loader && !loader.classList.contains("brand-loader")){
+    loader.setAttribute("aria-hidden", "true");
+    loader.classList.add("hidden");
   }
+  window.LZ_PAGE_READY.then(()=>{
+    syncScrollLock();
+    runHeroIntro();
+    window.ScrollTrigger?.refresh();
+  });
 
   function runHeroIntro(){
     if(!window.gsap || motionMedia.matches || !document.querySelector(".hero-title")) return;
-    gsap.set(".hero-title .line span", { yPercent: 110 });
+    gsap.set(".hero-title .line span", { yPercent: 0 });
     gsap.to(".hero-title .line span", {
-      yPercent: 0, duration: 1.1, stagger: 0.08, ease: "power4.out", delay: 0.15
+      yPercent: 0, duration: .6, stagger: 0.08, ease: "power4.out", delay: 0.15
     });
     gsap.fromTo(".hero-tagline, .hero-cta, .hero-meta, .scroll-cue",
       { opacity: 0, y: 24 },

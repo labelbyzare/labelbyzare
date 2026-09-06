@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-PK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,8 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://ldpzgtjbnbdsggaqmuvs.supabase.co">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css?v=20260906-seo1">
+<link rel="stylesheet" href="css/editorial.css?v=20260906-seo1">
 </head>
 <body>
 
@@ -25,7 +26,7 @@
     <a href="/" class="nav-logo"><img src="images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44"><span class="nav-wordmark">LABEL <em>by</em> ZARE</span></a>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
+      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/collections/abayas/">Abayas</a></li><li><a href="/collections/shawls/">Shawls</a></li></ul></details></li>
       <li><a href="/new-arrivals">New Arrivals</a></li>
       <li><a href="/sale">Sale</a></li>
       <li><a href="/about">About</a></li>
@@ -67,7 +68,7 @@
 
   <ul class="mobile-menu-primary">
     <li><a href="/">Home</a></li>
-    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
+    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/collections/abayas/">Abayas</a></li><li><a href="/collections/shawls/">Shawls</a></li></ul></details></li>
     <li><a href="/new-arrivals">New Arrivals</a></li>
     <li><a href="/sale">Sale</a></li>
     <li><a href="/about">About</a></li>
@@ -88,8 +89,8 @@
       <ul>
         <li><a href="/about">Our Story</a></li>
         <li><a href="/about#values">Craftsmanship</a></li>
-        <li><a href="/about">Sustainability</a></li>
-        <li><a href="/contact">Contact</a></li>
+        <li><a href="/about">Our Values</a></li>
+        <li><a href="/journal/">Journal</a></li><li><a href="/contact">Contact</a></li>
       </ul>
     </div>
   </div>
@@ -100,7 +101,7 @@
 <div class="search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" aria-hidden="true" inert>
   <p class="search-heading" id="site-search-title">Search the collection</p>
   <div class="search-top">
-    <form class="search-form" role="search" action="/#collection" method="get">
+    <form class="search-form" role="search" action="/search" method="get">
       <input type="search" name="q" placeholder="Search pieces, colours, fabrics…" aria-label="Search products" autocomplete="off" maxlength="120" enterkeyhint="search">
       <button class="search-clear" type="button" aria-label="Clear search" hidden>Clear</button>
     </form>
@@ -161,13 +162,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
-<script src="js/product-types.js"></script>
-<script src="js/search.js"></script>
-<script src="js/data.js"></script>
-<script src="js/cart.js"></script>
-<script src="js/main.js"></script>
-<script src="js/search-ui.js"></script>
-<script src="js/customer-auth.js"></script>
+<script src="js/catalog-core.js?v=20260906-seo1"></script>
+<script src="js/store-policy.js?v=20260906-seo1"></script>
+<script src="js/collections.js?v=20260906-seo1"></script>
+<script src="js/product-types.js?v=20260906-seo1"></script>
+<script src="js/structured-data.js?v=20260906-seo1"></script>
+
+<script src="js/search.js?v=20260906-seo1"></script>
+<script src="js/data.js?v=20260906-seo1"></script>
+<script src="js/analytics-config.js?v=20260906-seo1"></script>
+<script src="js/analytics.js?v=20260906-seo1"></script>
+<script src="js/cart.js?v=20260906-seo1"></script>
+<script src="js/main.js?v=20260906-seo1"></script>
+<script src="js/search-ui.js?v=20260906-seo1"></script>
+<script src="js/customer-auth.js?v=20260906-seo1"></script>
 
 <script>
 // If already logged in, skip straight to the account dashboard.

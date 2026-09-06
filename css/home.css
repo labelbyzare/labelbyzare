@@ -1,11 +1,18 @@
 /* Homepage merchandising, using the existing Label by Zare design tokens. */
 .home-page #loader.brand-loader {
-  background: var(--ink-soft); gap: 0; padding: 2rem; text-align: center;
-  transition: opacity .65s var(--ease), visibility .65s var(--ease);
-  animation: brand-loader-exit .45s ease 5.5s forwards;
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%; box-sizing: border-box;
+  background: radial-gradient(ellipse at 50% 42%, #2b2923 0%, var(--ink-soft) 65%);
+  gap: 0; padding: 2rem; text-align: center; pointer-events: auto;
+  transition: opacity .55s var(--ease), visibility .55s var(--ease);
+  /* Independent fallback if the loader script cannot be fetched. */
+  animation: brand-loader-exit .55s ease 3.2s forwards;
 }
+.home-page #loader.brand-loader::before { content: ''; position: absolute; inset: clamp(16px, 3vw, 36px); border: 1px solid rgba(192,161,106,.16); pointer-events: none; }
+html.lz-home-loading, html.lz-home-loading body { overflow: hidden; }
 .brand-loader .loader-eyebrow { color: var(--gold-soft); font-size: .75rem; letter-spacing: .32em; margin-bottom: 1.6rem; }
-.brand-loader .loader-mark { color: var(--cream); font-style: normal; font-weight: 400; font-size: clamp(2.3rem, 6.5vw, 5rem); letter-spacing: -.035em; line-height: 1.2; animation: brand-loader-enter .65s var(--ease) both; }
+.brand-loader .loader-mark { color: var(--cream); font-style: normal; font-weight: 400; font-size: clamp(2.6rem, 7vw, 5.5rem); letter-spacing: -.035em; line-height: 1.2; animation: brand-loader-enter .65s var(--ease) both; }
 .brand-loader .loader-mark em { font-weight: 400; color: var(--gold-soft); }
 .brand-loader .loader-bar { width: clamp(150px, 22vw, 230px); margin: 2rem 0 1.3rem; background: rgba(245,239,230,.16); }
 .brand-loader .loader-bar::after { width: 45%; background: var(--gold-soft); animation: brand-loader-sweep 1.6s ease-in-out infinite; }
@@ -37,7 +44,8 @@
   min-height: min(880px, 94svh);
   justify-content: center;
 }
-.home-page .hero-fallback-img { opacity: 1; object-position: 72% 48%; }
+.home-page .hero-picture { position: absolute; inset: 0; display: block; overflow: hidden; z-index: 0; }
+.home-page .hero-picture .hero-fallback-img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; opacity: 1; object-position: 72% 48%; }
 .home-page .hero::after {
   background: linear-gradient(90deg, rgba(20,17,13,.76) 0%, rgba(20,17,13,.54) 35%, rgba(20,17,13,.12) 65%, rgba(20,17,13,.04)), linear-gradient(180deg, rgba(20,17,13,.3), transparent 30%, rgba(20,17,13,.16));
 }
@@ -155,7 +163,8 @@
   .collection-tab-detail { font-size: .8125rem; }
   .brand-loader .loader-eyebrow { margin-bottom: 1.2rem; }
   .home-page .hero { min-height: 780px; min-height: max(700px, 95svh); justify-content: flex-end; }
-  .home-page .hero-fallback-img { top: 64px; height: calc(100% - 64px); object-position: 76% center; }
+  .home-page .hero-picture { top: 64px; }
+  .home-page .hero-picture .hero-fallback-img { object-position: 76% center; }
   .home-page .hero::after { background: linear-gradient(180deg, rgba(11,11,10,.34) 0%, rgba(11,11,10,.04) 26%, rgba(11,11,10,.28) 42%, rgba(11,11,10,.86) 75%, rgba(11,11,10,.93)); }
   .home-page .hero-content { margin: auto 0 0; padding: 18rem 1.4rem 5.5rem; }
   .home-page .hero-title { font-size: clamp(2.65rem,10.5vw,3.8rem); line-height: 1.1; }

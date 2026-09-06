@@ -99,6 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.setAttribute("aria-hidden","false");
     overlay.classList.add("open");
     document.body.style.overflow="hidden";
+    if(!window.CATALOG_COMPLETE){
+      ready=false;
+      window.ensureFullCatalog().then(()=>{ready=true;if(overlay.classList.contains("open")) render();});
+    }
     render();
     focusTimer=setTimeout(()=>{if(overlay.classList.contains("open")) input.focus();},80);
   }
@@ -148,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if(!event.shiftKey && (document.activeElement===last || !overlay.contains(document.activeElement))){event.preventDefault();first?.focus();}
   });
   (window.PRODUCTS_READY || Promise.resolve()).then(()=>{
-    ready=true;
+    ready=!!window.CATALOG_COMPLETE;
     if(overlay.classList.contains("open")) render();
   });
 });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-PK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -118,6 +118,7 @@
     .form-card { padding: 1.25rem; }
   }
 </style>
+<link rel="stylesheet" href="css/editorial.css?v=20260906-seo1">
 </head>
 <body>
 
@@ -279,6 +280,7 @@
           <input type="text" id="f-category" placeholder="Everyday, Occasion...">
         </div>
       </div>
+      <p class="hint">Restocking later? Switch off In Stock to keep the product page and its links available. Turn it back on when the piece returns.</p>
       <p class="hint" id="product-type-hint">Choose where this piece belongs in your collection.</p>
       <div class="field-row">
         <div class="field">
@@ -333,18 +335,18 @@
       </div>
 
       <div class="field">
-        <label>Description</label>
+        <label>Description</label><p class="hint">Describe the actual cut, closure, lining, included pieces and fit. Give verified garment measurements where available. Use the real product name rather than a list of search keywords.</p>
         <textarea id="f-description"></textarea>
       </div>
 
       <div class="field-row">
         <div class="field">
-          <label>Fabric / Care</label>
+          <label>Fabric / Care</label><p class="hint">Use verified composition and care instructions. A trade name such as Korean Silk does not establish a fibre percentage.</p>
           <textarea id="f-fabric"></textarea>
         </div>
         <div class="field">
-          <label>Shipping Info</label>
-          <textarea id="f-shipping"></textarea>
+          <label>Store delivery policy</label><p class="hint">Delivery fees are calculated consistently for the whole order.</p>
+          <textarea id="f-shipping" readonly></textarea>
         </div>
         <div class="field">
           <label>Returns Info</label>
@@ -397,7 +399,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
-<script src="js/product-types.js"></script>
+<script src="js/catalog-core.js?v=20260906-seo1"></script>
+<script src="js/store-policy.js?v=20260906-seo1"></script>
+<script src="js/collections.js?v=20260906-seo1"></script>
+<script src="js/product-types.js?v=20260906-seo1"></script>
+<script src="js/structured-data.js?v=20260906-seo1"></script>
+
 <script>
 const statusEl = document.getElementById("status");
 const contentEl = document.getElementById("content");
@@ -588,7 +595,7 @@ function openForm(product = null) {
     document.getElementById("f-colors").value = (product.colors || []).map(c => `${c.name}:${c.hex}`).join(", ");
     document.getElementById("f-description").value = product.description || "";
     document.getElementById("f-fabric").value = product.fabric || "";
-    document.getElementById("f-shipping").value = product.shipping || "";
+    document.getElementById("f-shipping").value = LZPolicy.shippingText;
     document.getElementById("f-returns").value = product.returns || "";
   } else {
     formTitle.textContent = "Add Product";
@@ -756,7 +763,7 @@ form.addEventListener("submit", async (e) => {
 });
 
 window.deleteProduct = async function(id) {
-  if (!confirm("Delete this product? This cannot be undone.")) return;
+  if (!confirm("Permanently delete this product and its page? If it will return, cancel and switch off In Stock instead. Deletion cannot be undone.")) return;
   const { error } = await supabaseClient.from("products").delete().eq("id", id);
   if (error) {
     alert("Error deleting: " + error.message);

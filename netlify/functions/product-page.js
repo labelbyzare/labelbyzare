@@ -1,3 +1,7 @@
+const Catalog = require("../lib/catalog");
+const Core = require("../../js/catalog-core");
+const Schema = require("../../js/structured-data");
+const Policy = require("../../js/store-policy");
 const LZProductTypes = require("../../js/product-types");
 
 /* ==========================================================================
@@ -64,76 +68,22 @@ function parseRequest(event) {
   // New scheme: /product/<slug>/<id>
   const parts = (event.path || "").split("/").filter(Boolean);
   const i = parts.indexOf("product");
-  if (i !== -1 && parts.length >= i + 3) {
-    return { id: decodeURIComponent(parts[i + 2]), requestedSlug: decodeURIComponent(parts[i + 1]) };
+  if (i !== -1 && parts.length === i + 3) {
+    try { return { id: decodeURIComponent(parts[i + 2]), requestedSlug: decodeURIComponent(parts[i + 1]) }; } catch { return {id:null,requestedSlug:null}; }
   }
   // Legacy scheme: /product?id=<id>  (netlify.toml forwards this here too)
   const id = event.queryStringParameters && event.queryStringParameters.id;
   return { id: id || null, requestedSlug: null };
 }
 
-async function fetchProduct(id) {
-  const url = `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(id)}&select=*&limit=1`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-  });
-  if (!res.ok) return null;
-  const rows = await res.json();
-  return (rows && rows[0]) || null;
+async function fetchProduct(id){ return Catalog.product(id); }
+async function fetchReviewStats(id){ return Catalog.ratings(id); }
+function notFoundPage(){
+  return `<!doctype html><html lang="en-PK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Piece unavailable | Label by Zare</title><link rel="stylesheet" href="/css/style.css?v=20260906-seo1"><link rel="stylesheet" href="/css/editorial.css?v=20260906-seo1">
+</head><body><main class="wrap section"><a href="/">Label by Zare</a><h1 class="display-2">This piece isn’t available.</h1><p>Explore the current collection or get in touch for help.</p><a class="btn btn-solid" href="/collections/abayas/">Explore abayas</a> <a class="btn btn-outline" href="/collections/shawls/">Explore shawls</a></main></body></html>`;
 }
 
-// Real customer ratings only — never a fabricated or placeholder value.
-// Mirrors the same average computed client-side in js/reviews.js so the
-// server-rendered schema always agrees with what the page later shows.
-async function fetchReviewStats(id) {
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/product_reviews?product_id=eq.${encodeURIComponent(id)}&select=rating`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    if (!res.ok) return { value: 0, count: 0 };
-    const rows = await res.json();
-    const count = Array.isArray(rows) ? rows.length : 0;
-    const value = count ? rows.reduce((s, r) => s + Number(r.rating || 0), 0) / count : 0;
-    return { value, count };
-  } catch (e) {
-    return { value: 0, count: 0 };
-  }
-}
-
-function notFoundPage() {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Product Not Found | ${SITE_NAME}</title>
-<meta name="robots" content="noindex, follow">
-<meta http-equiv="refresh" content="3;url=/shop">
-</head>
-<body>
-<p>This product is no longer available. Redirecting to the <a href="/shop">full collection</a>…</p>
-</body>
-</html>`;
-}
-
-function buildFullGallery(p) {
-  const raw = [p.img, p.img2, ...(Array.isArray(p.gallery) ? p.gallery : [])];
-  const seen = new Set();
-  const clean = [];
-  for (const src of raw) {
-    if (typeof src === "string" && src.trim() && !seen.has(src)) {
-      seen.add(src);
-      clean.push(src);
-    }
-  }
-  return clean.length ? clean : [DEFAULT_IMAGE];
-}
+function buildFullGallery(p){ const gallery=Core.normalize(p).gallery; return gallery.length ? gallery : [DEFAULT_IMAGE]; }
 
 function renderPage(p, rating) {
   const name = p.name || LZProductTypes.label(p);
@@ -141,62 +91,25 @@ function renderPage(p, rating) {
   const gallery = buildFullGallery(p);
   const img = gallery[0];
   const description = p.description || `${name} — premium ${LZProductTypes.singular(p)} by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
-  const inStock = p.in_stock !== false;
+  const inStock = Core.stocked(p) && p.price > 0;
   const slug = slugify(name);
   const canonicalPath = `/product/${slug}/${encodeURIComponent(p.id)}`;
   const canonical = `${SITE_URL}${canonicalPath}`;
   const title = `${name} — Buy Online | ${SITE_NAME}`;
   const metaDescription = truncate(`${name} — ${LZProductTypes.singular(p)} by ${SITE_NAME}. ${description}`, 160);
   const priceText = formatPKR(p.price);
+  const collection = require("../../js/collections").forProduct(p);
 
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name,
-    description,
-    image: gallery,
-    sku: p.id,
-    brand: { "@type": "Brand", name: SITE_NAME },
-    category,
-    offers: {
-      "@type": "Offer",
-      url: canonical,
-      priceCurrency: "PKR",
-      price: p.price,
-      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: SITE_NAME },
-    },
-  };
-  if (rating && rating.count > 0) {
-    productSchema.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: Math.round(rating.value * 10) / 10,
-      reviewCount: rating.count,
-      bestRating: 5,
-      worstRating: 1,
-    };
-  }
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "Collection", item: `${SITE_URL}/#collection` },
-      { "@type": "ListItem", position: 3, name: category, item: `${SITE_URL}${LZProductTypes.collectionUrl(p)}` },
-      { "@type": "ListItem", position: 4, name, item: canonical },
-    ],
-  };
+  const productSchema = Schema.product(p,rating);
+  const breadcrumbSchema = Schema.productBreadcrumbs(p);
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en-PK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(metaDescription)}">
-<meta name="keywords" content="buy ${LZProductTypes.label(p).toLowerCase()} online, ${escapeHtml(name.toLowerCase())}, modest wear Pakistan, Label by Zare">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${canonical}">
 <meta property="og:site_name" content="${SITE_NAME}">
@@ -216,13 +129,16 @@ function renderPage(p, rating) {
 <link rel="apple-touch-icon" href="/images/logo-mark.jpg">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#f5efe6">
-<script type="application/ld+json">${JSON.stringify(productSchema)}</script>
-<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
+<script id="lz-product-schema" type="application/ld+json">${Core.json(productSchema)}</script>
+<script id="lz-breadcrumb-schema" type="application/ld+json">${Core.json(breadcrumbSchema)}</script>
+<script id="lz-org-schema" type="application/ld+json">${Core.json(Schema.organization())}</script>
+<script id="lz-catalog-data" type="application/json" data-complete="false">${Core.json([p])}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://ldpzgtjbnbdsggaqmuvs.supabase.co">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/style.css?v=20260906-seo1">
+<link rel="stylesheet" href="/css/editorial.css?v=20260906-seo1">
 </head>
 <body>
 
@@ -233,7 +149,7 @@ function renderPage(p, rating) {
     <a href="/" class="nav-logo"><img src="/images/logo-mark.jpg" alt="Label by Zare logo" width="44" height="44"><span class="nav-wordmark">LABEL <em>by</em> ZARE</span></a>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
+      <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/collections/abayas/">Abayas</a></li><li><a href="/collections/shawls/">Shawls</a></li></ul></details></li>
       <li><a href="/new-arrivals">New Arrivals</a></li>
       <li><a href="/sale">Sale</a></li>
       <li><a href="/about">About</a></li>
@@ -259,14 +175,14 @@ function renderPage(p, rating) {
   </div>
   <ul class="mobile-menu-primary">
     <li><a href="/">Home</a></li>
-    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li></ul></details></li>
+    <li class="nav-collection"><details class="collection-menu"><summary>Collection<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><ul class="collection-submenu"><li><a href="/collections/abayas/">Abayas</a></li><li><a href="/collections/shawls/">Shawls</a></li></ul></details></li>
     <li><a href="/new-arrivals">New Arrivals</a></li>
     <li><a href="/sale">Sale</a></li>
     <li><a href="/about">About</a></li>
   </ul>
   <div class="mobile-menu-secondary">
     <div><h5>Support</h5><ul><li><a href="/track-order">Track Order</a></li><li><a href="/support#size-guide">Size Guide</a></li><li><a href="/support#shipping-returns">Shipping &amp; Returns</a></li><li><a href="/support#faqs">FAQs</a></li></ul></div>
-    <div><h5>About</h5><ul><li><a href="/about">Our Story</a></li><li><a href="/about#values">Craftsmanship</a></li><li><a href="/about">Sustainability</a></li><li><a href="/contact">Contact</a></li></ul></div>
+    <div><h5>About</h5><ul><li><a href="/about">Our Story</a></li><li><a href="/about#values">Craftsmanship</a></li><li><a href="/about">Our Values</a></li><li><a href="/journal/">Journal</a></li><li><a href="/contact">Contact</a></li></ul></div>
   </div>
   <div class="mobile-menu-bottom">&copy; 2026 Label by Zare. All rights reserved.</div>
 </div>
@@ -274,7 +190,7 @@ function renderPage(p, rating) {
 <div class="search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" aria-hidden="true" inert>
   <p class="search-heading" id="site-search-title">Search the collection</p>
   <div class="search-top">
-    <form class="search-form" role="search" action="/#collection" method="get">
+    <form class="search-form" role="search" action="/search" method="get">
       <input type="search" name="q" placeholder="Search pieces, colours, fabrics…" aria-label="Search products" autocomplete="off" maxlength="120" enterkeyhint="search">
       <button class="search-clear" type="button" aria-label="Clear search" hidden>Clear</button>
     </form>
@@ -307,20 +223,25 @@ function renderPage(p, rating) {
        immediately. js/product.js hydrates over this with the full
        interactive gallery, size/colour selectors and cart controls. -->
   <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
-    <a href="/">Home</a> &rsaquo; <a href="/#collection">Collection</a> &rsaquo; <a href="${escapeHtml(LZProductTypes.collectionUrl(p))}">${escapeHtml(category)}</a> &rsaquo; <span aria-current="page">${escapeHtml(name)}</span>
+    ${breadcrumbSchema.itemListElement.map((item,i,items)=>i===items.length-1 ? `<span aria-current="page">${escapeHtml(item.name)}</span>` : `<a href="${escapeHtml(new URL(item.item).pathname)}">${escapeHtml(item.name)}</a>`).join(' &rsaquo; ')}
   </nav>
   <div class="pdp-gallery reveal">
-    <div class="pdp-main-img"><img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" onerror="this.onerror=null;this.src='${escapeHtml(DEFAULT_IMAGE)}';"></div>
+    <div class="pdp-main-img"><img src="${escapeHtml(img)}" width="832" height="1248" fetchpriority="high" decoding="async" ${Core.responsive(img,"(max-width:768px) 100vw, 50vw",[480,832,1248])} alt="${escapeHtml(name)}"></div>
   </div>
   <div class="pdp-info reveal">
     <div class="cat-label">${escapeHtml(category)}${p.is_new ? " · New Arrival" : ""}</div>
     <h1 class="serif">${escapeHtml(name)}</h1>
     <div class="pdp-price">
-      ${p.old_price ? `<span class="price-old">${formatPKR(p.old_price)}</span>` : ""}
-      <span class="${p.is_sale ? "price-sale" : ""}">${priceText}</span>
+      ${p.isSale && p.oldPrice ? `<span class="price-old">${formatPKR(p.oldPrice)}</span>` : ""}
+      <span class="${p.isSale ? "price-sale" : ""}">${priceText}</span>
     </div>
     <p class="lede">${escapeHtml(description)}</p>
     <div class="pdp-stock ${inStock ? "" : "out"}">${inStock ? "In Stock" : "Sold Out"}</div>
+    ${rating.count>0 ? `<p><a href="#product-reviews-root">${rating.value.toFixed(1)} / 5 from ${rating.count} customer reviews</a></p>` : ''}
+    <p><a class="link-underline" href="/journal/${collection.guide}/">Read the ${escapeHtml(collection.name.toLowerCase())} guide</a></p>
+    <details><summary>Fabric &amp; care</summary><p>${escapeHtml(p.fabric || 'Contact us for the fabric and care details of this piece.')}</p></details>
+    <details><summary>Delivery &amp; returns</summary><p>${escapeHtml(Policy.shippingText)}</p><p>${escapeHtml(p.returns || Policy.returnsText)}</p><a href="/support#shipping-returns">Read the full policy</a></details>
+    <noscript><p>Enable JavaScript to select a size and add this piece to your bag.</p></noscript>
     <p class="pdp-note">Free nationwide delivery on orders over PKR 15,000 — Karachi, Lahore, Islamabad and across Pakistan.</p>
   </div>
 </main>
@@ -360,8 +281,8 @@ function renderPage(p, rating) {
         <div class="footer-brand"><img src="/images/logo-mark.jpg" alt="Label by Zare logo" width="46" height="46">Label <em>by</em> Zare</div>
         <p style="max-width:32ch;color:var(--beige)">Considered abayas and shawls for the modern woman — cut with intention, worn with quiet confidence.</p>
       </div>
-      <div><h4>Shop</h4><ul><li><a href="/?type=abayas#collection">Abayas</a></li><li><a href="/?type=shawls#collection">Shawls</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul></div>
-      <div><h4>About</h4><ul><li><a href="/about">Our Story</a></li><li><a href="/about#values">Craftsmanship</a></li><li><a href="/about">Sustainability</a></li><li><a href="/contact">Contact</a></li></ul></div>
+      <div><h4>Shop</h4><ul><li><a href="/collections/abayas/">Abayas</a></li><li><a href="/collections/shawls/">Shawls</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sale">Sale</a></li><li><a href="/wishlist">Wishlist</a></li><li><a href="/reviews">Reviews</a></li></ul></div>
+      <div><h4>About</h4><ul><li><a href="/about">Our Story</a></li><li><a href="/about#values">Craftsmanship</a></li><li><a href="/about">Our Values</a></li><li><a href="/journal/">Journal</a></li><li><a href="/contact">Contact</a></li></ul></div>
       <div><h4>Support</h4><ul><li><a href="/track-order">Track Order</a></li><li><a href="/support#size-guide">Size Guide</a></li><li><a href="/support#shipping-returns">Shipping &amp; Returns</a></li><li><a href="/support#faqs">FAQs</a></li></ul></div>
     </div>
     <div class="footer-bottom">
@@ -374,21 +295,28 @@ function renderPage(p, rating) {
 
 <div class="toast"><span class="dot"></span><span class="toast-msg"></span></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabase-client.js"></script>
-<script src="/js/product-types.js"></script>
-<script src="/js/search.js"></script>
-<script src="/js/seo.js"></script>
-<script src="/js/data.js"></script>
-<script src="/js/cart.js"></script>
-<script src="/js/customer-auth.js"></script>
-<script src="/js/main.js"></script>
-<script src="/js/search-ui.js"></script>
-<script src="/js/product.js"></script>
-<script src="/js/reviews.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script defer src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="/supabase-client.js"></script>
+<script defer src="/js/catalog-core.js?v=20260906-seo1"></script>
+<script defer src="/js/store-policy.js?v=20260906-seo1"></script>
+<script defer src="/js/collections.js?v=20260906-seo1"></script>
+<script defer src="/js/product-types.js?v=20260906-seo1"></script>
+<script defer src="/js/structured-data.js?v=20260906-seo1"></script>
+
+<script defer src="/js/search.js?v=20260906-seo1"></script>
+<script defer src="/js/seo.js?v=20260906-seo1"></script>
+<script defer src="/js/data.js?v=20260906-seo1"></script>
+<script defer src="/js/analytics-config.js?v=20260906-seo1"></script>
+<script defer src="/js/analytics.js?v=20260906-seo1"></script>
+<script defer src="/js/cart.js?v=20260906-seo1"></script>
+<script defer src="/js/customer-auth.js?v=20260906-seo1"></script>
+<script defer src="/js/main.js?v=20260906-seo1"></script>
+<script defer src="/js/search-ui.js?v=20260906-seo1"></script>
+<script defer src="/js/product.js?v=20260906-seo1"></script>
+<script defer src="/js/reviews.js?v=20260906-seo1"></script>
 
 <div class="float-actions">
   <a class="float-btn whatsapp" href="https://wa.me/923288691979" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
@@ -409,7 +337,7 @@ exports.handler = async (event) => {
   try {
     const { id, requestedSlug } = parseRequest(event);
     if (!id) {
-      return { statusCode: 302, headers: { Location: "/shop" }, body: "" };
+      return { statusCode: 404, headers: { "Content-Type":"text/html; charset=utf-8" }, body: notFoundPage() };
     }
 
     const [p, rating] = await Promise.all([fetchProduct(id), fetchReviewStats(id)]);
@@ -438,15 +366,15 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: {
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, max-age=300, s-maxage=3600",
+        "Cache-Control": "public, max-age=0, s-maxage=60, must-revalidate",
       },
       body: renderPage(p, rating),
     };
   } catch (err) {
     return {
-      statusCode: 302,
-      headers: { Location: "/shop" },
-      body: "",
+      statusCode: 503,
+      headers: { "Content-Type":"text/plain; charset=utf-8", "Cache-Control":"no-store", "Retry-After":"60" },
+      body: "We couldn’t load this piece just now. Please try again shortly.",
     };
   }
 };
