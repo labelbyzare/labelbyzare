@@ -155,6 +155,36 @@ test('Feeds and sitemaps agree with catalog URLs and avoid invented freshness',a
  const pages=await run('sitemap-pages','/sitemap-pages.xml');
  assert.ok(pages.body.includes('/journal/abaya-fabric-guide/'));assert.ok(!pages.body.includes('/collections/shawls/'));
 });
+test('Sitemaps omit empty shopping pages and unpriced products, but retain out-of-stock pieces',async()=>{
+ rows=[{...fixture[0],id:'unpriced-piece',price:0,old_price:5000,is_sale:true,is_new:true}];
+ let pages=await run('sitemap-pages','/sitemap-pages.xml');
+ for(const path of ['/shop','/sale','/new-arrivals',...Collections.all.map(Collections.url)]){
+  assert.ok(!pages.body.includes('<loc>'+C.site+path+'</loc>'),path+' must be omitted while empty');
+ }
+ assert.ok(pages.body.includes('/journal/abaya-fabric-guide/'));
+ const products=await run('sitemap-products','/sitemap-products.xml');
+ assert.doesNotMatch(products.body,/<url>/);
+ const html=await run('sitemap-html','/sitemap.html');
+ assert.ok(!html.body.includes('href="'+C.productUrl(rows[0])+'"'));
+ rows[0].price=4000;rows[0].in_stock=false;
+ pages=await run('sitemap-pages','/sitemap-pages.xml');
+ for(const path of ['/shop','/sale','/new-arrivals']){
+  assert.ok(pages.body.includes('<loc>'+C.site+path+'</loc>'));
+  assert.doesNotMatch((await run('collection-page',path)).body,/noindex, follow/);
+ }
+ assert.ok((await run('sitemap-products','/sitemap-products.xml')).body.includes(C.site+C.productUrl(rows[0])));
+});
+test('The visitor sitemap links every priced product once, including general abayas and shawls',async()=>{
+ rows.push({...fixture[0],id:'general-abaya',category:'Abaya'},{...fixture[0],id:'new-shawl',category:'Shawls'});
+ const html=await run('sitemap-html','/sitemap.html');assert.equal(html.statusCode,200);
+ const xml=await run('sitemap-products','/sitemap-products.xml');
+ for(const p of rows){
+  assert.equal(html.body.split('href="'+C.productUrl(p)+'"').length-1,1,p.id+' needs one visible product link');
+  assert.ok(xml.body.includes('<loc>'+C.site+C.productUrl(p)+'</loc>'));
+ }
+ assert.match(html.body,/Out of stock/);
+ assert.ok((await run('sitemap-pages','/sitemap-pages.xml')).body.includes('/collections/shawls/'));
+});
 test('Responsive product images stay on an allowlisted CDN path with an original fallback',()=>{
  const html=C.responsive(fixture[0].img);assert.match(html,/\/\.netlify\/images\?url=/);assert.match(html,/removeAttribute\('srcset'\)/);
  assert.equal(C.responsive('https://untrusted.example/image.jpg'),'');

@@ -1,4 +1,8 @@
-# Label by Zare — website update v10
+# Label by Zare — website update v11
+
+v11 checks and strengthens the sitemaps. At the time of the live check, the sitemap index and both XML sitemaps returned HTTP 200, and all 31 listed URLs (21 pages and 10 products) loaded with matching canonical URLs and no indexing blocks. There were no duplicate entries, and robots.txt referenced the correct sitemap index.
+
+The updated sitemap code excludes empty shop, sale and new-arrival pages when the catalog has no correctly priced products for them. The visitor sitemap also includes general abayas that do not match a named subcollection and excludes unpriced products, keeping its product links consistent with the XML sitemap. Out-of-stock pieces remain discoverable. These safeguards take effect after this ZIP is deployed; no deployment or Search Console submission was performed during the check.
 
 v10 restores the requested full-screen Label by Zare loading screen before the homepage. The centered wordmark and gold line fade into the page after a brief introduction. A time limit, keyboard dismissal and reduced-motion handling keep the page accessible if an image or external script is slow.
 
@@ -54,7 +58,7 @@ node --test tests/seo.test.js
 node scripts/build-site.js
 ```
 
-The 19 focused tests pass using catalog fixtures and mocked read-only database responses. They cover server-rendered products, collection routing, pagination, mixed product merchandising, search, shipping thresholds, schema escaping, genuine review counts, stock lifecycle, feed URLs and outage behavior. JavaScript and inline scripts, HTML structure/local asset references, XML and Netlify TOML were also checked. No live orders were placed.
+The suite contains 21 focused tests using catalog fixtures and mocked read-only database responses. The five tests covering sitemaps and their related collection and stock behavior passed for v11. The suite also covers server-rendered products, collection routing, pagination, mixed product merchandising, search, shipping thresholds, schema escaping, genuine review counts, feed URLs and outage behavior. Earlier checks covered JavaScript and inline scripts, HTML structure/local asset references, XML and Netlify TOML. No live orders were placed.
 
 Production Core Web Vitals and checkout behavior still need measurement on the deployed host. Target mobile field p75 LCP ≤2.5s, INP ≤200ms and CLS ≤0.1; a sub-1.5s LCP is a stretch goal, not a guaranteed result from file edits. No browser or live performance score is claimed here.
 

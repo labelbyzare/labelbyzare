@@ -2,7 +2,17 @@ const C=require('../../js/catalog-core');
 const Collections=require('../../js/collections');
 const Journal=require('./journal');
 const staticPaths=['/','/shop','/about','/support','/contact','/reviews','/journal/'];
-function pagePaths(products){return [...staticPaths,...(products.some(p=>p.isSale)?['/sale']:[]),...(products.some(p=>p.isNew)?['/new-arrivals']:[]),...Collections.all.filter(c=>products.some(p=>p.price>0 && Collections.matches(p,c))).map(Collections.url),...Journal.articles.map(a=>`/journal/${a.slug}/`)];}
+function pagePaths(products){
+ // Match the collection renderer: unpriced products cannot populate an indexable page.
+ const listed=products.filter(p=>p.price>0);
+ return [
+  ...staticPaths.filter(path=>path!=='/shop' || listed.length>0),
+  ...(listed.some(p=>p.isSale)?['/sale']:[]),
+  ...(listed.some(p=>p.isNew)?['/new-arrivals']:[]),
+  ...Collections.all.filter(c=>listed.some(p=>Collections.matches(p,c))).map(Collections.url),
+  ...Journal.articles.map(a=>`/journal/${a.slug}/`)
+ ];
+}
 function entry(path,updated,image){
  const date=updated && new Date(updated);
  return `<url><loc>${C.escape(C.site+path)}</loc>${date && Number.isFinite(date.getTime()) ? `<lastmod>${date.toISOString()}</lastmod>` : ''}${image?`<image:image><image:loc>${C.escape(image)}</image:loc></image:image>`:''}</url>`;
