@@ -1,7 +1,7 @@
 {
   "name": "labelbyzare",
   "main": "./cloudflare/worker.mjs",
-  "compatibility_date": "2026-09-08",
+  "compatibility_date": "2026-09-07",
   "workers_dev": true,
   "assets": {
     "directory": "./dist",
@@ -17,13 +17,13 @@
       "/product",
       "/product.html",
       "/product/*",
+      "/new-arrivals*",
+      "/sale*",
+      "/sitemap.xml",
       "/sitemap-pages.xml",
       "/sitemap-products.xml",
-      "/sitemap.html",
-      "/product-feed.xml",
-      "/shop",
-      "/sale",
-      "/new-arrivals"
+      "/sitemap-html.xml",
+      "/product-feed.xml"
     ]
   }
 }
