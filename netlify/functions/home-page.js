@@ -21,13 +21,13 @@ exports.handler=async event=>{
   const abayas=products.filter(p=>Collections.matches(p,Collections.get('abayas'))).sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured));
   let html=Templates.home;
   for(const [key,list,empty] of [['BEST',highlights(products,'isBestseller',4),'Our next best sellers edit is coming soon.'],['FEATURED',highlights(products,'isFeatured',2),'Our next featured edit is coming soon.'],['COLLECTION',abayas,'The next abaya edit is on its way.']]){
-   html=html.replace(new RegExp(`<!--LZ_${key}_START-->[\\s\\S]*?<!--LZ_${key}_END-->`),()=>list.length ? list.map(p=>R.card(p,99)).join('') : `<div class="home-empty"><p>${empty}</p><a class="link-underline" href="/shop">Explore the wardrobe</a></div>`);
+   html=html.replace(new RegExp(`<!--LZ_${key}_START-->[\\s\\S]*?<!--LZ_${key}_END-->`),()=>list.length ? list.map(p=>R.card(p,99,key!=='COLLECTION')).join('') : `<div class="home-empty"><p>${empty}</p><a class="link-underline" href="/shop">Explore the wardrobe</a></div>`);
   }
   html=html.replace(/aria-busy="true"/g,'aria-busy="false"').replace(/(<[^>]+id="home-result-count"[^>]*>)[^<]*/,`$1${abayas.length} pieces · Abayas`);
   html=html.replace('<!--LZ_COLLECTION_LINKS-->',R.collectionLinks());
   const q=event.queryStringParameters || {};
   const filtered=Object.keys(q).some(k=>['q','type','cat','sort','edit'].includes(k));
-  html=R.metadata(html,{title:'Abayas & Shawls Online in Pakistan | Label by Zare',description:'Shop thoughtfully designed everyday abayas, occasion wear, kaftans, prayer pieces and shawls by Label by Zare. Delivery across Pakistan.',path:'/',noindex:filtered,image:C.site+'/images/hero-boutique-1672.webp'});
+  html=R.metadata(html,{title:'Modest Wear, Abayas & Shawls in Pakistan | Label by Zare',description:'Shop thoughtfully designed everyday abayas, occasion wear, kaftans, prayer pieces and shawls by Label by Zare. Delivery across Pakistan.',path:'/',noindex:filtered,image:C.site+'/images/hero-boutique-1672.webp'});
   html=html.replace('</head>',()=>`${R.seed(products,true)}${R.jsonld('lz-org-schema',Schema.organization())}${R.jsonld('lz-website-schema',Schema.website())}${R.jsonld('lz-itemlist-schema',Schema.list(abayas,'Label by Zare abayas','/'))}</head>`);
   return R.response(html);
  }catch{return R.unavailable();}

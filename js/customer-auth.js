@@ -69,7 +69,7 @@ const CustomerAuth = {
   },
 
   async logout(){
-    await supabaseClient.auth.signOut();
+    return supabaseClient.auth.signOut();
   },
 
   // Step 1 of password reset: emails the customer a 6-digit code (same
@@ -135,27 +135,22 @@ const CustomerAuth = {
     return { error, avatarUrl };
   },
 
-  // Deletes everything this site controls for the customer (profile,
-  // addresses, saved cart/wishlist) and signs them out. Supabase's anon
-  // (public) key can never delete the underlying login itself — that
-  // requires a privileged server-side call — so this is a full data wipe
-  // + sign-out rather than a literal account deletion. See note in
-  // customer-accounts-setup.sql if you want true account deletion added
-  // later via a Supabase Edge Function.
+  // Clears these four kinds of saved data and signs out. Authentication,
+  // orders, reviews and uploaded files remain; full deletion needs a server workflow.
   async deleteMyData(){
     const user = await this.getUser();
     if(!user) return { error: { message: "Not logged in" } };
 
-    await supabaseClient.from("cart_items").delete().eq("user_id", user.id);
-    await supabaseClient.from("wishlist_items").delete().eq("user_id", user.id);
-    await supabaseClient.from("addresses").delete().eq("user_id", user.id);
-    await supabaseClient.from("profiles").delete().eq("id", user.id);
+    for(const [table, key] of [["cart_items", "user_id"], ["wishlist_items", "user_id"], ["addresses", "user_id"], ["profiles", "id"]]){
+      const { error } = await supabaseClient.from(table).delete().eq(key, user.id);
+      if(error) return { error };
+    }
 
     localStorage.removeItem("lz_cart");
     localStorage.removeItem("lz_wishlist");
 
-    await this.logout();
-    return { error: null };
+    const result = await this.logout();
+    return { error: result?.error || null };
   },
 
   // ---- Addresses ----
@@ -244,9 +239,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         avatar.className = "nav-avatar-photo";
         el.appendChild(avatar);
       }
-      avatar.innerHTML = profile?.avatar_url
-        ? `<img src="${profile.avatar_url}" alt="${name}">`
-        : initial;
+      if(profile?.avatar_url){
+        const photo = document.createElement("img");
+        photo.src = LZCatalog.image(profile.avatar_url);
+        photo.alt = "Your profile";
+        avatar.replaceChildren(photo);
+      } else avatar.textContent = initial;
     });
   }catch(e){ /* not fatal — icon just stays generic */ }
 });

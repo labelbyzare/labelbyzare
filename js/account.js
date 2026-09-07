@@ -12,7 +12,11 @@ function initials(str){
 
 function setAvatar(el, url, name){
   if(url){
-    el.innerHTML = `<img src="${url}" alt="Profile photo" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+    const photo = document.createElement("img");
+    photo.src = LZCatalog.image(url);
+    photo.alt = "Profile photo";
+    photo.style.cssText = "width:100%;height:100%;border-radius:50%;object-fit:cover";
+    el.replaceChildren(photo);
   } else {
     el.textContent = initials(name);
   }
@@ -45,6 +49,7 @@ function renderSidebar(){
 }
 
 function switchTab(tab){
+  if(!["profile", "orders", "addresses", "settings"].includes(tab)) tab = "profile";
   document.querySelectorAll(".tab-panel").forEach(p => p.style.display = "none");
   document.querySelectorAll(".tab-link").forEach(l => l.classList.remove("active"));
 
@@ -104,7 +109,7 @@ document.getElementById("avatar-input").addEventListener("change", async (e) => 
   setAvatar(document.getElementById("profile-avatar"), avatarUrl, currentProfile.full_name);
   setAvatar(document.getElementById("sidebar-avatar"), avatarUrl, currentProfile.full_name);
   document.querySelectorAll(".nav-avatar-photo").forEach(el => {
-    el.innerHTML = `<img src="${avatarUrl}" alt="${currentProfile.full_name || ""}">`;
+    setAvatar(el, avatarUrl, currentProfile.full_name);
   });
   successEl.textContent = "Profile photo updated.";
   successEl.classList.add("show");
@@ -144,15 +149,15 @@ async function renderOrdersTab(){
   empty.style.display = "none";
 
   list.innerHTML = orders.map(o => {
-    const items = (o.items || []).map(i => `${i.name} × ${i.qty}`).join(", ");
+    const items = (Array.isArray(o.items) ? o.items : []).filter(Boolean).map(i => `${LZCatalog.escape(i.name)} × ${LZCatalog.escape(i.qty)}`).join(", ");
     const date = new Date(o.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     return `<div class="order-card">
       <div class="order-card-head">
         <div>
-          <div class="order-num">${o.order_number}</div>
+          <div class="order-num">${LZCatalog.escape(o.order_number)}</div>
           <div style="font-size:0.78rem;color:var(--taupe)">${date}</div>
         </div>
-        <span class="order-status-badge">${o.status || "new"}</span>
+        <span class="order-status-badge">${LZCatalog.escape(o.status || "new")}</span>
       </div>
       <div class="order-items-mini">${items}</div>
       <div style="margin-top:.6rem;font-weight:700">${formatPKR(o.total)}</div>
@@ -177,17 +182,17 @@ async function renderAddressesTab(){
     list.innerHTML = editingAddresses.map(a => `
       <div class="address-card">
         <div class="address-card-head">
-          <span class="tag ${a.is_default ? "default" : ""}">${a.label}${a.is_default ? " · Default" : ""}</span>
+          <span class="tag ${a.is_default ? "default" : ""}">${LZCatalog.escape(a.label)}${a.is_default ? " · Default" : ""}</span>
         </div>
         <div style="font-size:0.9rem;line-height:1.6">
-          <strong>${a.full_name}</strong><br>
-          ${a.address}, ${a.area}, ${a.city}${a.postal_code ? ", " + a.postal_code : ""}<br>
-          ${a.country}<br>
-          ${a.phone}
+          <strong>${LZCatalog.escape(a.full_name)}</strong><br>
+          ${LZCatalog.escape(a.address)}, ${LZCatalog.escape(a.area)}, ${LZCatalog.escape(a.city)}${a.postal_code ? ", " + LZCatalog.escape(a.postal_code) : ""}<br>
+          ${LZCatalog.escape(a.country)}<br>
+          ${LZCatalog.escape(a.phone)}
         </div>
         <div class="address-actions">
-          <button data-edit="${a.id}">Edit</button>
-          <button data-delete="${a.id}" class="danger">Delete</button>
+          <button data-edit="${LZCatalog.escape(a.id)}">Edit</button>
+          <button data-delete="${LZCatalog.escape(a.id)}" class="danger">Delete</button>
         </div>
       </div>
     `).join("");
@@ -309,16 +314,22 @@ document.getElementById("change-password-btn").addEventListener("click", async (
   successEl.classList.add("show");
 });
 
-document.getElementById("delete-account-btn").addEventListener("click", async () => {
+document.getElementById("delete-account-btn").addEventListener("click", async (event) => {
   const errEl = document.getElementById("delete-error");
   errEl.classList.remove("show");
+  const button = event.currentTarget;
+  if(button.disabled) return;
 
-  if(!confirm("This will permanently delete your profile, addresses, cart and wishlist. Continue?")) return;
+  if(!confirm("Clear your profile details, addresses, bag and wishlist and sign out? Your login, orders, reviews and uploaded photos will remain.")) return;
 
-  const { error } = await CustomerAuth.deleteMyData();
+  button.disabled = true;
+  let error;
+  try{ ({ error } = await CustomerAuth.deleteMyData()); }
+  catch(err){ error = err; }
   if(error){
-    errEl.textContent = error.message;
+    errEl.textContent = "We couldn't finish clearing your saved data. Some entries may already have been removed. Please try again or contact us.";
     errEl.classList.add("show");
+    button.disabled = false;
     return;
   }
   window.location.href = "/";

@@ -54,4 +54,24 @@ const articles=[
   ['A common question','<h3><span lang="ur-Latn">Meri height ke liye konsa abaya size theek hai?</span></h3><p>Height helps you think about length, but it does not determine the full fit. Compare garment length, body width and sleeves with a piece you already wear comfortably, using the same measurement method.</p>']
  ]}
 ];
-module.exports={articles,get:slug=>articles.find(a=>a.slug===slug)};
+const Catalog=require('./catalog');
+function normalize(row){
+  if(!row) return null;
+  const sections=Array.isArray(row.sections)?row.sections.map(section=>Array.isArray(section)?section:[section.heading||'',section.body||'']):[];
+  return {slug:row.slug,title:row.title,collection:row.collection||'abayas',summary:row.summary||'',sections};
+}
+async function list(){
+  try{
+    const rows=await Catalog.request('journal_articles?select=slug,title,collection,summary,sections,sort_order&active=eq.true&order=sort_order.asc,slug.asc',{timeoutMs:2500});
+    if(Array.isArray(rows)&&rows.length) return rows.map(normalize).filter(Boolean);
+  }catch(error){ console.warn('Journal CMS unavailable; using bundled guides.',error?.message||error); }
+  return articles;
+}
+async function getLive(slug){
+  try{
+    const rows=await Catalog.request(`journal_articles?slug=eq.${encodeURIComponent(slug)}&active=eq.true&select=slug,title,collection,summary,sections&limit=1`,{timeoutMs:2500});
+    if(Array.isArray(rows)&&rows[0]) return normalize(rows[0]);
+  }catch(error){ console.warn('Journal CMS lookup unavailable; using bundled guide.',error?.message||error); }
+  return articles.find(a=>a.slug===slug)||null;
+}
+module.exports={articles,get:slug=>articles.find(a=>a.slug===slug),list,getLive};

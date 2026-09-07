@@ -21,6 +21,17 @@
     },
     slug(value){ return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60) || "abaya"; },
     productUrl(p){ return p?.id ? `/product/${core.slug(p.name)}/${encodeURIComponent(p.id)}` : "/shop"; },
+    productLabel(p){
+      const name=String(p?.name || 'Label by Zare piece').trim();
+      const category=String(p?.category || '').trim();
+      const type=/^shawls?$/i.test(category) ? 'Shawl' : /^kaftan$/i.test(category) ? 'Kaftan' : 'Abaya';
+      return /\b(?:abayas?|kaftans?|shawls?)\b/i.test(name) ? name : `${name} ${type}`;
+    },
+    productTitle(p){ return `${core.productLabel(p)} | Label by Zare`; },
+    imageAlt(p,index=0){
+      // Use known catalog details; never invent a fabric, angle or colour.
+      return core.productLabel(p)+(index>0 ? ` — photograph ${index+1}` : '');
+    },
     stocked(p){ return !!p && p.in_stock !== false && p.inStock !== false && p.discontinued !== true; },
     normalize(p){
       const images = [...new Set([p.img,p.img2,...(Array.isArray(p.gallery) ? p.gallery : [])].map(core.image).filter(Boolean))];

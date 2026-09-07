@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     link.href=productUrl(product);
     const img=node("img");
     img.src=imageUrl(product.img);
-    img.alt=product.name;
+    img.alt=LZCatalog.imageAlt(product);
     img.loading="lazy";
     img.decoding="async";
     img.width=600; img.height=800;
@@ -110,10 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!overlay.classList.contains("open")) return;
     clearTimeout(focusTimer);clearTimeout(searchTimer);
     overlay.classList.remove("open");
+    opener?.focus();
     overlay.setAttribute("aria-hidden","true");
     overlay.inert=true;
-    document.body.style.overflow=document.querySelector(".mobile-menu.open, .cart-drawer.open, .zoom-overlay.open") ? "hidden" : previousOverflow;
-    opener?.focus();
+    document.body.style.overflow=document.querySelector(".mobile-menu.open, .cart-drawer.open, .zoom-lightbox.active") ? "hidden" : previousOverflow;
   }
   document.querySelectorAll(".js-open-search").forEach(button=>button.addEventListener("click",event=>{
     event.preventDefault();openSearch(button);

@@ -32,10 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
             ${stocked && p.isNew ? '<span class="tag tag-new">New</span>' : ""}
             ${stocked && p.isSale ? '<span class="tag tag-sale">Sale</span>' : ""}
           </div>
-          <img class="img-primary" src="${p.img}" alt="${p.name}" loading="lazy">
-          <img class="img-secondary" src="${p.img2}" alt="${p.name} alternate view" loading="lazy">
+          <img class="img-primary" src="${LZCatalog.escape(LZCatalog.image(p.img))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p))}" loading="lazy">
+          <img class="img-secondary" src="${LZCatalog.escape(LZCatalog.image(p.img2))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p,1))}" loading="lazy">
         </a>
-      <button class="wishlist-btn ${LZ.isWished(p.id) ? "active" : ""}" data-wish-id="${p.id}" aria-label="Save to wishlist">
+      <button class="wishlist-btn ${LZ.isWished(p.id) ? "active" : ""}" data-wish-id="${LZCatalog.escape(p.id)}" aria-label="Save to wishlist">
         <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>
       </button>
       <div class="quick-add">
@@ -45,8 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="${productUrl(p)}">
         <div class="product-info">
           <div>
-            <h3>${p.name}</h3>
-            <div class="cat">${p.category}</div>
+            <h3>${LZCatalog.escape(p.name)}</h3>
+            <div class="cat">${LZCatalog.escape(p.category)}</div>
           </div>
           <div class="price-row">
             ${p.oldPrice ? `<span class="price-old">${formatPKR(p.oldPrice)}</span>` : ""}

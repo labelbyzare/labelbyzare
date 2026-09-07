@@ -82,7 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return ["https:", "http:"].includes(url.protocol) ? escape(url.href) : "";
     } catch { return ""; }
   }
-  function productCard(p) {
+  function productCard(p, isHeading=true) {
+    const titleTag=isHeading ? 'h3' : 'p';
     const stocked = isInStock(p);
     const href = escape(productUrl(p));
     const name = escape(p.name);
@@ -93,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return `<article class="product-card home-product-card${stocked ? "" : " is-soldout"}">
       <div class="product-media${alternate ? "" : " no-alt"}">
         <a href="${href}" aria-label="View ${name}">
-          ${primary ? `<img class="img-primary" src="${primary}" ${LZCatalog.responsive(p.img)} alt="${name}" loading="lazy" decoding="async" width="600" height="800">` : '<span class="home-image-placeholder">Image coming soon</span>'}
+          ${primary ? `<img class="img-primary" src="${primary}" ${LZCatalog.responsive(p.img)} alt="${escape(LZCatalog.imageAlt(p))}" loading="lazy" decoding="async" width="600" height="800">` : '<span class="home-image-placeholder">Image coming soon</span>'}
           ${alternate ? `<img class="img-secondary" src="${secondary}" ${LZCatalog.responsive(p.img2)} alt="" loading="lazy" decoding="async" width="600" height="800">` : ""}
         </a>
         <div class="product-tags">${!stocked ? '<span class="tag tag-soldout">Sold out</span>' : p.isSale ? '<span class="tag tag-sale">Sale</span>' : p.isNew ? '<span class="tag tag-new">New</span>' : ""}</div>
@@ -104,13 +105,13 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="product-info">
         <div class="cat">${escape(p.category || "Abaya")}</div>
-        <h3><a href="${href}">${name}</a></h3>
+        <${titleTag} class="product-name"><a href="${href}">${name}</a></${titleTag}>
         <div class="price-row"><span class="price${p.isSale ? " price-sale" : ""}">${escape(formatPKR(p.price))}</span>${p.oldPrice > p.price ? `<span class="price-old">${escape(formatPKR(p.oldPrice))}</span>` : ""}</div>
       </div>
     </article>`;
   }
   function renderCards(target, list, emptyText) {
-    target.innerHTML = list.length ? list.map(productCard).join("") : `<div class="home-empty"><p>${escape(emptyText)}</p></div>`;
+    target.innerHTML = list.length ? list.map(p=>productCard(p,target===grid)).join("") : `<div class="home-empty"><p>${escape(emptyText)}</p></div>`;
     target.setAttribute("aria-busy", "false");
   }
   function updateUrl() {
@@ -246,12 +247,15 @@ document.addEventListener("DOMContentLoaded", () => {
       products = window.PRODUCTS || [];
       const occasionProduct = products.find(p => p.id === occasionBanner?.dataset.occasionProduct);
       if(occasionProduct && occasionImage && occasionLink){
-        try {
-          const url = new URL(occasionProduct.img, location.href);
-          if(occasionProduct.img && ["http:","https:"].includes(url.protocol)) occasionImage.src = url.href;
-        } catch {}
-        occasionImage.alt = `${occasionProduct.name} by Label by Zare`;
-        occasionLink.href = productUrl(occasionProduct);
+        const cms = window.LZSiteSettings || {};
+        if(!cms.occasion_image_url){
+          try {
+            const url = new URL(occasionProduct.img, location.href);
+            if(occasionProduct.img && ["http:","https:"].includes(url.protocol)) occasionImage.src = url.href;
+          } catch {}
+          occasionImage.alt = LZCatalog.imageAlt(occasionProduct);
+        }
+        if(!cms.occasion_url) occasionLink.href = productUrl(occasionProduct);
       }
       loaded = true;
       const params = new URLSearchParams(location.search);

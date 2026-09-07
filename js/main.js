@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let lenis;
   let scrollFrame;
   let scrollTicker;
-  const scrollPanels = [...document.querySelectorAll(".mobile-menu, .search-overlay, .cart-drawer, .zoom-overlay")];
+  const scrollPanels = [...document.querySelectorAll(".mobile-menu, .search-overlay, .cart-drawer, .zoom-lightbox")];
   scrollPanels.forEach(panel => panel.setAttribute("data-lenis-prevent", ""));
   function syncScrollLock(){
     if(!lenis) return;
@@ -115,6 +115,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const burger = document.querySelector(".nav-burger");
   const mobileMenu = document.querySelector(".mobile-menu");
   const collectionMenus = [...document.querySelectorAll(".collection-menu")];
+  let menuOverflow = "";
+  function setMobileMenu(open){
+    if(!mobileMenu) return;
+    if(open && !mobileMenu.classList.contains("open")) menuOverflow = document.body.style.overflow;
+    burger?.classList.toggle("open", open);
+    burger?.setAttribute("aria-expanded", String(open));
+    mobileMenu.inert = !open;
+    mobileMenu.setAttribute("aria-hidden", String(!open));
+    mobileMenu.classList.toggle("open", open);
+    document.body.style.overflow = open ? "hidden" : menuOverflow;
+  }
   function closeCollectionMenus(except){
     collectionMenus.forEach(menu => { if(menu !== except) menu.open = false; });
   }
@@ -127,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(event.target.closest(".collection-submenu a")) closeCollectionMenus();
   });
   document.addEventListener("keydown", event => {
-    if(event.key !== "Escape" || document.querySelector(".search-overlay.open")) return;
+    if(event.key !== "Escape" || document.querySelector(".search-overlay.open, .cart-drawer.open, .zoom-lightbox.active")) return;
     const openMenu = collectionMenus.find(menu => menu.open);
     if(openMenu){
       event.preventDefault();event.stopImmediatePropagation();
@@ -135,40 +146,36 @@ document.addEventListener("DOMContentLoaded", () => {
       openMenu.querySelector("summary").focus();
     } else if(mobileMenu?.classList.contains("open")){
       event.preventDefault();event.stopImmediatePropagation();
-      burger?.classList.remove("open");
-      mobileMenu.classList.remove("open");
-      document.body.style.overflow = "";
+      setMobileMenu(false);
       burger?.focus();
     }
   });
   burger?.addEventListener("click", () => {
     closeCollectionMenus();
-    burger.classList.toggle("open");
-    mobileMenu?.classList.toggle("open");
-    document.body.style.overflow = mobileMenu?.classList.contains("open") ? "hidden" : "";
+    setMobileMenu(!mobileMenu?.classList.contains("open"));
   });
   mobileMenu?.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
     closeCollectionMenus();
-    burger?.classList.remove("open");
-    mobileMenu?.classList.remove("open");
-    document.body.style.overflow = "";
+    setMobileMenu(false);
   }));
 
-  /* ---------- Generic accordion (used on product page) ---------- */
-  document.querySelectorAll(".acc-head").forEach(head => {
-    head.addEventListener("click", () => {
-      const item = head.closest(".acc-item");
-      const body = item.querySelector(".acc-body");
-      const isOpen = item.classList.contains("open");
-      item.parentElement.querySelectorAll(".acc-item.open").forEach(other => {
-        other.classList.remove("open");
-        other.querySelector(".acc-body").style.maxHeight = null;
-      });
-      if(!isOpen){
-        item.classList.add("open");
-        body.style.maxHeight = body.scrollHeight + "px";
-      }
+  /* ---------- Generic accordion (supports dynamically loaded FAQs) ---------- */
+  document.addEventListener("click", event => {
+    const head = event.target.closest(".acc-head");
+    if(!head) return;
+    const item = head.closest(".acc-item");
+    const body = item?.querySelector(".acc-body");
+    if(!item || !body) return;
+    const isOpen = item.classList.contains("open");
+    item.parentElement?.querySelectorAll(".acc-item.open").forEach(other => {
+      other.classList.remove("open");
+      const otherBody = other.querySelector(".acc-body");
+      if(otherBody) otherBody.style.maxHeight = null;
     });
+    if(!isOpen){
+      item.classList.add("open");
+      body.style.maxHeight = body.scrollHeight + "px";
+    }
   });
 
   /* ---------- Scroll reveal animations ---------- */
@@ -203,11 +210,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if(!email) return;
 
       const btn = form.querySelector('button[type="submit"]');
+      if(btn.disabled) return;
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = "…";
 
-      const { error } = await supabaseClient.from("newsletter_subscribers").insert({ email });
+      let error;
+      try{ ({ error } = await supabaseClient.from("newsletter_subscribers").insert({ email })); }
+      catch(err){ error = err; }
 
       btn.disabled = false;
       btn.textContent = originalText;

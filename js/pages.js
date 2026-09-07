@@ -22,10 +22,10 @@ window.renderCartPage = function(){
     const p = getProductById(line.id);
     if(!p) return "";
     return `<div class="cart-line">
-      <a href="${productUrl(p)}"><img src="${p.img}" alt="${p.name}" loading="lazy"></a>
+      <a href="${productUrl(p)}"><img src="${LZCatalog.escape(LZCatalog.image(p.img))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p))}" loading="lazy"></a>
       <div>
-        <a href="${productUrl(p)}" class="cart-line-name serif">${p.name}</a>
-        <div class="cart-line-meta">${line.size} · ${line.color}</div>
+        <a href="${productUrl(p)}" class="cart-line-name serif">${LZCatalog.escape(p.name)}</a>
+        <div class="cart-line-meta">${LZCatalog.escape(line.size)} · ${LZCatalog.escape(line.color)}</div>
         <div class="cart-line-controls">
           <div class="qty-stepper">
             <button aria-label="Decrease quantity" onclick="LZ.updateQty(${i},-1)">−</button>
@@ -73,19 +73,19 @@ window.renderWishlistPage = function(){
           <div class="product-tags">
             ${!stocked ? '<span class="tag tag-soldout">Sold Out</span>' : ""}
           </div>
-          <img class="img-primary" src="${p.img}" alt="${p.name}" loading="lazy">
-          <img class="img-secondary" src="${p.img2}" alt="${p.name} alternate view" loading="lazy">
+          <img class="img-primary" src="${LZCatalog.escape(LZCatalog.image(p.img))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p))}" loading="lazy">
+          <img class="img-secondary" src="${LZCatalog.escape(LZCatalog.image(p.img2))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p,1))}" loading="lazy">
         </a>
-      <button class="wishlist-btn active" data-wish-id="${p.id}" aria-label="Remove from wishlist">
+      <button class="wishlist-btn active" data-wish-id="${LZCatalog.escape(p.id)}" aria-label="Remove from wishlist">
         <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>
       </button>
       <div class="quick-add">
-        <button class="btn btn-solid btn-block btn-sm" ${stocked ? `onclick="LZ.addToCart('${p.id}','${p.sizes[0]}','${p.colors[0].name}',1)"` : "disabled"}>${stocked ? "Add to Cart" : "Sold Out"}</button>
+        <button class="btn btn-solid btn-block btn-sm" ${stocked ? `data-quick-add="${LZCatalog.escape(p.id)}"` : "disabled"}>${stocked ? "Add to Cart" : "Sold Out"}</button>
       </div>
       </div>
       <a href="${productUrl(p)}">
         <div class="product-info">
-          <div><h3>${p.name}</h3><div class="cat">${p.category}</div></div>
+          <div><h3>${LZCatalog.escape(p.name)}</h3><div class="cat">${LZCatalog.escape(p.category)}</div></div>
           <div class="price-row"><span class="price">${formatPKR(p.price)}</span></div>
         </div>
       </a>

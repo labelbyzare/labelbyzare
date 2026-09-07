@@ -63,15 +63,15 @@ function buildProductPage(root){
     </nav>
     <div class="pdp-gallery reveal">
       <div class="pdp-main-img" id="pdp-main-img-wrap">
-        <img id="pdp-main-img" src="${e(p.gallery[0])}" width="832" height="1248" fetchpriority="high" decoding="async" ${LZCatalog.responsive(p.gallery[0], "(max-width:768px) 100vw, 50vw", [480,832,1248])} alt="${e(p.name)}">
+        <img id="pdp-main-img" src="${e(p.gallery[0])}" width="832" height="1248" fetchpriority="high" decoding="async" ${LZCatalog.responsive(p.gallery[0], "(max-width:768px) 100vw, 50vw", [480,832,1248])} alt="${e(LZCatalog.imageAlt(p))}">
         <button class="zoom-trigger" id="zoom-trigger" type="button" aria-label="Zoom image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
         </button>
       </div>
       <div class="pdp-thumbs">
         ${p.gallery.map((src, i) => `
-          <button class="${i === 0 ? "active" : ""}" data-src="${e(src)}" aria-label="View image ${i+1}">
-            <img width="80" height="120" loading="lazy" decoding="async" src="${e(src)}" ${LZCatalog.responsive(src,"80px",[80,160])} alt="${e(p.name)} — view ${i + 1}">
+          <button class="${i === 0 ? "active" : ""}" data-src="${e(src)}" aria-label="View ${e(LZCatalog.imageAlt(p,i))}">
+            <img width="80" height="120" loading="lazy" decoding="async" src="${e(src)}" ${LZCatalog.responsive(src,"80px",[80,160])} alt="${e(LZCatalog.imageAlt(p,i))}">
           </button>`).join("")}
       </div>
     </div>
@@ -165,10 +165,10 @@ function buildProductPage(root){
       const img = document.getElementById("pdp-main-img");
       if(window.gsap){
         gsap.to(img, { opacity: 0, duration: .18, onComplete: () => {
-          img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src;
+          img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; img.alt = LZCatalog.imageAlt(p,i);
           gsap.to(img, { opacity: 1, duration: .28 });
         }});
-      } else { img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; }
+      } else { img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; img.alt = LZCatalog.imageAlt(p,i); }
     });
   });
 
@@ -178,8 +178,8 @@ function buildProductPage(root){
     currentIdx = i;
     root.querySelectorAll(".pdp-thumbs button").forEach((b, bi) => b.classList.toggle("active", bi === i));
     const img = document.getElementById("pdp-main-img");
-    if(img){ img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = p.gallery[i]; }
-  }, p.name);
+    if(img){ img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = p.gallery[i]; img.alt = LZCatalog.imageAlt(p,i); }
+  }, LZCatalog.productLabel(p));
   document.getElementById("pdp-main-img-wrap")?.addEventListener("click", () => openZoom(currentIdx));
 
   // color
@@ -240,8 +240,8 @@ function buildProductPage(root){
             <div class="product-tags">
               ${!isInStock(rp) ? '<span class="tag tag-soldout">Sold Out</span>' : (rp.isNew ? '<span class="tag tag-new">New</span>' : "")}
             </div>
-            <img class="img-primary" width="600" height="800" src="${e(rp.img)}" ${LZCatalog.responsive(rp.img)} alt="${e(rp.name)}" loading="lazy">
-            <img class="img-secondary" width="600" height="800" src="${e(rp.img2)}" ${LZCatalog.responsive(rp.img2)} alt="${e(rp.name)} alternate view" loading="lazy">
+            <img class="img-primary" width="600" height="800" src="${e(rp.img)}" ${LZCatalog.responsive(rp.img)} alt="${e(LZCatalog.imageAlt(rp))}" loading="lazy">
+            <img class="img-secondary" width="600" height="800" src="${e(rp.img2)}" ${LZCatalog.responsive(rp.img2)} alt="${e(LZCatalog.imageAlt(rp,1))}" loading="lazy">
           </div>
         </a>
         <a href="${productUrl(rp)}">
@@ -282,6 +282,12 @@ function setupProductZoom(gallery, onNavigate, productName){
     box = document.createElement("div");
     box.id = "lz-zoom-lightbox";
     box.className = "zoom-lightbox";
+    box.setAttribute("data-lenis-prevent", "");
+    box.inert = true;
+    box.setAttribute("aria-hidden", "true");
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", "Product image viewer");
     box.innerHTML = `
       <div class="zoom-lightbox-hint">Scroll or pinch to zoom · Drag to pan</div>
       <button class="zoom-lightbox-close" type="button" aria-label="Close">
@@ -314,7 +320,7 @@ function setupProductZoom(gallery, onNavigate, productName){
   const zoomInBtn = box.querySelector('[data-zoom="in"]');
   const zoomOutBtn = box.querySelector('[data-zoom="out"]');
 
-  let index = 0, scale = 1, panX = 0, panY = 0;
+  let index = 0, scale = 1, panX = 0, panY = 0, opener = null, previousOverflow = "";
   let dragging = false, moved = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
   const pointers = new Map();
   let pinchStartDist = 0, pinchStartScale = 1;
@@ -351,14 +357,24 @@ function setupProductZoom(gallery, onNavigate, productName){
   }
 
   function open(i){
+    if(!box.classList.contains("active")){
+      opener = document.activeElement;
+      previousOverflow = document.body.style.overflow;
+    }
+    box.inert = false;
+    box.setAttribute("aria-hidden", "false");
     box.classList.add("active");
     document.body.style.overflow = "hidden";
     showIndex(i || 0);
+    closeBtn.focus({ preventScroll: true });
   }
 
   function close(){
     box.classList.remove("active");
-    document.body.style.overflow = "";
+    document.body.style.overflow = previousOverflow;
+    if(opener?.isConnected) opener.focus({ preventScroll: true });
+    box.inert = true;
+    box.setAttribute("aria-hidden", "true");
     scale = 1; panX = 0; panY = 0;
   }
 
@@ -371,7 +387,8 @@ function setupProductZoom(gallery, onNavigate, productName){
 
   document.addEventListener("keydown", (e) => {
     if(!box.classList.contains("active")) return;
-    if(e.key === "Escape") close();
+    if(e.key === "Escape"){ e.preventDefault(); e.stopImmediatePropagation(); close(); }
+    else if(e.key === "Tab") LZ.trapFocus(box, e);
     else if(e.key === "ArrowLeft") showIndex(index - 1);
     else if(e.key === "ArrowRight") showIndex(index + 1);
     else if(e.key === "+" || e.key === "=") setScale(scale + 1);

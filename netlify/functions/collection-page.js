@@ -43,7 +43,8 @@ exports.handler=async event=>{
     if(pageNumber>pages) return R.notFound();
     const visible=products.slice((pageNumber-1)*PAGE_SIZE,pageNumber*PAGE_SIZE);
     const name=collection?.name || ({'/shop':'The full collection','/sale':'The sale edit','/new-arrivals':'New arrivals','/search':'Search the collection'}[path]);
-    const title=(collection?.title || `${name} | Label by Zare`)+(pageNumber>1 ? ` — Page ${pageNumber}` : '');
+    const listingTitles={'/shop':'Abayas & Shawls Collection | Label by Zare','/sale':'Abaya & Shawl Sale | Label by Zare','/new-arrivals':'New Arrivals: Abayas & Shawls | Label by Zare','/search':'Search Abayas & Shawls | Label by Zare'};
+    const title=(collection?.title || listingTitles[path])+(pageNumber>1 ? ` — Page ${pageNumber}` : '');
     const description=collection?.intro || (search ? 'Search Label by Zare by product name, colour, fabric or collection.' : 'Discover abayas and shawls by Label by Zare. Browse available pieces, compare prices in PKR and order for delivery across Pakistan.');
     const canonical=path+(pageNumber>1 ? '?page='+pageNumber : '');
     const filtered=Object.keys(query).some(key=>!['page','utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].includes(key));

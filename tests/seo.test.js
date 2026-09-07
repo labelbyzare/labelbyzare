@@ -71,6 +71,8 @@ test('Homepage keeps the approved hero and sections while sending actual product
  assert.doesNotMatch(result.body,/<!--LZ_(?:BEST|FEATURED|COLLECTION)_START-->/);
  assert.ok(byType(result.body,'OnlineStore'));assert.ok(byType(result.body,'WebSite'));
  for(const p of rows) assert.ok(result.body.includes(C.productUrl(p)));
+ const headings=[...result.body.matchAll(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/g)].map(m=>m[1].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim().toLowerCase());
+ assert.equal(new Set(headings).size,headings.length,'Repeated merchandising must not duplicate page headings');
 });
 test('Merchandising can include a real shawl in both homepage edits',async()=>{
  rows.push({...fixture[0],id:'test-shawl',name:'Test Shawl',category:'Shawls',is_featured:true,is_bestseller:true,in_stock:true});
@@ -188,4 +190,34 @@ test('The visitor sitemap links every priced product once, including general aba
 test('Responsive product images stay on an allowlisted CDN path with an original fallback',()=>{
  const html=C.responsive(fixture[0].img);assert.match(html,/\/\.netlify\/images\?url=/);assert.match(html,/removeAttribute\('srcset'\)/);
  assert.equal(C.responsive('https://untrusted.example/image.jpg'),'');
+});
+test('Public page caching preserves query variants and never caches errors',async()=>{
+ for(const [fn,path] of [['home-page','/'],['collection-page','/shop'],['journal-page','/journal/'],['product-page',C.productUrl(rows[0])]]){
+  const result=await run(fn,path);assert.equal(result.statusCode,200);
+  assert.equal(result.headers['Cache-Control'],'public, max-age=0, must-revalidate');
+  assert.match(result.headers['Netlify-CDN-Cache-Control'],/durable/);
+  assert.match(result.headers['Netlify-CDN-Cache-Control'],/max-age=60, stale-while-revalidate=30/);
+  assert.equal(result.headers['Netlify-Vary'],'query');
+ }
+ const missing=await run('collection-page','/collections/no-such-collection/');
+ assert.equal(missing.statusCode,404);assert.equal(missing.headers['Cache-Control'],'no-store');
+ assert.equal(missing.headers['Netlify-CDN-Cache-Control'],undefined);
+ fail=true;
+ for(const [fn,path] of [['home-page','/'],['product-page',C.productUrl(rows[0])]]){
+  const result=await run(fn,path);assert.equal(result.statusCode,503);
+  assert.equal(result.headers['Cache-Control'],'no-store');
+  assert.equal(result.headers['Netlify-CDN-Cache-Control'],undefined);
+ }
+});
+test('A stalled optional review request is aborted while the product remains available',async()=>{
+ const fetchCatalog=global.fetch;let reviewAborted=false;
+ global.fetch=(input,options)=>String(input).includes('/product_reviews?') ? new Promise((resolve,reject)=>{
+  options.signal.addEventListener('abort',()=>{reviewAborted=true;reject(new Error('Review request timed out'));},{once:true});
+ }) : fetchCatalog(input,options);
+ const start=performance.now();
+ const result=await run('product-page',C.productUrl(rows[0]));
+ assert.equal(result.statusCode,200);assert.equal(reviewAborted,true);
+ assert.ok(performance.now()-start<2500,'Optional reviews must not block for the eight-second catalog timeout');
+ assert.equal(byType(result.body,'Product').aggregateRating,undefined);
+ assert.equal(Number(byType(result.body,'Product').offers.price),rows[0].price);
 });

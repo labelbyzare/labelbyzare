@@ -119,22 +119,78 @@
   }
 </style>
 <link rel="stylesheet" href="css/editorial.css?v=20260906-seo1">
+<link rel="stylesheet" href="css/admin-dashboard.css?v=20260907-admin2">
 </head>
 <body>
+<aside class="admin-sidebar" id="admin-sidebar" aria-label="Backend menu">
+  <div class="admin-brand">
+    <img src="images/logo-mark.jpg" alt="" width="42" height="42">
+    <div><strong>LABEL <em>by</em> ZARE</strong><span>Backend</span></div>
+  </div>
+  <nav class="admin-nav">
+    <button class="admin-nav-item active" type="button" data-section-target="dashboard"><span>▦</span><b>Dashboard</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="products"><span>□</span><b>Products</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="orders"><span>◫</span><b>Orders</b><i id="nav-orders-count"></i></button>
+    <button class="admin-nav-item" type="button" data-section-target="customers"><span>♙</span><b>Customers</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="reviews"><span>★</span><b>Reviews</b><i id="nav-reviews-count"></i></button>
+    <button class="admin-nav-item" type="button" data-section-target="messages"><span>◇</span><b>Messages</b><i id="nav-messages-count"></i></button>
+    <button class="admin-nav-item" type="button" data-section-target="subscribers"><span>✉</span><b>Subscribers</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="discounts"><span>％</span><b>Discounts</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="settings"><span>⚙</span><b>Website Settings</b></button>
+  </nav>
+  <div class="admin-sidebar-foot">
+    <a href="/" target="_blank" rel="noopener">View storefront ↗</a>
+  </div>
+</aside>
+<button class="admin-mobile-menu" id="admin-mobile-menu" type="button" aria-label="Open backend menu" aria-controls="admin-sidebar" aria-expanded="false">☰</button>
+
 
 <div class="topbar">
-  <h1>Admin Dashboard</h1>
-  <button id="logout-btn">Log Out</button>
+  <div>
+    <span class="admin-top-kicker">LABEL BY ZARE / BACKEND</span>
+    <h1 id="admin-page-title">Dashboard</h1>
+  </div>
+  <div class="admin-top-actions">
+    <span class="admin-live-dot"><i></i> Live store</span>
+    <button id="logout-btn">Log Out</button>
+  </div>
 </div>
 
 <div class="wrap">
   <p id="status">Checking session...</p>
 
   <div id="content" style="display:none;">
-    <div class="card">
+    <section class="admin-section-block" data-admin-section="dashboard" id="dashboard-card">
+      <div class="admin-page-head">
+        <div><span class="admin-eyebrow">Store overview</span><h2>Good to see you.</h2><p>A live view of sales, orders and customer activity.</p></div>
+        <button type="button" id="refresh-dashboard-btn">Refresh data</button>
+      </div>
+      <div class="admin-stat-grid">
+        <article class="admin-stat"><span>Total revenue</span><strong id="dash-revenue">Rs. —</strong><small id="dash-revenue-note">Across non-cancelled orders</small></article>
+        <article class="admin-stat"><span>Orders today</span><strong id="dash-orders-today">—</strong><small id="dash-orders-note">— total orders</small></article>
+        <article class="admin-stat"><span>Customers</span><strong id="dash-customers">—</strong><small>Profiles + guest buyers</small></article>
+        <article class="admin-stat"><span>Out of stock</span><strong id="dash-out-stock">—</strong><small id="dash-products-note">— products in catalog</small></article>
+      </div>
+      <div class="admin-dashboard-grid">
+        <article class="admin-panel admin-chart-panel">
+          <div class="admin-panel-head"><div><span>Revenue</span><h3>Last 30 days</h3></div><strong id="dash-30d-revenue">Rs. —</strong></div>
+          <div class="admin-chart-wrap"><canvas id="revenue-chart" aria-label="Revenue in the last 30 days"></canvas><div id="revenue-chart-empty" class="admin-empty-chart">No sales in this period yet.</div></div>
+        </article>
+        <article class="admin-panel">
+          <div class="admin-panel-head"><div><span>Products</span><h3>Best sellers</h3></div></div>
+          <div id="dash-best-sellers" class="admin-ranked-list"><p class="admin-muted">Loading…</p></div>
+        </article>
+      </div>
+      <article class="admin-panel">
+        <div class="admin-panel-head"><div><span>Orders</span><h3>Recent orders</h3></div><button type="button" data-go-section="orders">View all</button></div>
+        <div class="admin-table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody id="dash-recent-orders"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+      </article>
+    </section>
+
+    <div class="card" id="products-card" data-admin-section="products">
       <div class="admin-products-heading">
-        <h2>Product collections</h2>
-        <p>Choose a collection to manage its products or add a new piece.</p>
+        <span class="admin-eyebrow">Catalog</span><h2>Products</h2>
+        <p>Add, edit, feature, restock or remove pieces from your storefront.</p>
       </div>
       <div class="admin-product-tabs" id="admin-product-tabs" role="tablist" aria-label="Product collections">
         <button class="admin-product-tab" type="button" id="admin-tab-abayas" role="tab" aria-selected="true" aria-controls="admin-product-panel" tabindex="0" data-admin-type="abayas">
@@ -164,21 +220,27 @@
       </div>
     </div>
 
-    <div class="card" id="orders-card">
+    <div class="card" id="orders-card" data-admin-section="orders">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <strong>Orders</strong>
+        <div><span class="admin-eyebrow">Fulfilment</span><strong>Orders</strong></div>
         <button id="refresh-orders-btn">Refresh</button>
       </div>
-      <table>
+      <div class="admin-filterbar">
+        <input type="search" id="orders-search" placeholder="Search order, customer, email…" aria-label="Search orders">
+        <select id="orders-status-filter" aria-label="Filter orders by status">
+          <option value="all">All statuses</option><option value="new">New</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option><option value="returned">Returned</option>
+        </select>
+      </div>
+      <div class="admin-table-wrap"><table>
         <thead>
           <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr>
         </thead>
         <tbody id="orders-tbody"></tbody>
-      </table>
+      </table></div>
       <p id="orders-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No orders yet.</p>
     </div>
 
-    <div class="card" id="messages-card">
+    <div class="card" id="messages-card" data-admin-section="messages">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <strong>Messages <span id="messages-unread-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
         <button id="refresh-messages-btn">Refresh</button>
@@ -192,10 +254,10 @@
       <p id="messages-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No messages yet.</p>
     </div>
 
-    <div class="card" id="subscribers-card">
+    <div class="card" id="subscribers-card" data-admin-section="subscribers">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <strong>Subscribers <span id="subscribers-count-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
-        <button id="refresh-subscribers-btn">Refresh</button>
+        <div class="admin-inline-actions"><button id="export-subscribers-btn" type="button">Export CSV</button><button id="refresh-subscribers-btn">Refresh</button></div>
       </div>
       <table>
         <thead>
@@ -206,7 +268,21 @@
       <p id="subscribers-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No subscribers yet.</p>
     </div>
 
-    <div class="card" id="reviews-card">
+
+    <div class="card" id="customers-card" data-admin-section="customers">
+      <div class="admin-section-heading">
+        <div><span class="admin-eyebrow">CRM</span><h2>Customers</h2><p>Profiles, delivery addresses and purchase history in one place.</p></div>
+        <button type="button" id="refresh-customers-btn">Refresh</button>
+      </div>
+      <div class="admin-filterbar"><input type="search" id="customers-search" placeholder="Search customer, email, phone or city…" aria-label="Search customers"></div>
+      <div class="admin-table-wrap"><table>
+        <thead><tr><th>Customer</th><th>Contact</th><th>Location</th><th>Orders</th><th>Cart</th><th>Wishlist</th><th>Total spent</th><th>Last order</th><th></th></tr></thead>
+        <tbody id="customers-tbody"><tr><td colspan="9">Loading customers…</td></tr></tbody>
+      </table></div>
+      <p id="customers-empty-msg" class="admin-muted" hidden>No customer records yet.</p>
+    </div>
+
+    <div class="card" id="reviews-card" data-admin-section="reviews">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <strong>Reviews <span id="reviews-count-badge" class="badge" style="background:#4a6fa5;color:#fff;display:none;"></span></strong>
         <button id="refresh-reviews-btn">Refresh</button>
@@ -220,7 +296,182 @@
       <p id="reviews-empty-msg" style="display:none; color:#888; text-align:center; padding:1rem;">No reviews yet.</p>
     </div>
 
-    <div class="card" id="security-card">
+
+    <div class="card" id="discounts-card" data-admin-section="discounts">
+      <div class="admin-section-heading">
+        <div><span class="admin-eyebrow">Promotions</span><h2>Discounts</h2><p>Create coupon codes with percentage or fixed-value discounts.</p></div>
+        <button class="btn-primary" type="button" id="new-discount-btn">+ New coupon</button>
+      </div>
+      <div id="discounts-setup-note" class="admin-setup-note" hidden>Discount tables are not installed yet. Run <code>supabase/admin-dashboard-setup.sql</code> once in Supabase SQL Editor.</div>
+      <form id="discount-form" class="admin-form-grid" hidden>
+        <input type="hidden" id="discount-id">
+        <div class="field"><label for="discount-code">Coupon code</label><input type="text" id="discount-code" placeholder="WELCOME10" required></div>
+        <div class="field"><label for="discount-type">Discount type</label><select id="discount-type"><option value="percent">Percentage</option><option value="fixed">Fixed amount</option></select></div>
+        <div class="field"><label for="discount-value">Value</label><input type="number" id="discount-value" min="0" step="0.01" required></div>
+        <div class="field"><label for="discount-min-order">Minimum order (PKR)</label><input type="number" id="discount-min-order" min="0" step="1" value="0"></div>
+        <div class="field"><label for="discount-usage-limit">Usage limit</label><input type="number" id="discount-usage-limit" min="1" step="1" placeholder="Unlimited"></div>
+        <div class="field"><label for="discount-expiry">Expiry</label><input type="datetime-local" id="discount-expiry"></div>
+        <label class="admin-check"><input type="checkbox" id="discount-active" checked> Active</label>
+        <div class="form-actions admin-form-actions"><button type="button" id="discount-cancel-btn">Cancel</button><button type="submit" class="btn-primary">Save coupon</button></div>
+        <p id="discount-form-message" class="admin-form-message"></p>
+      </form>
+      <div class="admin-table-wrap"><table>
+        <thead><tr><th>Code</th><th>Offer</th><th>Minimum</th><th>Used</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+        <tbody id="discounts-tbody"><tr><td colspan="7">Loading coupons…</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <div class="card" id="website-settings-card" data-admin-section="settings">
+      <div class="admin-section-heading"><div><span class="admin-eyebrow">Storefront control</span><h2>Website Settings</h2><p>Edit your storefront content, photos, policies, FAQs and journal guides without touching HTML.</p></div></div>
+      <div id="settings-setup-note" class="admin-setup-note" hidden>Website CMS tables are not installed yet. Run <code>supabase/admin-dashboard-setup.sql</code> once in Supabase SQL Editor.</div>
+
+      <div class="admin-settings-tabs" role="tablist" aria-label="Website settings sections">
+        <button type="button" class="admin-settings-tab active" data-settings-panel="homepage">Homepage</button>
+        <button type="button" class="admin-settings-tab" data-settings-panel="story">Our Story</button>
+        <button type="button" class="admin-settings-tab" data-settings-panel="policies">Shipping &amp; Returns</button>
+        <button type="button" class="admin-settings-tab" data-settings-panel="faqs">FAQs</button>
+        <button type="button" class="admin-settings-tab" data-settings-panel="guides">Journal Guides</button>
+        <button type="button" class="admin-settings-tab" data-settings-panel="store">Store &amp; Social</button>
+      </div>
+
+      <form id="website-settings-form">
+        <section class="admin-settings-panel active" data-settings-content="homepage">
+          <h3 class="admin-form-section-title">Homepage hero</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-hero-eyebrow">Eyebrow</label><input type="text" id="setting-hero-eyebrow"></div>
+            <div class="field"><label for="setting-hero-line1">Headline line 1</label><input type="text" id="setting-hero-line1"></div>
+            <div class="field"><label for="setting-hero-line2">Headline line 2</label><input type="text" id="setting-hero-line2"></div>
+            <div class="field admin-span-2"><label for="setting-hero-tagline">Tagline</label><textarea id="setting-hero-tagline" rows="3"></textarea></div>
+            <div class="field"><label for="setting-hero-primary-text">Primary button text</label><input type="text" id="setting-hero-primary-text"></div>
+            <div class="field"><label for="setting-hero-secondary-text">Secondary link text</label><input type="text" id="setting-hero-secondary-text"></div>
+            <div class="field admin-span-2"><label for="setting-hero-image">Hero image URL</label><input type="text" id="setting-hero-image"><input type="file" data-setting-upload="setting-hero-image" accept="image/*"></div>
+          </div>
+
+          <h3 class="admin-form-section-title">The House section</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-house-label">Section label</label><input type="text" id="setting-house-label"></div>
+            <div class="field"><label for="setting-house-heading">Heading</label><input type="text" id="setting-house-heading"></div>
+            <div class="field admin-span-2"><label for="setting-house-text1">Story paragraph 1</label><textarea id="setting-house-text1" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-house-text2">Story paragraph 2</label><textarea id="setting-house-text2" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-house-text3">Story paragraph 3</label><textarea id="setting-house-text3" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-house-signoff">Sign-off</label><textarea id="setting-house-signoff" rows="3"></textarea></div>
+            <div class="field"><label for="setting-house-cta">Button text</label><input type="text" id="setting-house-cta"></div>
+            <div class="field"><label for="setting-house-image">House photo URL</label><input type="text" id="setting-house-image"><input type="file" data-setting-upload="setting-house-image" accept="image/*"></div>
+          </div>
+
+          <h3 class="admin-form-section-title">Occasion banner</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-occasion-eyebrow">Eyebrow</label><input type="text" id="setting-occasion-eyebrow"></div>
+            <div class="field"><label for="setting-occasion-heading">Heading</label><input type="text" id="setting-occasion-heading"></div>
+            <div class="field admin-span-2"><label for="setting-occasion-text">Description</label><textarea id="setting-occasion-text" rows="3"></textarea></div>
+            <div class="field"><label for="setting-occasion-cta">Button text</label><input type="text" id="setting-occasion-cta"></div>
+            <div class="field"><label for="setting-occasion-url">Button URL</label><input type="text" id="setting-occasion-url"></div>
+            <div class="field admin-span-2"><label for="setting-occasion-image">Occasion photo URL</label><input type="text" id="setting-occasion-image"><input type="file" data-setting-upload="setting-occasion-image" accept="image/*"></div>
+          </div>
+
+          <h3 class="admin-form-section-title">Homepage values &amp; newsletter</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-value1-title">Value 1 title</label><input type="text" id="setting-value1-title"></div>
+            <div class="field"><label for="setting-value1-text">Value 1 text</label><input type="text" id="setting-value1-text"></div>
+            <div class="field"><label for="setting-value2-title">Value 2 title</label><input type="text" id="setting-value2-title"></div>
+            <div class="field"><label for="setting-value2-text">Value 2 text</label><input type="text" id="setting-value2-text"></div>
+            <div class="field"><label for="setting-value3-title">Value 3 title</label><input type="text" id="setting-value3-title"></div>
+            <div class="field"><label for="setting-value3-text">Value 3 text</label><input type="text" id="setting-value3-text"></div>
+            <div class="field"><label for="setting-newsletter-eyebrow">Newsletter eyebrow</label><input type="text" id="setting-newsletter-eyebrow"></div>
+            <div class="field"><label for="setting-newsletter-heading">Newsletter heading</label><input type="text" id="setting-newsletter-heading"></div>
+            <div class="field admin-span-2"><label for="setting-newsletter-text">Newsletter text</label><textarea id="setting-newsletter-text" rows="3"></textarea></div>
+          </div>
+        </section>
+
+        <section class="admin-settings-panel" data-settings-content="story">
+          <h3 class="admin-form-section-title">Our Story page</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-about-eyebrow">Hero eyebrow</label><input type="text" id="setting-about-eyebrow"></div>
+            <div class="field"><label for="setting-about-title">Hero title</label><input type="text" id="setting-about-title"></div>
+            <div class="field admin-span-2"><label for="setting-about-hero-image">Hero photo URL</label><input type="text" id="setting-about-hero-image"><input type="file" data-setting-upload="setting-about-hero-image" accept="image/*"></div>
+            <div class="field"><label for="setting-about-ch1-title">Chapter one heading</label><input type="text" id="setting-about-ch1-title"></div>
+            <div class="field admin-span-2"><label for="setting-about-ch1-text1">Chapter one paragraph 1</label><textarea id="setting-about-ch1-text1" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-about-ch1-text2">Chapter one paragraph 2</label><textarea id="setting-about-ch1-text2" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-about-story-image">Story photo URL</label><input type="text" id="setting-about-story-image"><input type="file" data-setting-upload="setting-about-story-image" accept="image/*"></div>
+            <div class="field"><label for="setting-about-ch2-title">Chapter two heading</label><input type="text" id="setting-about-ch2-title"></div>
+            <div class="field admin-span-2"><label for="setting-about-ch2-text1">Chapter two paragraph 1</label><textarea id="setting-about-ch2-text1" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-about-ch2-text2">Chapter two paragraph 2</label><textarea id="setting-about-ch2-text2" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-about-craft-image">Craftsmanship photo URL</label><input type="text" id="setting-about-craft-image"><input type="file" data-setting-upload="setting-about-craft-image" accept="image/*"></div>
+            <div class="field"><label for="setting-about-values-eyebrow">Values eyebrow</label><input type="text" id="setting-about-values-eyebrow"></div>
+            <div class="field"><label for="setting-about-values-heading">Values heading</label><input type="text" id="setting-about-values-heading"></div>
+            <div class="field"><label for="setting-about-cta-heading">Bottom CTA heading</label><input type="text" id="setting-about-cta-heading"></div>
+            <div class="field"><label for="setting-about-cta-text">Bottom CTA button</label><input type="text" id="setting-about-cta-text"></div>
+          </div>
+        </section>
+
+        <section class="admin-settings-panel" data-settings-content="policies">
+          <h3 class="admin-form-section-title">Shipping pricing</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-standard-fee">Standard delivery (PKR)</label><input type="number" id="setting-standard-fee" min="0"></div>
+            <div class="field"><label for="setting-express-fee">Express delivery (PKR)</label><input type="number" id="setting-express-fee" min="0"></div>
+            <div class="field"><label for="setting-free-shipping">Free shipping above (PKR)</label><input type="number" id="setting-free-shipping" min="0"></div>
+            <div class="field"><label for="setting-standard-days">Standard delivery time</label><input type="text" id="setting-standard-days" placeholder="3–5 business days nationwide"></div>
+            <div class="field"><label for="setting-express-days">Express delivery time</label><input type="text" id="setting-express-days" placeholder="1–2 business days in major cities"></div>
+            <div class="field"><label for="setting-processing-days">Processing time</label><input type="text" id="setting-processing-days" placeholder="1–2 business days"></div>
+          </div>
+          <h3 class="admin-form-section-title">Returns &amp; support copy</h3>
+          <div class="admin-form-grid">
+            <div class="field admin-span-2"><label for="setting-return-policy">Returns &amp; exchanges text</label><textarea id="setting-return-policy" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-return-process">Return process text</label><textarea id="setting-return-process" rows="4"></textarea></div>
+            <div class="field admin-span-2"><label for="setting-size-intro">Size guide intro</label><textarea id="setting-size-intro" rows="3"></textarea></div>
+            <div class="field"><label for="setting-support-eyebrow">Support hero eyebrow</label><input type="text" id="setting-support-eyebrow"></div>
+            <div class="field"><label for="setting-support-title">Support hero title</label><input type="text" id="setting-support-title"></div>
+            <div class="field admin-span-2"><label for="setting-support-hero-image">Support hero photo URL</label><input type="text" id="setting-support-hero-image"><input type="file" data-setting-upload="setting-support-hero-image" accept="image/*"></div>
+            <div class="field"><label for="setting-support-help-heading">Help section heading</label><input type="text" id="setting-support-help-heading"></div>
+            <div class="field admin-span-2"><label for="setting-support-help-text">Help section text</label><textarea id="setting-support-help-text" rows="3"></textarea></div>
+          </div>
+        </section>
+
+        <section class="admin-settings-panel" data-settings-content="faqs">
+          <div class="admin-section-heading compact"><div><h3>Frequently Asked Questions</h3><p>Add as many FAQs as you need, reorder them and publish or hide individual questions.</p></div><button type="button" class="btn-primary" id="new-faq-btn">+ Add FAQ</button></div>
+          <div id="faq-editor" class="admin-inline-editor" hidden>
+            <input type="hidden" id="faq-id">
+            <div class="field"><label for="faq-question">Question</label><input type="text" id="faq-question"></div>
+            <div class="field"><label for="faq-answer">Answer</label><textarea id="faq-answer" rows="5"></textarea></div>
+            <div class="admin-form-grid"><div class="field"><label for="faq-order">Display order</label><input type="number" id="faq-order" min="0" value="0"></div><label class="admin-check"><input type="checkbox" id="faq-active" checked> Published</label></div>
+            <div class="form-actions"><button type="button" id="faq-cancel-btn">Cancel</button><button type="button" class="btn-primary" id="faq-save-btn">Save FAQ</button></div><p id="faq-message" class="admin-form-message"></p>
+          </div>
+          <div class="admin-table-wrap"><table><thead><tr><th>Order</th><th>Question</th><th>Status</th><th></th></tr></thead><tbody id="faqs-admin-tbody"><tr><td colspan="4">Loading FAQs…</td></tr></tbody></table></div>
+        </section>
+
+        <section class="admin-settings-panel" data-settings-content="guides">
+          <div class="admin-section-heading compact"><div><h3>Journal Guides</h3><p>Edit every buying/styling guide that appears under /journal/.</p></div><button type="button" class="btn-primary" id="new-guide-btn">+ New guide</button></div>
+          <div id="guide-editor" class="admin-inline-editor" hidden>
+            <input type="hidden" id="guide-original-slug">
+            <div class="admin-form-grid">
+              <div class="field"><label for="guide-slug">URL slug</label><input type="text" id="guide-slug" placeholder="everyday-abaya-guide"></div>
+              <div class="field"><label for="guide-collection">Collection key</label><input type="text" id="guide-collection" placeholder="abayas"></div>
+              <div class="field admin-span-2"><label for="guide-title">Title</label><input type="text" id="guide-title"></div>
+              <div class="field admin-span-2"><label for="guide-summary">Summary / SEO description</label><textarea id="guide-summary" rows="3"></textarea></div>
+              <div class="field"><label for="guide-order">Display order</label><input type="number" id="guide-order" min="0" value="0"></div>
+              <label class="admin-check"><input type="checkbox" id="guide-active" checked> Published</label>
+            </div>
+            <div class="admin-section-heading compact"><div><h4>Guide sections</h4><p>Each section has a heading and rich HTML body. Basic links, paragraphs, lists and tables are supported.</p></div><button type="button" id="guide-add-section-btn">+ Add section</button></div>
+            <div id="guide-sections-editor"></div>
+            <div class="form-actions"><button type="button" id="guide-cancel-btn">Cancel</button><button type="button" class="btn-primary" id="guide-save-btn">Save guide</button></div><p id="guide-message" class="admin-form-message"></p>
+          </div>
+          <div class="admin-table-wrap"><table><thead><tr><th>Order</th><th>Guide</th><th>Collection</th><th>Status</th><th></th></tr></thead><tbody id="guides-admin-tbody"><tr><td colspan="5">Loading guides…</td></tr></tbody></table></div>
+        </section>
+
+        <section class="admin-settings-panel" data-settings-content="store">
+          <h3 class="admin-form-section-title">Store links</h3>
+          <div class="admin-form-grid">
+            <div class="field"><label for="setting-whatsapp">WhatsApp number</label><input type="text" id="setting-whatsapp" placeholder="923001234567"></div>
+            <div class="field"><label for="setting-instagram">Instagram URL</label><input type="text" id="setting-instagram"></div>
+            <div class="field admin-span-2"><label for="setting-footer-text">Footer brand text</label><textarea id="setting-footer-text" rows="3"></textarea></div>
+          </div>
+        </section>
+
+        <div class="admin-settings-savebar"><button class="btn-primary" type="submit" id="save-website-settings-btn">Save website content</button><p id="settings-form-message" class="admin-form-message"></p></div>
+      </form>
+    </div>
+
+    <div class="card" id="security-card" data-admin-section="settings">
       <strong>Security — Two-Factor Authentication</strong>
       <p id="mfa-status" style="color:#888; margin:0.6rem 0;">Checking status...</p>
 
@@ -372,10 +623,13 @@
       <label>Status</label>
       <select id="order-status-select">
         <option value="new">New</option>
+        <option value="confirmed">Confirmed</option>
         <option value="processing">Processing</option>
         <option value="shipped">Shipped</option>
-        <option value="completed">Completed</option>
+        <option value="delivered">Delivered</option>
+        <option value="completed">Completed (legacy)</option>
         <option value="cancelled">Cancelled</option>
+        <option value="returned">Returned</option>
       </select>
     </div>
     <div class="form-actions">
@@ -399,12 +653,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
-<script src="js/catalog-core.js?v=20260906-seo1"></script>
+<script src="js/catalog-core.js?v=20260907-seo2"></script>
 <script src="js/store-policy.js?v=20260906-seo1"></script>
+<script src="js/site-settings.js?v=20260907-admin2"></script>
 <script src="js/collections.js?v=20260906-seo1"></script>
 <script src="js/product-types.js?v=20260906-seo1"></script>
 <script src="js/structured-data.js?v=20260906-seo1"></script>
 
+<div class="overlay" id="customer-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
+  <div class="form-card admin-customer-modal-box">
+    <div style="display:flex;justify-content:flex-end"><button type="button" data-close-customer-modal aria-label="Close customer details">×</button></div>
+    <div id="customer-modal-body"><h2 id="customer-modal-title">Customer details</h2><p>Loading…</p></div>
+  </div>
+</div>
 <script>
 const statusEl = document.getElementById("status");
 const contentEl = document.getElementById("content");
@@ -458,6 +719,7 @@ async function checkAccess() {
   contentEl.style.display = "block";
   loadProducts();
   loadMfaStatus();
+  window.dispatchEvent(new CustomEvent("lz:admin-ready"));
 }
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -878,8 +1140,8 @@ const orderDetailsBody = document.getElementById("order-details-body");
 const orderStatusSelect = document.getElementById("order-status-select");
 let currentOrderId = null;
 
-const STATUS_LABELS = { new: "New", processing: "Processing", shipped: "Shipped", completed: "Completed", cancelled: "Cancelled" };
-const STATUS_COLORS = { new: "#4a6fa5", processing: "#c9a227", shipped: "#1e8449", completed: "#1a1a1a", cancelled: "#c0392b" };
+const STATUS_LABELS = { new: "New", confirmed: "Confirmed", processing: "Processing", shipped: "Shipped", delivered: "Delivered", completed: "Completed", cancelled: "Cancelled", returned: "Returned" };
+const STATUS_COLORS = { new: "#6578a8", confirmed: "#8a6c3f", processing: "#b4852a", shipped: "#35725d", delivered: "#235744", completed: "#24231f", cancelled: "#a6473d", returned: "#8a5b5b" };
 
 async function loadOrders() {
   const { data, error } = await supabaseClient
@@ -903,7 +1165,7 @@ async function loadOrders() {
 
   ordersEmptyMsg.style.display = "none";
   ordersTbody.innerHTML = data.map(o => `
-    <tr>
+    <tr data-order-status="${escapeHtml(o.status || "new")}" data-order-search="${escapeHtml([o.order_number,o.full_name,o.email,o.phone].filter(Boolean).join(" ").toLowerCase())}">
       <td>${escapeHtml(o.order_number)}</td>
       <td>${escapeHtml(o.full_name)}</td>
       <td>Rs. ${o.total}</td>
@@ -928,7 +1190,7 @@ window.viewOrder = function(order) {
     </div>
     <div style="margin-top:1rem;">${itemsHtml}</div>
     <div style="margin-top:1rem;font-weight:600;">
-      Subtotal: Rs. ${order.subtotal} · Shipping: Rs. ${order.shipping_fee} · Total: Rs. ${order.total}
+      Subtotal: Rs. ${order.subtotal}${Number(order.discount_amount) > 0 ? ` · Discount (${escapeHtml(order.discount_code || "coupon")}): −Rs. ${order.discount_amount}` : ""} · Shipping: Rs. ${order.shipping_fee} · Total: Rs. ${order.total}
     </div>
   `;
   orderStatusSelect.value = order.status || "new";
@@ -1124,6 +1386,7 @@ async function loadReviews() {
     reviewsEmptyMsg.style.display = "block";
     reviewsEmptyMsg.textContent = "Error loading reviews: " + error.message;
     reviewsCountBadge.style.display = "none";
+    const navBadge = document.getElementById("nav-reviews-count"); if(navBadge) navBadge.style.display = "none";
     return;
   }
 
@@ -1132,6 +1395,7 @@ async function loadReviews() {
     reviewsEmptyMsg.style.display = "block";
     reviewsEmptyMsg.textContent = "No reviews yet.";
     reviewsCountBadge.style.display = "none";
+    const navBadge = document.getElementById("nav-reviews-count"); if(navBadge) navBadge.style.display = "none";
     return;
   }
 
@@ -1149,6 +1413,8 @@ async function loadReviews() {
 
   reviewsCountBadge.textContent = reviews.length;
   reviewsCountBadge.style.display = "inline-block";
+  const navBadge = document.getElementById("nav-reviews-count");
+  if(navBadge){ navBadge.textContent = reviews.length; navBadge.style.display = "inline-block"; }
   reviewsEmptyMsg.style.display = "none";
 
   reviewsTbody.innerHTML = reviews.map(r => {
@@ -1179,6 +1445,7 @@ window.deleteReview = async function(id) {
 document.getElementById("refresh-reviews-btn").addEventListener("click", loadReviews);
 loadReviews();
 </script>
+<script src="js/admin-dashboard.js?v=20260907-admin2"></script>
 
 </body>
 </html>

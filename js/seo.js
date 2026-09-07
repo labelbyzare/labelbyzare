@@ -175,7 +175,7 @@ window.LZSEO = (() => {
   }
 
   function applyProduct(p) {
-    const title = `${p.name} — Buy Online | ${SITE.name}`;
+    const title = LZCatalog.productTitle(p);
     const description = truncate(
       `${p.name} — ${LZProductTypes.singular(p)} by ${SITE.name}. ${p.description || "Premium fabric, considered construction, nationwide delivery across Pakistan."}`,
       160

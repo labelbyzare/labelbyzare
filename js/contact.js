@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const btn = document.getElementById("contact-submit-btn");
+    if(btn.disabled) return;
     const msg = document.getElementById("contact-form-message");
     msg.textContent = "";
     msg.className = "";
@@ -33,14 +34,15 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.textContent = "Sending…";
 
     // 1. Save to Supabase — this is what shows up in admin.html → Messages.
-    const { error: dbError } = await supabaseClient.from("messages").insert({
+    let dbError;
+    try{ ({ error: dbError } = await supabaseClient.from("messages").insert({
       name: name,
       email: email,
       phone: phone || null,
       subject: subject,
       message: message,
       status: "new"
-    });
+    })); } catch(error){ dbError = error; }
 
     if(dbError){
       console.error("Message failed to save to Supabase:", dbError.message);
@@ -51,8 +53,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    form.style.display = "none";
+    const success = document.getElementById("contact-success");
+    success.style.display = "block";
+    success.setAttribute("tabindex", "-1");
+    success.focus({ preventScroll: true });
+    if(window.gsap){
+      gsap.fromTo("#contact-success", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .6, ease: "power2.out" });
+    }
+    if(window.LZ && LZ.showToast) LZ.showToast("Your message has been sent");
+
     // 2. Also email it to you via Formspree, so nothing gets missed even
     // if you haven't checked the admin page yet.
+    const emailController = new AbortController();
+    const emailTimeout = setTimeout(() => emailController.abort(), 5000);
     try {
       const fd = new FormData();
       fd.append("_subject", `New Contact Message — ${subject || "Website"}`);
@@ -63,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fd.append("Message", message);
       const res = await fetch(CONTACT_FORMSPREE_ENDPOINT, {
         method: "POST",
+        signal: emailController.signal,
         body: fd,
         headers: { "Accept": "application/json" }
       });
@@ -71,13 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // The message is already safely saved in Supabase above, so we
       // don't block the customer — just log it for you to notice later.
       console.warn("Message email failed to send (message was still saved):", err);
-    }
+    } finally { clearTimeout(emailTimeout); }
 
-    form.style.display = "none";
-    document.getElementById("contact-success").style.display = "block";
-    if(window.gsap){
-      gsap.fromTo("#contact-success", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .6, ease: "power2.out" });
-    }
-    if(window.LZ && LZ.showToast) LZ.showToast("Your message has been sent");
+
   });
 });

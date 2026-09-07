@@ -9,13 +9,17 @@ const LZ = {
   WISH_KEY: "lz_wishlist",
 
   getCart(){
-    try{ return JSON.parse(localStorage.getItem(this.CART_KEY)) || []; }
+    try{
+      const cart = JSON.parse(localStorage.getItem(this.CART_KEY));
+      return Array.isArray(cart) ? cart.filter(line => line && typeof line.id === "string" && line.id && typeof line.size === "string" && typeof line.color === "string" && Number.isSafeInteger(line.qty) && line.qty > 0) : [];
+    }
     catch(e){ return []; }
   },
   saveCart(cart){
     localStorage.setItem(this.CART_KEY, JSON.stringify(cart));
     this.refreshBadges();
-    this.pushCartToSupabase(cart);
+    this.pushCartToSupabase(cart).catch(() => {});
+    window.dispatchEvent(new Event("lz:cart-changed"));
   },
   addToCart(productId, size, color, qty = 1){
     const product = getProductById(productId);
@@ -59,13 +63,16 @@ const LZ = {
   },
 
   getWishlist(){
-    try{ return JSON.parse(localStorage.getItem(this.WISH_KEY)) || []; }
+    try{
+      const list = JSON.parse(localStorage.getItem(this.WISH_KEY));
+      return Array.isArray(list) ? [...new Set(list.filter(id => typeof id === "string" && id))] : [];
+    }
     catch(e){ return []; }
   },
   saveWishlist(list){
     localStorage.setItem(this.WISH_KEY, JSON.stringify(list));
     this.refreshBadges();
-    this.pushWishlistToSupabase(list);
+    this.pushWishlistToSupabase(list).catch(() => {});
   },
 
   // ---- Supabase sync (logged-in customers only; silently does nothing
@@ -129,7 +136,8 @@ const LZ = {
     if(has){ list = list.filter(id => id !== productId); }
     else{ list.push(productId); this.showToast("Saved to wishlist"); }
     this.saveWishlist(list);
-    document.querySelectorAll(`[data-wish-id="${productId}"]`).forEach(btn => {
+    document.querySelectorAll("[data-wish-id]").forEach(btn => {
+      if(btn.getAttribute("data-wish-id") !== productId) return;
       btn.classList.toggle("active", !has);
     });
     if(typeof window.renderWishlistPage === "function") window.renderWishlistPage();
@@ -166,8 +174,18 @@ const LZ = {
 
   openDrawer(){
     this.renderDrawer();
-    document.querySelector(".cart-drawer")?.classList.add("open");
+    const drawer = document.querySelector(".cart-drawer");
+    if(!drawer) return;
+    if(!drawer.classList.contains("open")){
+      this._drawerOpener = document.activeElement;
+      this._drawerOverflow = document.body.style.overflow;
+    }
+    drawer.inert = false;
+    drawer.setAttribute("aria-hidden", "false");
+    drawer.classList.add("open");
     document.querySelector(".cart-drawer-backdrop")?.classList.add("open");
+    document.body.style.overflow = "hidden";
+    drawer.querySelector(".js-close-drawer")?.focus({ preventScroll: true });
     if(!window.CATALOG_COMPLETE && this.getCart().length){
       const body=document.querySelector('.drawer-body');
       const foot=document.querySelector('.drawer-foot');
@@ -180,8 +198,26 @@ const LZ = {
     }
   },
   closeDrawer(){
-    document.querySelector(".cart-drawer")?.classList.remove("open");
+    const drawer = document.querySelector(".cart-drawer");
+    if(!drawer?.classList.contains("open")) return;
+    drawer.classList.remove("open");
     document.querySelector(".cart-drawer-backdrop")?.classList.remove("open");
+    document.body.style.overflow = this._drawerOverflow || "";
+    if(this._drawerOpener?.isConnected) this._drawerOpener.focus({ preventScroll: true });
+    drawer.inert = true;
+    drawer.setAttribute("aria-hidden", "true");
+  },
+
+  trapFocus(panel, event){
+    if(event.key !== "Tab") return;
+    const controls = [...panel.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')].filter(el => el.getClientRects().length && !el.closest("[inert]"));
+    const first = controls[0], last = controls[controls.length - 1];
+    if(!first){ event.preventDefault(); return; }
+    if(!panel.contains(document.activeElement) || (event.shiftKey && document.activeElement === first)){
+      event.preventDefault(); (event.shiftKey ? last : first).focus();
+    } else if(!event.shiftKey && document.activeElement === last){
+      event.preventDefault(); first.focus();
+    }
   },
 
   renderDrawer(){
@@ -203,10 +239,10 @@ const LZ = {
       const p = getProductById(line.id);
       if(!p) return "";
       return `<div class="drawer-line">
-        <img src="${p.img}" alt="${p.name}" loading="lazy">
+        <img src="${LZCatalog.escape(LZCatalog.image(p.img))}" alt="${LZCatalog.escape(LZCatalog.imageAlt(p))}" loading="lazy">
         <div>
-          <div class="drawer-line-name">${p.name}</div>
-          <div class="drawer-line-meta">${line.size} · ${line.color}</div>
+          <div class="drawer-line-name">${LZCatalog.escape(p.name)}</div>
+          <div class="drawer-line-meta">${LZCatalog.escape(line.size)} · ${LZCatalog.escape(line.color)}</div>
           <div class="qty-stepper" style="width:fit-content">
             <button aria-label="Decrease quantity" onclick="LZ.updateQty(${i},-1)">−</button>
             <span>${line.qty}</span>
@@ -235,8 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
   LZ.refreshBadges();
   if(typeof supabaseClient !== "undefined"){
     supabaseClient.auth.getUser().then(({ data }) => {
-      if(data.user) LZ.syncAfterLogin();
-    });
+      if(data.user) return LZ.syncAfterLogin();
+    }).catch(() => {});
   }
 
   document.querySelector(".js-open-cart")?.addEventListener("click", (e) => {
@@ -245,15 +281,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector(".cart-drawer-backdrop")?.addEventListener("click", () => LZ.closeDrawer());
   document.querySelector(".js-close-drawer")?.addEventListener("click", () => LZ.closeDrawer());
+  document.addEventListener("keydown", event => {
+    const drawer = document.querySelector(".cart-drawer.open");
+    if(!drawer || document.querySelector(".search-overlay.open, .zoom-lightbox.active")) return;
+    if(event.key === "Escape"){
+      event.preventDefault(); event.stopImmediatePropagation(); LZ.closeDrawer();
+    } else LZ.trapFocus(drawer, event);
+  });
 
   // wishlist buttons anywhere on the page
   document.body.addEventListener("click", (e) => {
+    const quickAdd = e.target.closest("[data-quick-add]");
+    if(quickAdd){
+      e.preventDefault();
+      const product = getProductById(quickAdd.getAttribute("data-quick-add"));
+      if(product?.sizes?.length && product?.colors?.length) LZ.addToCart(product.id, product.sizes[0], product.colors[0].name, 1);
+      return;
+    }
     const btn = e.target.closest("[data-wish-id]");
     if(btn){
       e.preventDefault();
       const id = btn.getAttribute("data-wish-id");
       const active = LZ.toggleWishlist(id);
-      document.querySelectorAll(`[data-wish-id="${id}"]`).forEach(b => b.classList.toggle("active", active));
+      document.querySelectorAll("[data-wish-id]").forEach(b => {
+        if(b.getAttribute("data-wish-id") === id) b.classList.toggle("active", active);
+      });
     }
   });
 });

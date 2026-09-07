@@ -3,10 +3,11 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "https://ldpzgtjbnbdsggaqmuvs.s
 const PUBLIC_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_DG3Iar3m4BUg72fUWPyLag_XMyHfLWs";
 const headers = {apikey:PUBLIC_KEY,Authorization:`Bearer ${PUBLIC_KEY}`};
 async function request(resource, options={}){
+  const {timeoutMs=8000,...fetchOptions}=options;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${resource}`, {...options,headers:{...headers,...options.headers},signal:controller.signal});
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${resource}`, {...fetchOptions,headers:{...headers,...fetchOptions.headers},signal:controller.signal});
     if(!response.ok) throw new Error(`Catalog request failed (${response.status})`);
     return await response.json();
   } finally { clearTimeout(timeout); }
@@ -27,7 +28,8 @@ async function product(id){
 }
 async function ratings(id){
   try {
-    const rows=await request(`product_reviews?product_id=eq.${encodeURIComponent(id)}&select=rating`);
+    // Reviews are optional: a slow review service must not hold up the product.
+    const rows=await request(`product_reviews?product_id=eq.${encodeURIComponent(id)}&select=rating`,{timeoutMs:1200});
     const valid=Array.isArray(rows) ? rows.map(r=>Number(r.rating)).filter(n=>Number.isFinite(n)&&n>=1&&n<=5) : [];
     return {count:valid.length,value:valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 0};
   } catch { return {count:0,value:0}; }
