@@ -14,11 +14,12 @@
       items.push({name:p.name,url:core.productUrl(p)});
       return schema.breadcrumbs(items,core.productUrl(p));
     },
-    product(p,rating){
+    product(p,rating,policyOverride){
+      const activePolicy=policyOverride || policy;
       p=core.normalize(p);
       const url=site+core.productUrl(p);
       const result={"@context":"https://schema.org","@type":"Product","@id":url+"#product",url,name:p.name,description:p.description || `${p.name} by Label by Zare.`,image:p.gallery,sku:p.id,brand:{"@type":"Brand",name:"Label by Zare"},category:collections.forProduct(p).name,color:p.colors.map(c=>typeof c === "string" ? c : c.name).join(" / "),size:p.sizes.map(String)};
-      if(p.price>0) result.offers={"@type":"Offer",url,priceCurrency:policy.currency,price:p.price.toFixed(2),availability:p.discontinued ? "https://schema.org/Discontinued" : p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",itemCondition:"https://schema.org/NewCondition",seller:{"@id":site+"/#organization"},shippingDetails:{"@type":"OfferShippingDetails",shippingDestination:{"@type":"DefinedRegion",addressCountry:"PK"},shippingRate:{"@type":"MonetaryAmount",value:policy.shippingFee(p.price,"standard"),currency:"PKR"},deliveryTime:{"@type":"ShippingDeliveryTime",handlingTime:{"@type":"QuantitativeValue",minValue:1,maxValue:2,unitCode:"DAY"},transitTime:{"@type":"QuantitativeValue",minValue:3,maxValue:5,unitCode:"DAY"}}},hasMerchantReturnPolicy:{"@id":site+"/support#return-policy"}};
+      if(p.price>0) result.offers={"@type":"Offer",url,priceCurrency:policy.currency,price:p.price.toFixed(2),availability:p.discontinued ? "https://schema.org/Discontinued" : p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",itemCondition:"https://schema.org/NewCondition",seller:{"@id":site+"/#organization"},shippingDetails:{"@type":"OfferShippingDetails",shippingDestination:{"@type":"DefinedRegion",addressCountry:"PK"},shippingRate:{"@type":"MonetaryAmount",value:activePolicy.shippingFee(p.price,"standard"),currency:"PKR"},deliveryTime:{"@type":"ShippingDeliveryTime",handlingTime:{"@type":"QuantitativeValue",minValue:1,maxValue:2,unitCode:"DAY"},transitTime:{"@type":"QuantitativeValue",minValue:3,maxValue:5,unitCode:"DAY"}}},hasMerchantReturnPolicy:{"@id":site+"/support#return-policy"}};
       if(Number.isInteger(rating?.count) && rating.count>0 && Number.isFinite(rating.value) && rating.value>=1 && rating.value<=5) result.aggregateRating={"@type":"AggregateRating",ratingValue:Math.round(rating.value*10)/10,reviewCount:rating.count,bestRating:5,worstRating:1};
       return result;
     },

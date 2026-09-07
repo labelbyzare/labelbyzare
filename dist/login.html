@@ -95,10 +95,10 @@
 <script src="supabase-client.js"></script>
 <script src="js/catalog-core.js?v=20260907-seo2"></script>
 <script src="js/store-policy.js?v=20260906-seo1"></script>
-<script src="js/site-settings.js?v=20260907-admin2"></script>
+<script src="js/site-settings.js?v=20260907-popup1"></script>
 <script src="js/collections.js?v=20260906-seo1"></script>
 <script src="js/product-types.js?v=20260906-seo1"></script>
-<script src="js/structured-data.js?v=20260906-seo1"></script>
+<script src="js/structured-data.js?v=20260907-shipping1"></script>
 
 <script>
 const form = document.getElementById("login-form");
@@ -117,12 +117,10 @@ let pendingChallengeId = null;
 (async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) return;
-  const { data: adminRow } = await supabaseClient
-    .from("admins")
-    .select("email")
-    .eq("email", session.user.email)
-    .maybeSingle();
-  if (!adminRow) return;
+  let adminCheck = await supabaseClient.from("admins").select("email,active").ilike("email", session.user.email).maybeSingle();
+  if (adminCheck.error) adminCheck = await supabaseClient.from("admins").select("email").ilike("email", session.user.email).maybeSingle();
+  const adminRow = adminCheck.data;
+  if (!adminRow || adminRow.active === false) return;
   const { data: aal } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
     return; // needs 2FA — stay on login page, will show code step below
@@ -150,12 +148,10 @@ form.addEventListener("submit", async (e) => {
 
   // Reject anyone not on the admin allowlist — including any customer
   // account — right here, before an MFA prompt or admin.html is ever shown.
-  const { data: adminRow } = await supabaseClient
-    .from("admins")
-    .select("email")
-    .eq("email", email)
-    .maybeSingle();
-  if (!adminRow) {
+  let adminCheck = await supabaseClient.from("admins").select("email,active").ilike("email", email).maybeSingle();
+  if (adminCheck.error) adminCheck = await supabaseClient.from("admins").select("email").ilike("email", email).maybeSingle();
+  const adminRow = adminCheck.data;
+  if (!adminRow || adminRow.active === false) {
     await supabaseClient.auth.signOut();
     messageEl.textContent = "This account doesn't have admin access.";
     messageEl.className = "error";
@@ -170,6 +166,7 @@ form.addEventListener("submit", async (e) => {
   if (!totpFactor) {
     messageEl.textContent = "Success — redirecting...";
     messageEl.className = "success";
+    supabaseClient.rpc("admin_touch_login").then(()=>{}).catch(()=>{});
     window.location.href = "admin.html";
     return;
   }
@@ -217,6 +214,7 @@ mfaForm.addEventListener("submit", async (e) => {
 
   messageEl.textContent = "Success — redirecting...";
   messageEl.className = "success";
+  supabaseClient.rpc("admin_touch_login").then(()=>{}).catch(()=>{});
   window.location.href = "admin.html";
 });
 </script>

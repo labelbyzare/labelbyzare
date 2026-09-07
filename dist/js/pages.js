@@ -94,7 +94,7 @@ window.renderWishlistPage = function(){
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  (window.PRODUCTS_READY || Promise.resolve()).then(() => {
+  Promise.all([window.PRODUCTS_READY || Promise.resolve(), window.LZ_SETTINGS_READY || Promise.resolve()]).then(() => {
     window.renderCartPage();
     window.renderWishlistPage();
   });

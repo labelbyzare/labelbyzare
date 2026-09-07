@@ -119,7 +119,7 @@
   }
 </style>
 <link rel="stylesheet" href="css/editorial.css?v=20260906-seo1">
-<link rel="stylesheet" href="css/admin-dashboard.css?v=20260907-admin2">
+<link rel="stylesheet" href="css/admin-dashboard.css?v=20260907-adminusers1">
 </head>
 <body>
 <aside class="admin-sidebar" id="admin-sidebar" aria-label="Backend menu">
@@ -136,7 +136,9 @@
     <button class="admin-nav-item" type="button" data-section-target="messages"><span>◇</span><b>Messages</b><i id="nav-messages-count"></i></button>
     <button class="admin-nav-item" type="button" data-section-target="subscribers"><span>✉</span><b>Subscribers</b></button>
     <button class="admin-nav-item" type="button" data-section-target="discounts"><span>％</span><b>Discounts</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="popup"><span>✦</span><b>Message Popup</b><i id="nav-popup-status"></i></button>
     <button class="admin-nav-item" type="button" data-section-target="settings"><span>⚙</span><b>Website Settings</b></button>
+    <button class="admin-nav-item" type="button" data-section-target="admins"><span>♜</span><b>Admin Users</b></button>
   </nav>
   <div class="admin-sidebar-foot">
     <a href="/" target="_blank" rel="noopener">View storefront ↗</a>
@@ -152,6 +154,8 @@
   </div>
   <div class="admin-top-actions">
     <span class="admin-live-dot"><i></i> Live store</span>
+    <div class="admin-current-user"><strong id="admin-current-name">Admin</strong><small id="admin-current-role">Checking role…</small></div>
+    <span class="admin-access-mode" id="admin-access-mode">Checking…</span>
     <button id="logout-btn">Log Out</button>
   </div>
 </div>
@@ -160,6 +164,7 @@
   <p id="status">Checking session...</p>
 
   <div id="content" style="display:none;">
+    <div class="admin-readonly-banner" id="admin-readonly-banner" hidden><strong>View-only access</strong><span>You can review the sections assigned to you, but publishing, editing and deleting are disabled.</span></div>
     <section class="admin-section-block" data-admin-section="dashboard" id="dashboard-card">
       <div class="admin-page-head">
         <div><span class="admin-eyebrow">Store overview</span><h2>Good to see you.</h2><p>A live view of sales, orders and customer activity.</p></div>
@@ -173,8 +178,28 @@
       </div>
       <div class="admin-dashboard-grid">
         <article class="admin-panel admin-chart-panel">
-          <div class="admin-panel-head"><div><span>Revenue</span><h3>Last 30 days</h3></div><strong id="dash-30d-revenue">Rs. —</strong></div>
-          <div class="admin-chart-wrap"><canvas id="revenue-chart" aria-label="Revenue in the last 30 days"></canvas><div id="revenue-chart-empty" class="admin-empty-chart">No sales in this period yet.</div></div>
+          <div class="admin-panel-head admin-revenue-head">
+            <div><span>Revenue</span><h3 id="dash-revenue-period">Last 30 days</h3><small id="dash-revenue-dates" class="admin-revenue-dates">—</small></div>
+            <strong id="dash-30d-revenue">Rs. —</strong>
+          </div>
+          <div class="admin-revenue-range" aria-label="Revenue date range">
+            <div class="admin-range-pills" role="group" aria-label="Revenue range presets">
+              <button type="button" data-revenue-range="7d">7 days</button>
+              <button type="button" class="active" data-revenue-range="30d">30 days</button>
+              <button type="button" data-revenue-range="3m">3 months</button>
+              <button type="button" data-revenue-range="6m">6 months</button>
+              <button type="button" data-revenue-range="1y">1 year</button>
+              <button type="button" class="admin-range-custom-trigger" data-revenue-range="custom"><span>Custom</span><i aria-hidden="true">⌄</i></button>
+            </div>
+            <div class="admin-custom-range" id="revenue-custom-range" hidden>
+              <label><span>From</span><input type="date" id="revenue-date-from"></label>
+              <span class="admin-custom-range-arrow" aria-hidden="true">→</span>
+              <label><span>To</span><input type="date" id="revenue-date-to"></label>
+              <button type="button" id="apply-revenue-range" class="admin-range-apply">Apply range</button>
+              <small id="revenue-range-error" role="status"></small>
+            </div>
+          </div>
+          <div class="admin-chart-wrap"><canvas id="revenue-chart" aria-label="Revenue chart"></canvas><div id="revenue-chart-empty" class="admin-empty-chart">No sales in this period yet.</div></div>
         </article>
         <article class="admin-panel">
           <div class="admin-panel-head"><div><span>Products</span><h3>Best sellers</h3></div></div>
@@ -297,6 +322,111 @@
     </div>
 
 
+    <div class="card" id="popup-card" data-admin-section="popup">
+      <div class="admin-section-heading">
+        <div>
+          <span class="admin-eyebrow">Campaigns &amp; announcements</span>
+          <h2>Message Popup</h2>
+          <p>Create a polished storefront popup for coupons, Azadi sales, launches or any important message.</p>
+        </div>
+        <div class="admin-inline-actions">
+          <span class="popup-admin-status" id="popup-admin-status">Checking…</span>
+          <button type="button" id="popup-preview-btn">Preview</button>
+        </div>
+      </div>
+
+      <div class="admin-popup-layout">
+        <form id="popup-settings-form" class="admin-popup-form">
+          <div class="admin-popup-publish">
+            <div>
+              <strong>Show popup on storefront</strong>
+              <p>Switch this off any time to hide the campaign without deleting your content.</p>
+            </div>
+            <label class="admin-switch">
+              <input type="checkbox" id="popup-enabled">
+              <span aria-hidden="true"></span>
+              <b>Enabled</b>
+            </label>
+          </div>
+
+          <div class="admin-popup-presets" aria-label="Quick popup templates">
+            <span>Quick templates</span>
+            <button type="button" data-popup-preset="coupon">Coupon offer</button>
+            <button type="button" data-popup-preset="azadi">Azadi Sale</button>
+            <button type="button" data-popup-preset="new-arrival">New collection</button>
+          </div>
+
+          <h3 class="admin-form-section-title">Message</h3>
+          <div class="admin-form-grid">
+            <div class="field">
+              <label for="popup-type">Campaign style</label>
+              <select id="popup-type">
+                <option value="coupon">Coupon / offer</option>
+                <option value="sale">Sale event</option>
+                <option value="announcement">Announcement</option>
+                <option value="new-arrival">New collection</option>
+              </select>
+            </div>
+            <div class="field"><label for="popup-kicker">Small label</label><input type="text" id="popup-kicker" placeholder="A little something for you"></div>
+            <div class="field admin-span-2"><label for="popup-title">Headline</label><input type="text" id="popup-title" placeholder="Enjoy 10% off your first order"></div>
+            <div class="field admin-span-2"><label for="popup-message">Message</label><textarea id="popup-message" rows="4" placeholder="Use the code below at checkout."></textarea></div>
+            <div class="field"><label for="popup-coupon-code">Coupon code <span class="admin-muted">(optional)</span></label><input type="text" id="popup-coupon-code" placeholder="AZADI15"></div>
+            <div class="field"><label for="popup-cta-text">Button text <span class="admin-muted">(optional)</span></label><input type="text" id="popup-cta-text" placeholder="Shop the sale"></div>
+            <div class="field admin-span-2"><label for="popup-cta-url">Button URL</label><input type="text" id="popup-cta-url" placeholder="/sale/"></div>
+            <div class="field admin-span-2">
+              <label for="popup-image-url">Campaign image <span class="admin-muted">(optional)</span></label>
+              <input type="text" id="popup-image-url" placeholder="Image URL">
+              <input type="file" id="popup-image-file" accept="image/*">
+            </div>
+          </div>
+
+          <h3 class="admin-form-section-title">Display rules</h3>
+          <div class="admin-form-grid">
+            <div class="field">
+              <label for="popup-scope">Where to show</label>
+              <select id="popup-scope">
+                <option value="storefront">All storefront pages</option>
+                <option value="home">Homepage only</option>
+                <option value="shopping">Shopping pages only</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="popup-frequency">Show frequency</label>
+              <select id="popup-frequency">
+                <option value="session">Once per browsing session</option>
+                <option value="day">Once per day</option>
+                <option value="always">Every eligible page load</option>
+              </select>
+            </div>
+            <div class="field"><label for="popup-delay">Open after (seconds)</label><input type="number" id="popup-delay" min="0" max="30" step="1" value="2"></div>
+            <div class="field"><label for="popup-start">Start date/time <span class="admin-muted">(optional)</span></label><input type="datetime-local" id="popup-start"></div>
+            <div class="field"><label for="popup-end">End date/time <span class="admin-muted">(optional)</span></label><input type="datetime-local" id="popup-end"></div>
+          </div>
+
+          <div class="admin-popup-actions">
+            <button type="submit" class="btn-primary" id="popup-save-btn">Save &amp; publish popup</button>
+            <p id="popup-form-message" class="admin-form-message"></p>
+          </div>
+        </form>
+
+        <aside class="admin-popup-preview-panel">
+          <span class="admin-eyebrow">Live preview</span>
+          <p class="admin-muted">This preview uses the same content and layout customers will see.</p>
+          <div id="admin-popup-preview" class="lz-promo-preview lz-promo-preview--coupon">
+            <div class="lz-promo-preview-media" id="admin-popup-preview-media"></div>
+            <div class="lz-promo-preview-copy">
+              <span id="admin-popup-preview-kicker">A little something for you</span>
+              <h3 id="admin-popup-preview-title">Enjoy 10% off your first order</h3>
+              <p id="admin-popup-preview-message">Use the code below at checkout.</p>
+              <div class="lz-promo-preview-code" id="admin-popup-preview-code"><b>WELCOME10</b><span>Copy code</span></div>
+              <button type="button" id="admin-popup-preview-cta">Shop the collection</button>
+            </div>
+          </div>
+          <p class="admin-popup-preview-note">The popup is responsive and automatically adapts when no image, coupon code or button is provided.</p>
+        </aside>
+      </div>
+    </div>
+
     <div class="card" id="discounts-card" data-admin-section="discounts">
       <div class="admin-section-heading">
         <div><span class="admin-eyebrow">Promotions</span><h2>Discounts</h2><p>Create coupon codes with percentage or fixed-value discounts.</p></div>
@@ -319,6 +449,67 @@
         <thead><tr><th>Code</th><th>Offer</th><th>Minimum</th><th>Used</th><th>Expires</th><th>Status</th><th></th></tr></thead>
         <tbody id="discounts-tbody"><tr><td colspan="7">Loading coupons…</td></tr></tbody>
       </table></div>
+    </div>
+
+
+    <div class="card" id="admin-users-card" data-admin-section="admins">
+      <div class="admin-section-heading">
+        <div><span class="admin-eyebrow">Team &amp; permissions</span><h2>Admin Users</h2><p>Add multiple admin emails, assign roles and decide exactly who can apply changes to the store.</p></div>
+        <button class="btn-primary" type="button" id="new-admin-user-btn">+ Add admin user</button>
+      </div>
+      <div id="admin-users-setup-note" class="admin-setup-note" hidden>Admin roles are not installed yet. Run <code>supabase/admin-dashboard-setup.sql</code> once in Supabase SQL Editor.</div>
+
+      <div class="admin-team-stats" id="admin-team-stats">
+        <article><span>Active admins</span><strong id="admin-stat-active">—</strong></article>
+        <article><span>Managing Directors</span><strong id="admin-stat-directors">—</strong></article>
+        <article><span>View only</span><strong id="admin-stat-viewers">—</strong></article>
+      </div>
+
+      <div class="admin-self-card" id="admin-self-card">
+        <div class="admin-self-avatar" id="admin-self-avatar">A</div>
+        <div><span class="admin-eyebrow">Your admin account</span><h3 id="admin-self-name">Admin</h3><p id="admin-self-meta">—</p></div>
+        <div class="admin-self-badges"><span id="admin-self-role">Owner</span><span id="admin-self-change">Changes enabled</span></div>
+      </div>
+
+      <div id="admin-team-management">
+        <form id="admin-user-form" class="admin-user-editor" hidden>
+          <input type="hidden" id="staff-original-email">
+          <div class="admin-section-heading compact"><div><h3 id="admin-user-form-title">Add admin user</h3><p>The person can activate their own password from a secure invite link.</p></div><button type="button" id="admin-user-cancel-btn">Close</button></div>
+          <div class="admin-form-grid">
+            <div class="field"><label for="staff-full-name">Full name</label><input type="text" id="staff-full-name" required placeholder="e.g. Zare Khan"></div>
+            <div class="field"><label for="staff-email">Email</label><input type="email" id="staff-email" required placeholder="name@example.com"></div>
+            <div class="field"><label for="staff-phone">Phone <span class="admin-muted">(optional)</span></label><input type="text" id="staff-phone" placeholder="+92 …"></div>
+            <div class="field"><label for="staff-role">Role</label><select id="staff-role"><option value="managing_director">Managing Director</option><option value="admin" selected>Admin</option><option value="viewer">Viewer</option><option value="owner">Owner</option></select></div>
+          </div>
+          <div class="admin-permission-switches">
+            <label class="admin-permission-master"><input type="checkbox" id="staff-can-apply" checked><span><strong>Can apply changes</strong><small>Allows publishing, editing, status updates and deletes in assigned sections.</small></span></label>
+            <label class="admin-permission-master"><input type="checkbox" id="staff-can-manage-admins"><span><strong>Can manage admin users</strong><small>Can add/edit staff. Recommended for Owner or Managing Director only.</small></span></label>
+            <label class="admin-permission-master"><input type="checkbox" id="staff-active" checked><span><strong>Account active</strong><small>Turn this off to immediately remove admin dashboard access.</small></span></label>
+          </div>
+          <div class="admin-access-editor">
+            <div><span class="admin-eyebrow">Dashboard access</span><h4>Which sections can this admin see?</h4><p>Dashboard and their own Admin Users/security page are always available.</p></div>
+            <div class="admin-access-grid">
+              <label><input type="checkbox" data-staff-permission="products" checked><span>Products</span></label>
+              <label><input type="checkbox" data-staff-permission="orders" checked><span>Orders</span></label>
+              <label><input type="checkbox" data-staff-permission="customers" checked><span>Customers</span></label>
+              <label><input type="checkbox" data-staff-permission="reviews" checked><span>Reviews</span></label>
+              <label><input type="checkbox" data-staff-permission="messages" checked><span>Messages</span></label>
+              <label><input type="checkbox" data-staff-permission="subscribers" checked><span>Subscribers</span></label>
+              <label><input type="checkbox" data-staff-permission="discounts" checked><span>Discounts</span></label>
+              <label><input type="checkbox" data-staff-permission="popup" checked><span>Message Popup</span></label>
+              <label><input type="checkbox" data-staff-permission="settings" checked><span>Website Settings</span></label>
+            </div>
+          </div>
+          <div class="field"><label for="staff-notes">Internal notes <span class="admin-muted">(optional)</span></label><textarea id="staff-notes" rows="3" placeholder="Responsibility, branch, working hours, etc."></textarea></div>
+          <div class="admin-user-form-actions"><p id="admin-user-form-message" class="admin-form-message"></p><button type="submit" class="btn-primary">Save admin user</button></div>
+        </form>
+
+        <div class="admin-table-wrap admin-users-table"><table>
+          <thead><tr><th>Admin</th><th>Role</th><th>Access</th><th>Changes</th><th>Login</th><th>Status</th><th></th></tr></thead>
+          <tbody id="admin-users-tbody"><tr><td colspan="7">Loading admin users…</td></tr></tbody>
+        </table></div>
+        <p class="admin-muted admin-team-help">New users who do not already have a Label by Zare account receive a secure activation link you can copy and send to them. Existing accounts can log in immediately once added here.</p>
+      </div>
     </div>
 
     <div class="card" id="website-settings-card" data-admin-section="settings">
@@ -471,7 +662,7 @@
       </form>
     </div>
 
-    <div class="card" id="security-card" data-admin-section="settings">
+    <div class="card" id="security-card" data-admin-section="admins">
       <strong>Security — Two-Factor Authentication</strong>
       <p id="mfa-status" style="color:#888; margin:0.6rem 0;">Checking status...</p>
 
@@ -655,10 +846,11 @@
 <script src="supabase-client.js"></script>
 <script src="js/catalog-core.js?v=20260907-seo2"></script>
 <script src="js/store-policy.js?v=20260906-seo1"></script>
-<script src="js/site-settings.js?v=20260907-admin2"></script>
+<script src="js/site-settings.js?v=20260907-popup1"></script>
 <script src="js/collections.js?v=20260906-seo1"></script>
 <script src="js/product-types.js?v=20260906-seo1"></script>
-<script src="js/structured-data.js?v=20260906-seo1"></script>
+<script src="js/structured-data.js?v=20260907-shipping1"></script>
+<script src="js/admin-access.js?v=20260907-adminusers1"></script>
 
 <div class="overlay" id="customer-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
   <div class="form-card admin-customer-modal-box">
@@ -691,35 +883,31 @@ let currentGallery = [];
 
 async function checkAccess() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
+  if (!session) { window.location.href = "login.html"; return; }
 
-  // Only emails listed in public.admins are staff — everyone else (any
-  // customer account included) is turned away here, before anything on
-  // this page loads.
-  const { data: adminRow } = await supabaseClient
-    .from("admins")
-    .select("email")
-    .eq("email", session.user.email)
-    .maybeSingle();
-  if (!adminRow) {
-    await supabaseClient.auth.signOut();
-    window.location.href = "login.html";
-    return;
+  // v20 reads the full staff profile. If the migration has not been run yet,
+  // fall back to the legacy email allow-list so the current owner is never
+  // locked out before they can install the new SQL.
+  let adminRow = null;
+  let legacy = false;
+  let result = await supabaseClient.from("admins").select("email,full_name,role,phone,notes,active,can_apply_changes,can_manage_admins,permissions,created_at,last_login_at").ilike("email", session.user.email).maybeSingle();
+  if (result.error) {
+    legacy = true;
+    result = await supabaseClient.from("admins").select("email").ilike("email", session.user.email).maybeSingle();
   }
+  adminRow = result.data;
+  if (!adminRow || adminRow.active === false) { await supabaseClient.auth.signOut(); window.location.href = "login.html"; return; }
+  if (legacy) adminRow = { ...adminRow, full_name: session.user.user_metadata?.full_name || "Owner", role: "owner", active: true, can_apply_changes: true, can_manage_admins: true, permissions: {}, legacy: true };
 
   const { data: aal } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
-    window.location.href = "login.html";
-    return;
-  }
-  statusEl.style.display = "none";
-  contentEl.style.display = "block";
-  loadProducts();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) { window.location.href = "login.html"; return; }
+
+  window.LZAdminAccess?.setProfile(adminRow);
+  if (!legacy) supabaseClient.rpc("admin_touch_login").then(()=>{}).catch(()=>{});
+  statusEl.style.display = "none"; contentEl.style.display = "block";
+  if (window.LZAdminAccess?.canView("products")) loadProducts();
   loadMfaStatus();
-  window.dispatchEvent(new CustomEvent("lz:admin-ready"));
+  window.dispatchEvent(new CustomEvent("lz:admin-ready", { detail: window.LZAdminAccess?.profile || adminRow }));
 }
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -907,6 +1095,7 @@ function renderImagePreviews() {
 window.editProduct = openForm;
 
 async function uploadImage(file) {
+  if (!window.LZAdminAccess?.requireWrite("products", "product images")) throw new Error("View-only access — upload cancelled.");
   const ext = file.name.split(".").pop();
   const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const { error } = await supabaseClient.storage.from("product-images").upload(path, file);
@@ -965,6 +1154,7 @@ document.getElementById("f-gallery-files").addEventListener("change", async (e) 
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!window.LZAdminAccess?.requireWrite("products", "products")) return;
   saveBtn.disabled = true;
   formMessage.textContent = "";
   formMessage.className = "";
@@ -1025,6 +1215,7 @@ form.addEventListener("submit", async (e) => {
 });
 
 window.deleteProduct = async function(id) {
+  if (!window.LZAdminAccess?.requireWrite("products", "products")) return;
   if (!confirm("Permanently delete this product and its page? If it will return, cancel and switch off In Stock instead. Deletion cannot be undone.")) return;
   const { error } = await supabaseClient.from("products").delete().eq("id", id);
   if (error) {
@@ -1202,6 +1393,7 @@ document.getElementById("order-close-btn").addEventListener("click", () => {
 });
 
 document.getElementById("order-save-status-btn").addEventListener("click", async () => {
+  if (!window.LZAdminAccess?.requireWrite("orders", "orders")) return;
   const { error } = await supabaseClient.from("orders").update({ status: orderStatusSelect.value }).eq("id", currentOrderId);
   if (error) {
     alert("Error updating status: " + error.message);
@@ -1212,6 +1404,7 @@ document.getElementById("order-save-status-btn").addEventListener("click", async
 });
 
 document.getElementById("order-delete-btn").addEventListener("click", async () => {
+  if (!window.LZAdminAccess?.requireWrite("orders", "orders")) return;
   if (!confirm("Delete this order permanently?")) return;
   const { error } = await supabaseClient.from("orders").delete().eq("id", currentOrderId);
   if (error) {
@@ -1223,7 +1416,7 @@ document.getElementById("order-delete-btn").addEventListener("click", async () =
 });
 
 document.getElementById("refresh-orders-btn").addEventListener("click", loadOrders);
-loadOrders();
+window.addEventListener("lz:admin-ready",()=>{if(window.LZAdminAccess?.canView("orders"))loadOrders();},{once:true});
 
 // ---------- MESSAGES (Contact form submissions) ----------
 const messagesTbody = document.getElementById("messages-tbody");
@@ -1290,7 +1483,7 @@ window.viewMessage = async function(message) {
 
   // mark as read as soon as it's opened
   if (message.status !== "read") {
-    await supabaseClient.from("messages").update({ status: "read" }).eq("id", message.id);
+    if (window.LZAdminAccess?.canWrite("messages")) await supabaseClient.from("messages").update({ status: "read" }).eq("id", message.id);
     loadMessages();
   }
 };
@@ -1300,6 +1493,7 @@ document.getElementById("message-close-btn").addEventListener("click", () => {
 });
 
 document.getElementById("message-delete-btn").addEventListener("click", async () => {
+  if (!window.LZAdminAccess?.requireWrite("messages", "messages")) return;
   if (!confirm("Delete this message permanently?")) return;
   const { error } = await supabaseClient.from("messages").delete().eq("id", currentMessageId);
   if (error) {
@@ -1311,7 +1505,7 @@ document.getElementById("message-delete-btn").addEventListener("click", async ()
 });
 
 document.getElementById("refresh-messages-btn").addEventListener("click", loadMessages);
-loadMessages();
+window.addEventListener("lz:admin-ready",()=>{if(window.LZAdminAccess?.canView("messages"))loadMessages();},{once:true});
 
 // ---------- SUBSCRIBERS (Newsletter signups) ----------
 const subscribersTbody = document.getElementById("subscribers-tbody");
@@ -1354,6 +1548,7 @@ async function loadSubscribers() {
 }
 
 window.deleteSubscriber = async function(id) {
+  if (!window.LZAdminAccess?.requireWrite("subscribers", "subscribers")) return;
   if (!confirm("Remove this subscriber?")) return;
   const { error } = await supabaseClient.from("newsletter_subscribers").delete().eq("id", id);
   if (error) {
@@ -1364,7 +1559,7 @@ window.deleteSubscriber = async function(id) {
 };
 
 document.getElementById("refresh-subscribers-btn").addEventListener("click", loadSubscribers);
-loadSubscribers();
+window.addEventListener("lz:admin-ready",()=>{if(window.LZAdminAccess?.canView("subscribers"))loadSubscribers();},{once:true});
 
 // ---------- REVIEWS (moderation) ----------
 const reviewsTbody = document.getElementById("reviews-tbody");
@@ -1433,6 +1628,7 @@ async function loadReviews() {
 }
 
 window.deleteReview = async function(id) {
+  if (!window.LZAdminAccess?.requireWrite("reviews", "reviews")) return;
   if (!confirm("Delete this review? This can't be undone.")) return;
   const { error } = await supabaseClient.from("product_reviews").delete().eq("id", id);
   if (error) {
@@ -1443,9 +1639,9 @@ window.deleteReview = async function(id) {
 };
 
 document.getElementById("refresh-reviews-btn").addEventListener("click", loadReviews);
-loadReviews();
+window.addEventListener("lz:admin-ready",()=>{if(window.LZAdminAccess?.canView("reviews"))loadReviews();},{once:true});
 </script>
-<script src="js/admin-dashboard.js?v=20260907-admin2"></script>
+<script src="js/admin-dashboard.js?v=20260907-adminusers1"></script>
 
 </body>
 </html>
