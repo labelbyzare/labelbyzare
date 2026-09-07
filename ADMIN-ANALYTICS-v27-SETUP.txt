@@ -1,0 +1,25 @@
+LABEL BY ZARE — v27 WEBSITE ANALYTICS SETUP
+
+1. Deploy this v27 project to Netlify.
+2. In Supabase, open SQL Editor -> New Query.
+3. Paste and run the complete supabase/admin-dashboard-setup.sql file.
+4. Visit the live storefront at labelbyzare.com. Analytics begins collecting from this deployment onward; it cannot recreate historical visits from before tracking was installed.
+5. Open Admin -> Website Analytics.
+
+WHAT IS COLLECTED
+- Page views, anonymous visitor/session IDs, foreground active time
+- Country (from Netlify geolocation), device type, browser and OS
+- Landing page, referring host, UTM source/medium/campaign
+- Product views, wishlist additions, add-to-cart, checkout starts and purchase events
+
+PRIVACY
+- Raw IP addresses are NOT stored.
+- Customer names, email addresses, delivery addresses and payment information are NOT added to analytics events.
+- Do Not Track is respected.
+- Local file:// previews and localhost do not send analytics to the live database.
+
+COUNTRY DATA
+Country is read from Netlify's server request context. Local previews will not generate live analytics records.
+
+MIGRATION NOTE (v27.1):
+If Supabase previously showed ERROR 42P13 / "cannot change return type of existing function" for admin_staff_list(), use the corrected setup SQL in this package. It now safely drops that RPC before recreating it. No admin/customer/order/product data is deleted.

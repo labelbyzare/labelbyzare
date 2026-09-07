@@ -183,3 +183,157 @@ test('Account addresses and order items render text, and unknown tabs fall back 
   const avatar=element(e.doc);e.ctx.setAvatar(avatar,'javascript:alert(1)',attack);
   assert.equal(avatar.children[0].src,'');assert.equal(avatar.innerHTML,'');
 });
+
+
+test('Track Order exposes a customer refund or exchange claim workflow only through RPCs',()=>{
+  const html=fs.readFileSync('track-order.html','utf8');
+  const claims=fs.readFileSync('js/return-claims.js','utf8');
+  assert.ok(html.includes('js/return-claims.js'));
+  assert.ok(html.includes('return-claim-area'));
+  assert.ok(claims.includes('submit_customer_return_claim'));
+  assert.ok(claims.includes('get_customer_return_claim'));
+  assert.ok(!claims.includes('.from("return_requests").insert'));
+  assert.ok(claims.includes('p_item_indexes:selectedIndexes'));
+});
+
+test('Non-damaged refund claims assign return delivery responsibility to the customer',()=>{
+  const sql=fs.readFileSync('supabase/admin-dashboard-setup.sql','utf8');
+  assert.ok(sql.includes("when t='refund' and coalesce(p_is_damaged,false)=false then 'customer'"));
+  assert.ok(sql.includes("lower(order_number)=lower(trim(p_order_number)) and lower(email)=lower(trim(p_email))"));
+  assert.ok(sql.includes("Claims are available after delivery."));
+  assert.ok(sql.includes("This order already has an open claim."));
+});
+
+test('Admin return cases show customer claim condition and return delivery responsibility',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const ops=fs.readFileSync('js/admin-operations.js','utf8');
+  assert.ok(html.includes('return-shipping-payer'));
+  assert.ok(html.includes('return-shipping-fee'));
+  assert.ok(html.includes('return-customer-claim-summary'));
+  assert.ok(ops.includes('Customer pays the return delivery charges for a non-damaged refund.'));
+});
+
+test('Refund and exchange is publicly visible from Support and Track Order before verification',()=>{
+  const track=fs.readFileSync('track-order.html','utf8');
+  const support=fs.readFileSync('support.html','utf8');
+  const home=fs.readFileSync('index.html','utf8');
+  assert.ok(track.includes('id="refund-exchange"'));
+  assert.ok(track.includes('Available to all customers'));
+  assert.ok(track.includes('data-claim-intent="refund"'));
+  assert.ok(track.includes('data-claim-intent="exchange"'));
+  assert.ok(support.includes('support-claims-section'));
+  assert.ok(support.includes('Start a Refund / Exchange'));
+  assert.ok(home.includes('<li><a href="/track-order#refund-exchange">Refund / Exchange</a></li>'));
+});
+
+
+test('Customers can independently track refund or exchange progress',()=>{
+  const track=fs.readFileSync('track-order.html','utf8');
+  const support=fs.readFileSync('support.html','utf8');
+  const progress=fs.readFileSync('js/return-progress.js','utf8');
+  assert.ok(track.includes('id="return-progress"'));
+  assert.ok(track.includes('id="return-progress-form"'));
+  assert.ok(track.includes('Check Return Progress'));
+  assert.ok(track.includes('js/return-progress.js'));
+  assert.ok(support.includes('/track-order#return-progress'));
+  assert.ok(progress.includes('get_customer_return_claim'));
+  assert.ok(progress.includes('return-progress-timeline'));
+  assert.ok(progress.includes('Refund completed'));
+  assert.ok(progress.includes('Exchange completed'));
+  assert.ok(!progress.includes('.from("return_requests")'));
+});
+
+test('Admin includes abandoned cart recovery tools for synced customer carts',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const growth=fs.readFileSync('js/admin-growth-tools.js','utf8');
+  assert.ok(html.includes('data-section-target="abandoned"'));
+  assert.ok(html.includes('id="abandoned-carts-card"'));
+  assert.ok(html.includes('id="abandoned-age-filter"'));
+  assert.ok(growth.includes('from("cart_items").select("*")'));
+  assert.ok(growth.includes('admin_customer_accounts'));
+  assert.ok(growth.includes('Recovery actions are manual'));
+});
+
+test('Admin global search is permission-aware and supports keyboard access',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const growth=fs.readFileSync('js/admin-growth-tools.js','utf8');
+  assert.ok(html.includes('id="admin-global-search-input"'));
+  assert.ok(html.includes('id="admin-global-search-overlay"'));
+  assert.ok(growth.includes('e.key.toLowerCase()==="k"'));
+  assert.ok(growth.includes('allowed(section)'));
+  assert.ok(html.includes('Searches only the dashboard areas your account can access.'));
+});
+
+test('System Health performs only read-only storefront and database checks',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const growth=fs.readFileSync('js/admin-growth-tools.js','utf8');
+  assert.ok(html.includes('data-section-target="health"'));
+  assert.ok(html.includes('id="system-health-card"'));
+  assert.ok(growth.includes('from("products").select("id",{count:"exact",head:true})'));
+  assert.ok(growth.includes('fetchCheck("Sitemap","/sitemap.xml"'));
+  assert.ok(growth.includes('fetchCheck("Checkout page","/checkout.html"'));
+  assert.ok(!growth.includes('.insert('));
+  assert.ok(!growth.includes('.update('));
+  assert.ok(!growth.includes('.delete('));
+});
+
+test('Website Analytics dashboard exposes traffic, engagement, geography and visitor journeys',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const adminAnalytics=fs.readFileSync('js/admin-analytics.js','utf8');
+  assert.ok(html.includes('data-section-target="analytics"'));
+  assert.ok(html.includes('id="analytics-card"'));
+  assert.ok(html.includes('Visitors by country'));
+  assert.ok(html.includes('Most loved product'));
+  assert.ok(html.includes('Recent sessions'));
+  assert.ok(adminAnalytics.includes('admin_analytics_overview'));
+  assert.ok(adminAnalytics.includes('admin_analytics_session'));
+  assert.ok(adminAnalytics.includes('Active time'));
+});
+
+test('Website Analytics auto-refreshes every 15 seconds only while the analytics tab is visible',()=>{
+  const html=fs.readFileSync('admin.html','utf8');
+  const adminAnalytics=fs.readFileSync('js/admin-analytics.js','utf8');
+  assert.ok(html.includes('id="analytics-auto-refresh-status"'));
+  assert.ok(adminAnalytics.includes('const AUTO_REFRESH_MS=15000'));
+  assert.ok(adminAnalytics.includes('setInterval'));
+  assert.ok(adminAnalytics.includes('document.hidden'));
+  assert.ok(adminAnalytics.includes('visibilitychange'));
+  assert.ok(adminAnalytics.includes('admin-section-visible'));
+});
+
+test('First-party analytics tracks production traffic without storing raw IP addresses',()=>{
+  const analytics=fs.readFileSync('js/analytics.js','utf8');
+  const sql=fs.readFileSync('supabase/admin-dashboard-setup.sql','utf8');
+  assert.ok(analytics.includes('labelbyzare\\.com'));
+  assert.ok(analytics.includes('navigator.doNotTrack'));
+  assert.ok(analytics.includes('track_store_analytics'));
+  assert.ok(analytics.includes('page_view'));
+  assert.ok(analytics.includes('engagement'));
+  assert.ok(sql.includes('create table if not exists public.analytics_sessions'));
+  assert.ok(sql.includes('create table if not exists public.analytics_events'));
+  assert.ok(!/\bip_address\b/i.test(sql));
+});
+
+test('Analytics captures product interest, wishlist activity and conversion signals',()=>{
+  const analytics=fs.readFileSync('js/analytics.js','utf8');
+  const cart=fs.readFileSync('js/cart.js','utf8');
+  const sql=fs.readFileSync('supabase/admin-dashboard-setup.sql','utf8');
+  assert.ok(analytics.includes('view_item'));
+  assert.ok(analytics.includes('add_to_cart'));
+  assert.ok(analytics.includes('purchase_item'));
+  assert.ok(cart.includes('add_to_wishlist'));
+  assert.ok(cart.includes('remove_from_wishlist'));
+  assert.ok(sql.includes('interest_score'));
+  assert.ok(sql.includes("count(*) filter(where e.event_type='purchase_item')"));
+});
+
+test('Visitor country comes from a dedicated Netlify geo endpoint',()=>{
+  const analytics=fs.readFileSync('js/analytics.js','utf8');
+  const fn=fs.readFileSync('netlify/functions/visitor-geo.mjs','utf8');
+  const netlify=fs.readFileSync('netlify.toml','utf8');
+  assert.ok(analytics.includes('fetch("/api/visitor-geo"'));
+  assert.ok(fn.includes('context?.geo?.country'));
+  assert.ok(fn.includes('countryCode'));
+  assert.ok(fn.includes('Raw IP addresses'));
+  assert.ok(netlify.includes('from = "/api/visitor-geo"'));
+});

@@ -1,0 +1,23 @@
+LABEL BY ZARE — v26 ADMIN GROWTH TOOLS
+
+Added:
+1. Abandoned Cart Manager (logged-in, Supabase-synced carts)
+2. Global Admin Search (Ctrl/Cmd + K)
+3. System Health dashboard
+
+ABANDONED CARTS
+- Uses the existing cart_items, customer accounts, products and orders data.
+- Guest carts stored only in a visitor browser cannot be shown server-side.
+- Default abandoned threshold is 24 hours and can be changed in the dashboard filter.
+
+GLOBAL SEARCH
+- Searches only dashboard sections the signed-in admin can access.
+- No database writes are performed.
+
+SYSTEM HEALTH
+- Read-only checks for Supabase/session, products, orders, CMS settings, storefront asset, sitemap, robots.txt, checkout and Track Order.
+- It does not place an order or modify store data.
+
+SUPABASE SQL
+The three features reuse existing tables and do not require new database tables.
+If you want the new Abandoned Carts / System Health permission toggles to be saved for each admin role, run the latest supabase/admin-dashboard-setup.sql once.

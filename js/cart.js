@@ -136,6 +136,11 @@ const LZ = {
     if(has){ list = list.filter(id => id !== productId); }
     else{ list.push(productId); this.showToast("Saved to wishlist"); }
     this.saveWishlist(list);
+    const product = getProductById(productId);
+    if(product && window.LZAnalytics){
+      const eventName = has ? "remove_from_wishlist" : "add_to_wishlist";
+      window.LZAnalytics.track(eventName,{value:Number(product.price||0),items:[window.LZAnalytics.item(product,1)]});
+    }
     document.querySelectorAll("[data-wish-id]").forEach(btn => {
       if(btn.getAttribute("data-wish-id") !== productId) return;
       btn.classList.toggle("active", !has);

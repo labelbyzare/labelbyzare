@@ -1,0 +1,11 @@
+LABEL BY ZARE — v22 CUSTOMER REFUND / EXCHANGE CLAIMS
+
+1. Deploy this full v22 project (Netlify still publishes dist).
+2. In Supabase > SQL Editor, run the complete supabase/admin-dashboard-setup.sql once.
+3. Track Order now lets a customer with a matching order number + email submit a Refund or Exchange claim after the order is delivered.
+4. Customer claims appear automatically in Admin > Returns & Refunds and create an admin notification.
+5. For a REFUND where the customer declares the product is NOT damaged, shipping_payer is automatically set to Customer. Admin can enter the actual Return delivery charge (PKR) while managing the case.
+6. Customers cannot directly read/write the return_requests table. Public claim access goes through security-definer RPCs that first verify order number + checkout email.
+7. The customer cannot open a second active claim for the same order while one is already open.
+
+No existing orders, products, customers or prior return cases are deleted.

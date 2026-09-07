@@ -1,0 +1,16 @@
+LABEL BY ZARE — v24 Return / Exchange Progress
+
+What changed
+- Added a public Track Return / Exchange Progress card on Track Order.
+- Customers verify with order number + checkout email.
+- Shows a visual progress timeline from claim received through refund/exchange completion.
+- Shows claim type, reason, opened/updated dates, return-delivery responsibility, return tracking/reference and refund amount when available.
+- Added a Track Return Progress button in Support > Refund or Exchange.
+
+Database
+- No new SQL is required beyond the v22/v23 customer-claims setup.
+- This uses the existing secure get_customer_return_claim RPC.
+
+Security
+- No direct public access to return_requests was added.
+- The progress lookup is still verified by the order number and checkout email.

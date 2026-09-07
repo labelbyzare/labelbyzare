@@ -1,0 +1,9 @@
+Label by Zare v25 — Order Support Layout
+
+Changes:
+- Track Order is now the first action on the Track Order page.
+- Added a dedicated Track Your Order card heading and supporting copy.
+- Reframed the page intro as Order Support so the page hierarchy is clearer.
+- Return progress follows order tracking.
+- Refund / Exchange request remains available afterward.
+- No database or Supabase migration is required for this visual/layout update.

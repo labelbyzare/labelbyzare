@@ -12,6 +12,13 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+
+[[redirects]]
+  from = "/api/visitor-geo"
+  to = "/.netlify/functions/visitor-geo"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/index.html"
   to = "/"

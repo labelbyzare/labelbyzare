@@ -1,0 +1,12 @@
+LABEL BY ZARE v23 — REFUND / EXCHANGE VISIBILITY
+
+What changed
+- Refund / Exchange is now the last link in public Support menus and footers.
+- Track Order always shows a visible Refund / Exchange entry card to every visitor.
+- Support now has a dedicated public Refund / Exchange section.
+- Clicking Refund or Exchange on Track Order remembers the choice and preselects it after order verification.
+- Actual claim submission still requires the real order number + checkout email and a delivered order.
+- Existing v22 admin notifications, claim status tracking and delivery-charge rules are preserved.
+
+Database
+No new SQL migration is required beyond the v22 admin-dashboard-setup.sql already needed for customer claims.
