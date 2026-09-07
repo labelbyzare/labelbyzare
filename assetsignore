@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+wrangler.jsonc
+package.json
+package-lock.json
+netlify.toml
+README.md
+netlify
