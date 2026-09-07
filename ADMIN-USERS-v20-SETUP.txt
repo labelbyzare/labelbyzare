@@ -1,0 +1,28 @@
+LABEL BY ZARE — v20 ADMIN USERS SETUP
+
+1. Deploy the website normally.
+2. In Supabase > SQL Editor, run the complete file:
+   supabase/admin-dashboard-setup.sql
+3. Log out and log back in to /login.html.
+4. Open Admin Users in the backend menu.
+
+ROLES
+- Owner: full access; Apply Changes and Manage Admin Users are always enabled.
+- Managing Director: normally full operational access; permissions can be customized.
+- Admin: choose which sections they can see and whether they can apply changes.
+- Viewer: view-only. Apply Changes is forced off.
+
+ADDING A NEW ADMIN
+- Admin Users > Add admin user.
+- Enter name/email, role, section access and permissions.
+- If that email already has a Supabase/Label by Zare account, it can use Admin Login immediately.
+- If it does not have an account, the dashboard gives you a secure 7-day activation link.
+- Send the link privately. The user creates/verifies their own password on admin-activate.html and then uses login.html.
+
+SECURITY
+- Section access controls what appears in the backend UI.
+- “Can apply changes” is also enforced by Supabase RLS for admin writes to products, orders, messages, subscribers, reviews, discounts, website settings, FAQs, journal content and product-image uploads.
+- A Managing Director with Manage Admin Users cannot create/edit an Owner. Only an Owner can manage Owner accounts.
+- The last active Owner cannot be removed or demoted.
+- Admin activation links expire after 7 days and can be regenerated.
+- 2FA remains per-admin account under Admin Users.

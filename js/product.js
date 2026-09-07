@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if(!root) return;
 
   if(!document.getElementById("lz-catalog-data")) root.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Loading…</p></div>`;
-  (window.PRODUCTS_READY || Promise.resolve()).then(() => buildProductPage(root));
+  Promise.all([window.PRODUCTS_READY || Promise.resolve(), window.LZ_SETTINGS_READY || Promise.resolve()]).then(() => buildProductPage(root));
 });
 
 /* Merge the three separate image fields your admin panel writes
@@ -124,7 +124,7 @@ function buildProductPage(root){
       <button class="btn btn-outline btn-block" id="buy-now" ${stocked ? "" : "disabled"}>${stocked ? "Buy Now" : "Sold Out"}</button>
       <p class="pdp-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
-        Free nationwide delivery on orders over PKR 15,000
+        Free nationwide delivery on orders over PKR <span data-lz-free-shipping-threshold>${Number(LZPolicy.freeShippingAbove).toLocaleString("en-PK")}</span>
       </p>
 
       <p class="pdp-note"><a class="link-underline" href="/journal/${collection.guide}/">Read our ${e(collection.name.toLowerCase())} guide</a></p>

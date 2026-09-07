@@ -18,7 +18,10 @@ let PRODUCTS = [];
 /* Site-wide fallback text for Shipping & Returns.
    Used automatically for any product that doesn't set its own "shipping"
    or "returns" text. Edit here to change the copy everywhere at once. */
-const SHOP_DEFAULTS = { shipping:LZPolicy.shippingText, returns:LZPolicy.returnsText };
+const SHOP_DEFAULTS = {
+  get shipping(){ return LZPolicy.shippingText; },
+  get returns(){ return LZPolicy.returnsText; }
+};
 
 window.PRODUCTS = PRODUCTS;
 window.PRODUCTS_LOAD_ERROR = null;

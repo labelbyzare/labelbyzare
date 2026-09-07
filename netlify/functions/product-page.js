@@ -79,6 +79,31 @@ function parseRequest(event) {
 
 async function fetchProduct(id){ return Catalog.product(id); }
 async function fetchReviewStats(id){ return Catalog.ratings(id); }
+async function fetchSiteSettings(){
+  try {
+    const rows = await Catalog.request("site_settings?key=eq.main&select=value&limit=1", { timeoutMs: 1500 });
+    return Array.isArray(rows) && rows[0] && rows[0].value ? rows[0].value : {};
+  } catch { return {}; }
+}
+function policyFromSettings(settings={}){
+  const standardFee = Number.isFinite(Number(settings.standard_fee)) ? Number(settings.standard_fee) : Policy.standardFee;
+  const expressFee = Number.isFinite(Number(settings.express_fee)) ? Number(settings.express_fee) : Policy.expressFee;
+  const freeShippingAbove = Number.isFinite(Number(settings.free_shipping_above)) ? Number(settings.free_shipping_above) : Policy.freeShippingAbove;
+  const processingDays = settings.processing_days || "1–2 business days";
+  const returnsText = settings.return_policy || Policy.returnsText;
+  const standardDays = settings.standard_days || "3–5 business days nationwide";
+  const expressDays = settings.express_days || "1–2 business days in major cities";
+  return {
+    ...Policy, standardFee, expressFee, freeShippingAbove, returnsText,
+    shippingFee(subtotal, method){
+      const amount=Number(subtotal);
+      if(!Number.isFinite(amount) || amount < 0) throw new Error("Invalid order subtotal");
+      if(amount > this.freeShippingAbove) return 0;
+      return method === "express" ? this.expressFee : this.standardFee;
+    },
+    shippingText:`Orders are processed within ${processingDays}. Standard delivery takes ${standardDays}. Express delivery takes ${expressDays}. Standard shipping is PKR ${standardFee.toLocaleString("en-PK")} and express shipping is PKR ${expressFee.toLocaleString("en-PK")}; both are free on orders over PKR ${freeShippingAbove.toLocaleString("en-PK")}.`
+  };
+}
 function notFoundPage(){
   return `<!doctype html><html lang="en-PK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Piece unavailable | Label by Zare</title><link rel="stylesheet" href="/css/style.css?v=20260907-audit1"><link rel="stylesheet" href="/css/editorial.css?v=20260906-seo1">
 </head><body><main class="wrap section"><a href="/">Label by Zare</a><h1 class="display-2">This piece isn’t available.</h1><p>Explore the current collection or get in touch for help.</p><a class="btn btn-solid" href="/collections/abayas/">Explore abayas</a> <a class="btn btn-outline" href="/collections/shawls/">Explore shawls</a></main></body></html>`;
@@ -86,7 +111,7 @@ function notFoundPage(){
 
 function buildFullGallery(p){ const gallery=Core.normalize(p).gallery; return gallery.length ? gallery : [DEFAULT_IMAGE]; }
 
-function renderPage(p, rating) {
+function renderPage(p, rating, policy) {
   const name = p.name || LZProductTypes.label(p);
   const category = p.category || LZProductTypes.label(p);
   const gallery = buildFullGallery(p);
@@ -101,7 +126,7 @@ function renderPage(p, rating) {
   const priceText = formatPKR(p.price);
   const collection = require("../../js/collections").forProduct(p);
 
-  const productSchema = Schema.product(p,rating);
+  const productSchema = Schema.product(p,rating,policy);
   const breadcrumbSchema = Schema.productBreadcrumbs(p);
 
   return `<!DOCTYPE html>
@@ -241,9 +266,9 @@ function renderPage(p, rating) {
     ${rating.count>0 ? `<p><a href="#product-reviews-root">${rating.value.toFixed(1)} / 5 from ${rating.count} customer reviews</a></p>` : ''}
     <p><a class="link-underline" href="/journal/${collection.guide}/">Read the ${escapeHtml(collection.name.toLowerCase())} guide</a></p>
     <details><summary>Fabric &amp; care</summary><p>${escapeHtml(p.fabric || 'Contact us for the fabric and care details of this piece.')}</p></details>
-    <details><summary>Delivery &amp; returns</summary><p>${escapeHtml(Policy.shippingText)}</p><p>${escapeHtml(p.returns || Policy.returnsText)}</p><a href="/support#shipping-returns">Read the full policy</a></details>
+    <details><summary>Delivery &amp; returns</summary><p>${escapeHtml(policy.shippingText)}</p><p>${escapeHtml(p.returns || policy.returnsText)}</p><a href="/support#shipping-returns">Read the full policy</a></details>
     <noscript><p>Enable JavaScript to select a size and add this piece to your bag.</p></noscript>
-    <p class="pdp-note">Free nationwide delivery on orders over PKR 15,000 — Karachi, Lahore, Islamabad and across Pakistan.</p>
+    <p class="pdp-note">Free nationwide delivery on orders over PKR <span data-lz-free-shipping-threshold>${policy.freeShippingAbove.toLocaleString("en-PK")}</span> — Karachi, Lahore, Islamabad and across Pakistan.</p>
   </div>
 </main>
 
@@ -303,21 +328,21 @@ function renderPage(p, rating) {
 <script defer src="/supabase-client.js"></script>
 <script defer src="/js/catalog-core.js?v=20260907-seo2"></script>
 <script defer src="/js/store-policy.js?v=20260906-seo1"></script>
-<script defer src="/js/site-settings.js?v=20260907-admin1"></script>
+<script defer src="/js/site-settings.js?v=20260907-admin3"></script>
 <script defer src="/js/collections.js?v=20260906-seo1"></script>
 <script defer src="/js/product-types.js?v=20260906-seo1"></script>
-<script defer src="/js/structured-data.js?v=20260906-seo1"></script>
+<script defer src="/js/structured-data.js?v=20260907-shipping1"></script>
 
 <script defer src="/js/search.js?v=20260906-seo1"></script>
 <script defer src="/js/seo.js?v=20260907-seo2"></script>
-<script defer src="/js/data.js?v=20260906-seo1"></script>
+<script defer src="/js/data.js?v=20260907-shipping1"></script>
 <script defer src="/js/analytics-config.js?v=20260906-seo1"></script>
 <script defer src="/js/analytics.js?v=20260906-seo1"></script>
 <script defer src="/js/cart.js?v=20260907-audit1"></script>
 <script defer src="/js/customer-auth.js?v=20260907-audit1"></script>
 <script defer src="/js/main.js?v=20260907-audit1"></script>
 <script defer src="/js/search-ui.js?v=20260907-audit1"></script>
-<script defer src="/js/product.js?v=20260907-audit1"></script>
+<script defer src="/js/product.js?v=20260907-shipping1"></script>
 <script defer src="/js/reviews.js?v=20260906-seo1"></script>
 
 <div class="float-actions">
@@ -342,7 +367,8 @@ exports.handler = async (event) => {
       return { statusCode: 404, headers: { "Content-Type":"text/html; charset=utf-8" }, body: notFoundPage() };
     }
 
-    const [p, rating] = await Promise.all([fetchProduct(id), fetchReviewStats(id)]);
+    const [p, rating, siteSettings] = await Promise.all([fetchProduct(id), fetchReviewStats(id), fetchSiteSettings()]);
+    const activePolicy = policyFromSettings(siteSettings);
     if (!p) {
       return {
         statusCode: 404,
@@ -370,7 +396,7 @@ exports.handler = async (event) => {
         "Content-Type": "text/html; charset=utf-8",
         ...publicPageHeaders(),
       },
-      body: renderPage(p, rating),
+      body: renderPage(p, rating, activePolicy),
     };
   } catch (err) {
     return {
