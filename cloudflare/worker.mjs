@@ -54,10 +54,27 @@ function countryName(code) {
 }
 
 function visitorGeo(request) {
-  const code = String(request.cf?.country || request.headers.get('CF-IPCountry') || '').toUpperCase();
+  const cf = request.cf || {};
+  const code = String(cf.country || request.headers.get('CF-IPCountry') || '').toUpperCase();
+  const clean = (value, max = 120) => String(value ?? '').trim().slice(0, max);
+  const coordinate = (value, min, max) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= min && n <= max ? Number(n.toFixed(5)) : null;
+  };
+
   return new Response(JSON.stringify({
     countryCode: code,
-    countryName: countryName(code)
+    countryName: countryName(code),
+    city: clean(cf.city, 100),
+    region: clean(cf.region, 100),
+    regionCode: clean(cf.regionCode, 24),
+    postalCode: clean(cf.postalCode, 24),
+    timezone: clean(cf.timezone, 80),
+    continent: clean(cf.continent, 8),
+    latitude: coordinate(cf.latitude, -90, 90),
+    longitude: coordinate(cf.longitude, -180, 180),
+    approximate: true,
+    source: 'Cloudflare network geolocation'
   }), {
     status: 200,
     headers: {
