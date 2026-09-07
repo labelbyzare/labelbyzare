@@ -80,12 +80,32 @@
     campaign: (params.get("utm_campaign") || "").slice(0,160)
   };
 
+  function normalizeGeo(data){
+    const bounded=(value,max)=>String(value??"").trim().slice(0,max);
+    const coordinate=(value,min,max)=>{const n=Number(value);return Number.isFinite(n)&&n>=min&&n<=max?Number(n.toFixed(5)):null;};
+    const countryName=bounded(data?.countryName||data?.name||"Unknown",80)||"Unknown";
+    return {
+      code:bounded(data?.countryCode||data?.code,3).toUpperCase(),
+      name:countryName,
+      countryName,
+      city:bounded(data?.city,100),
+      region:bounded(data?.region,100),
+      regionCode:bounded(data?.regionCode,24),
+      postalCode:bounded(data?.postalCode,24),
+      timezone:bounded(data?.timezone,80),
+      continent:bounded(data?.continent,8),
+      latitude:coordinate(data?.latitude,-90,90),
+      longitude:coordinate(data?.longitude,-180,180),
+      approximate:true
+    };
+  }
   let geoCache = null;
-  try{const saved=JSON.parse(sessionStorage.getItem("lz_analytics_geo")||"null");if(saved?.name)geoCache=saved;}catch(_){ }
+  try{const saved=JSON.parse(sessionStorage.getItem("lz_analytics_geo")||"null");if(saved&&(saved.countryName||saved.name))geoCache=normalizeGeo(saved);}catch(_){ }
+  const unknownGeo=()=>normalizeGeo({countryName:"Unknown"});
   const geoPromise = firstPartyEnabled && !geoCache ? fetch("/api/visitor-geo", {headers:{"accept":"application/json"},cache:"no-store"})
     .then(r=>r.ok?r.json():null)
-    .then(data=>{geoCache={code:String(data?.countryCode||"").slice(0,3),name:String(data?.countryName||"Unknown").slice(0,80)};try{sessionStorage.setItem("lz_analytics_geo",JSON.stringify(geoCache));}catch(_){ }return geoCache;})
-    .catch(()=>geoCache={code:"",name:"Unknown"}) : Promise.resolve(geoCache||{code:"",name:"Unknown"});
+    .then(data=>{geoCache=normalizeGeo(data||{});try{sessionStorage.setItem("lz_analytics_geo",JSON.stringify(geoCache));}catch(_){ }return geoCache;})
+    .catch(()=>geoCache=unknownGeo()) : Promise.resolve(geoCache||unknownGeo());
 
   function item(p,quantity=1,size,color){
     let category = "";
@@ -108,7 +128,7 @@
       p_value: Number.isFinite(Number(options.value)) ? Number(options.value) : null,
       p_active_seconds: Math.max(0,Math.min(120,Math.round(Number(options.activeSeconds)||0))),
       p_country_code: geo?.code || null,
-      p_country_name: geo?.name || "Unknown",
+      p_country_name: geo?.countryName || geo?.name || "Unknown",
       p_device_type: device.device,
       p_browser: device.browser,
       p_os: device.os,
@@ -116,7 +136,13 @@
       p_utm_source: acquisition.source || null,
       p_utm_medium: acquisition.medium || null,
       p_utm_campaign: acquisition.campaign || null,
-      p_metadata: options.metadata && typeof options.metadata === "object" ? options.metadata : {}
+      p_metadata: {
+        ...(options.metadata && typeof options.metadata === "object" ? options.metadata : {}),
+        geo:{
+          city:geo?.city||null,region:geo?.region||null,region_code:geo?.regionCode||null,postal_code:geo?.postalCode||null,
+          timezone:geo?.timezone||null,continent:geo?.continent||null,latitude:geo?.latitude??null,longitude:geo?.longitude??null,approximate:true
+        }
+      }
     };
     try{ await window.supabaseClient.rpc("track_store_analytics",payload); }catch(_){ }
   }
