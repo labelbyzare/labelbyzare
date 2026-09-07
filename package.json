@@ -1,0 +1,12 @@
+{
+  "name": "label-by-zare-storefront",
+  "private": true,
+  "version": "27.3-cloudflare.1",
+  "scripts": {
+    "build": "node scripts/build-site.js",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.129.1"
+  }
+}
