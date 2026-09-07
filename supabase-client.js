@@ -8,3 +8,4 @@ const SUPABASE_URL = "https://ldpzgtjbnbdsggaqmuvs.supabase.co"; // from Supabas
 const SUPABASE_ANON_KEY = "sb_publishable_DG3Iar3m4BUg72fUWPyLag_XMyHfLWs"; // from same page — this is safe to expose client-side
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabaseClient = supabaseClient;
