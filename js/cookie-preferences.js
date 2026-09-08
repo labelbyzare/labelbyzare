@@ -1,32 +1,34 @@
-/* LABEL BY ZARE — cookie-preference UI copy layered over consent-aware analytics */
+/* LABEL BY ZARE — safe cookie-preference UI copy */
 (function(){
   "use strict";
+
+  function setText(el,value){
+    if(el && el.textContent !== value) el.textContent=value;
+  }
+
   function applyCookieCopy(){
     const banner=document.getElementById("lz-consent-banner");
     if(banner){
-      banner.setAttribute("aria-label","Cookie preferences");
-      const title=banner.querySelector("strong");
-      const copy=banner.querySelector("p");
-      const reject=banner.querySelector('[data-lz-consent="denied"]');
-      const accept=banner.querySelector('[data-lz-consent="granted"]');
-      const details=banner.querySelector('a[href="/privacy"]');
-      if(title)title.textContent="Cookie preferences";
-      if(copy)copy.textContent="We use optional cookies and similar technologies to improve your experience. Essential shopping functions always remain available.";
-      if(reject)reject.textContent="Reject non-essential";
-      if(accept)accept.textContent="Accept all";
-      if(details)details.textContent="Cookie details";
+      if(banner.getAttribute("aria-label")!=="Cookie preferences") banner.setAttribute("aria-label","Cookie preferences");
+      setText(banner.querySelector("strong"),"Cookie preferences");
+      setText(banner.querySelector("p"),"We use optional cookies and similar technologies to improve your experience. Essential shopping functions always remain available.");
+      setText(banner.querySelector('[data-lz-consent="denied"]'),"Reject non-essential");
+      setText(banner.querySelector('[data-lz-consent="granted"]'),"Accept all");
+      setText(banner.querySelector('a[href="/privacy"]'),"Cookie details");
     }
 
-    document.querySelectorAll('[data-privacy-choice="deny"]').forEach(button=>{button.textContent="Reject non-essential";});
-    document.querySelectorAll('[data-privacy-choice="allow"]').forEach(button=>{button.textContent="Accept optional cookies";});
+    document.querySelectorAll('[data-privacy-choice="deny"]').forEach(button=>setText(button,"Reject non-essential"));
+    document.querySelectorAll('[data-privacy-choice="allow"]').forEach(button=>setText(button,"Accept optional cookies"));
   }
 
-  document.addEventListener("DOMContentLoaded",()=>{
+  function ready(){
     applyCookieCopy();
-    const observer=new MutationObserver(applyCookieCopy);
-    observer.observe(document.body,{childList:true,subtree:true});
-    setTimeout(()=>observer.disconnect(),5000);
-  });
+    requestAnimationFrame(applyCookieCopy);
+    setTimeout(applyCookieCopy,100);
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",ready,{once:true});
+  else ready();
 
   window.addEventListener("lz:privacy-consent",()=>setTimeout(applyCookieCopy,0));
 })();
