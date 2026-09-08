@@ -1,179 +1,21 @@
-import homePageModule from '../netlify/functions/home-page.js';
-import collectionPageModule from '../netlify/functions/collection-page.js';
-import journalPageModule from '../netlify/functions/journal-page.js';
-import productPageModule from '../netlify/functions/product-page.js';
-import productFeedModule from '../netlify/functions/product-feed.js';
-import sitemapHtmlModule from '../netlify/functions/sitemap-html.js';
-import sitemapPagesModule from '../netlify/functions/sitemap-pages.js';
-import sitemapProductsModule from '../netlify/functions/sitemap-products.js';
+import homePageModule from '../server/routes/home-page.js';
+import collectionPageModule from '../server/routes/collection-page.js';
+import journalPageModule from '../server/routes/journal-page.js';
+import productPageModule from '../server/routes/product-page.js';
+import productFeedModule from '../server/routes/product-feed.js';
+import sitemapHtmlModule from '../server/routes/sitemap-html.js';
+import sitemapPagesModule from '../server/routes/sitemap-pages.js';
+import sitemapProductsModule from '../server/routes/sitemap-products.js';
 
-const homePage = homePageModule.handler;
-const collectionPage = collectionPageModule.handler;
-const journalPage = journalPageModule.handler;
-const productPage = productPageModule.handler;
-const productFeed = productFeedModule.handler;
-const sitemapHtml = sitemapHtmlModule.handler;
-const sitemapPages = sitemapPagesModule.handler;
-const sitemapProducts = sitemapProductsModule.handler;
-
-const DYNAMIC_SECURITY_HEADERS = {
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'X-Frame-Options': 'SAMEORIGIN',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
-};
-
-function queryObject(url) {
-  const result = {};
-  for (const [key, value] of url.searchParams) result[key] = value;
-  return result;
-}
-
-function netlifyEvent(request) {
-  const url = new URL(request.url);
-  return {
-    path: url.pathname,
-    rawPath: url.pathname,
-    rawQuery: url.search.slice(1),
-    rawUrl: url.href,
-    httpMethod: request.method,
-    headers: Object.fromEntries(request.headers),
-    queryStringParameters: queryObject(url),
-    body: null,
-    isBase64Encoded: false
-  };
-}
-
-function countryName(code) {
-  if (!code || code.length !== 2) return 'Unknown';
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code.toUpperCase()) || code.toUpperCase();
-  } catch {
-    return code.toUpperCase();
-  }
-}
-
-function visitorGeo(request) {
-  const cf = request.cf || {};
-  const code = String(cf.country || request.headers.get('CF-IPCountry') || '').toUpperCase();
-  const clean = (value, max = 120) => String(value ?? '').trim().slice(0, max);
-  const coordinate = (value, min, max) => {
-    const n = Number(value);
-    return Number.isFinite(n) && n >= min && n <= max ? Number(n.toFixed(5)) : null;
-  };
-
-  return new Response(JSON.stringify({
-    countryCode: code,
-    countryName: countryName(code),
-    city: clean(cf.city, 100),
-    region: clean(cf.region, 100),
-    regionCode: clean(cf.regionCode, 24),
-    postalCode: clean(cf.postalCode, 24),
-    timezone: clean(cf.timezone, 80),
-    continent: clean(cf.continent, 8),
-    latitude: coordinate(cf.latitude, -90, 90),
-    longitude: coordinate(cf.longitude, -180, 180),
-    approximate: true,
-    source: 'Cloudflare network geolocation'
-  }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store, max-age=0',
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    }
-  });
-}
-
-function isWorkersPreview(request) {
-  try { return new URL(request.url).hostname.endsWith('.workers.dev'); }
-  catch { return false; }
-}
-
-function harden(response, request) {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(DYNAMIC_SECURITY_HEADERS)) {
-    if (!headers.has(name)) headers.set(name, value);
-  }
-  if (isWorkersPreview(request)) headers.set('X-Robots-Tag', 'noindex, nofollow');
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
-}
-
-function fromNetlify(result, request) {
-  const status = Number(result?.statusCode) || 200;
-  const headers = new Headers(result?.headers || {});
-
-  // Netlify-specific edge-cache headers are harmless, but Cloudflare should use
-  // its own CDN cache-control header when one has not already been supplied.
-  const netlifyCdn = headers.get('Netlify-CDN-Cache-Control');
-  if (netlifyCdn && !headers.has('Cloudflare-CDN-Cache-Control')) {
-    headers.set('Cloudflare-CDN-Cache-Control', netlifyCdn.replace(/\bdurable,\s*/i, ''));
-  }
-
-  let body = result?.body ?? '';
-  if (request.method === 'HEAD') body = null;
-  const response = new Response(body, { status, headers });
-  return harden(response, request);
-}
-
-async function run(handler, request) {
-  try {
-    return fromNetlify(await handler(netlifyEvent(request)), request);
-  } catch (error) {
-    console.error('Label by Zare Worker route failed:', error?.stack || error);
-    return harden(new Response('Service temporarily unavailable.', {
-      status: 503,
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-store',
-        'Retry-After': '60'
-      }
-    }), request);
-  }
-}
-
-function redirect(location, status = 301) {
-  return new Response(null, { status, headers: { Location: location } });
-}
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
-
-    // The storefront routes are read-only. Keep unexpected methods away from
-    // legacy SSR handlers and let normal static asset behavior handle them.
-    if (!['GET', 'HEAD'].includes(request.method)) {
-      if (path === '/api/visitor-geo') {
-        return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
-      }
-      return env.ASSETS.fetch(request);
-    }
-
-    if (path === '/api/visitor-geo') return visitorGeo(request);
-    if (path === '/') return run(homePage, request);
-
-    if (path === '/index.html') return redirect('/');
-
-    if (path === '/shop' || path === '/sale' || path === '/new-arrivals' || path === '/search' || path.startsWith('/collections/')) {
-      return run(collectionPage, request);
-    }
-
-    if (path === '/journal' || path === '/journal/' || path.startsWith('/journal/')) {
-      return run(journalPage, request);
-    }
-
-    if (path === '/product' || path === '/product.html' || path.startsWith('/product/')) {
-      return run(productPage, request);
-    }
-
-    if (path === '/sitemap-pages.xml') return run(sitemapPages, request);
-    if (path === '/sitemap-products.xml') return run(sitemapProducts, request);
-    if (path === '/sitemap.html') return run(sitemapHtml, request);
-    if (path === '/product-feed.xml') return run(productFeed, request);
-
-    const asset = await env.ASSETS.fetch(request);
-    return asset;
-  }
-};
+const homePage=homePageModule.handler,collectionPage=collectionPageModule.handler,journalPage=journalPageModule.handler,productPage=productPageModule.handler,productFeed=productFeedModule.handler,sitemapHtml=sitemapHtmlModule.handler,sitemapPages=sitemapPagesModule.handler,sitemapProducts=sitemapProductsModule.handler;
+const SECURITY={'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN','Permissions-Policy':'camera=(), microphone=(), geolocation=()'};
+function queryObject(url){const out={};for(const [k,v] of url.searchParams)out[k]=v;return out;}
+function routeEvent(request){const url=new URL(request.url);return{path:url.pathname,rawPath:url.pathname,rawQuery:url.search.slice(1),rawUrl:url.href,httpMethod:request.method,headers:Object.fromEntries(request.headers),queryStringParameters:queryObject(url),body:null,isBase64Encoded:false};}
+function countryName(code){if(!code||code.length!==2)return'Unknown';try{return new Intl.DisplayNames(['en'],{type:'region'}).of(code.toUpperCase())||code.toUpperCase();}catch{return code.toUpperCase();}}
+function visitorGeo(request){const cf=request.cf||{},code=String(cf.country||request.headers.get('CF-IPCountry')||'').toUpperCase();const clean=(v,n=100)=>String(v??'').trim().slice(0,n);return new Response(JSON.stringify({countryCode:code,countryName:countryName(code),city:clean(cf.city),region:clean(cf.region||cf.regionCode)}),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});}
+function preview(request){try{return new URL(request.url).hostname.endsWith('.workers.dev');}catch{return false;}}
+function htmlHarden(body){let html=String(body||'').replace(/@supabase\/supabase-js@2(?=["'])/g,'@supabase/supabase-js@2.105.0').replace(/\/js\/catalog-core\.js\?v=[^"']+/g,'/js/catalog-core.js?v=20260908-v29').replace(/\/js\/analytics\.js\?v=[^"']+/g,'/js/analytics.js?v=20260908-v29');if(!html.includes('v29-hardening.css'))html=html.replace('</head>','<link rel="stylesheet" href="/css/v29-hardening.css?v=20260908-v29"></head>');if(html.includes('class="site-footer"')&&!html.includes('class="footer-legal"'))html=html.replace('</footer>','<span class="footer-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping-policy">Shipping</a><a href="/returns-policy">Returns</a></span></footer>');return html;}
+function fromRouteResult(result,request){const status=Number(result?.statusCode)||200,headers=new Headers(result?.headers||{});for(const [k,v] of Object.entries(SECURITY))if(!headers.has(k))headers.set(k,v);if(preview(request))headers.set('X-Robots-Tag','noindex, nofollow');let body=result?.body??'';if(headers.get('Content-Type')?.includes('text/html'))body=htmlHarden(body);if(request.method==='HEAD')body=null;return new Response(body,{status,headers});}
+async function run(handler,request){try{return fromRouteResult(await handler(routeEvent(request)),request);}catch(error){console.error('Label by Zare Worker route failed:',error?.stack||error);return new Response('Service temporarily unavailable.',{status:503,headers:{...SECURITY,'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store','Retry-After':'60'}});}}
+function redirect(location,status=301){return new Response(null,{status,headers:{Location:location}});}
+export default{async fetch(request,env){const url=new URL(request.url),path=url.pathname;if(!['GET','HEAD'].includes(request.method)){if(path==='/api/visitor-geo')return new Response('Method Not Allowed',{status:405,headers:{Allow:'GET, HEAD'}});return env.ASSETS.fetch(request);}if(path==='/api/visitor-geo')return visitorGeo(request);if(path==='/')return run(homePage,request);if(path==='/index.html')return redirect('/');if(path==='/shop'||path==='/sale'||path==='/new-arrivals'||path==='/search'||path.startsWith('/collections/'))return run(collectionPage,request);if(path==='/journal'||path==='/journal/'||path.startsWith('/journal/'))return run(journalPage,request);if(path==='/product'||path==='/product.html'||path.startsWith('/product/'))return run(productPage,request);if(path==='/sitemap-pages.xml')return run(sitemapPages,request);if(path==='/sitemap-products.xml')return run(sitemapProducts,request);if(path==='/sitemap.html')return run(sitemapHtml,request);if(path==='/product-feed.xml')return run(productFeed,request);return env.ASSETS.fetch(request);}};

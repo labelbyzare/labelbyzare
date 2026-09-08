@@ -6,8 +6,8 @@ const Policy=require('../js/store-policy');
 const Collections=require('../js/collections');
 const Search=require('../js/search');
 const Schema=require('../js/structured-data');
-const Journal=require('../netlify/lib/journal');
-const Catalog=require('../netlify/lib/catalog');
+const Journal=require('../server/lib/journal');
+const Catalog=require('../server/lib/catalog');
 const fixture=require('./fixtures/catalog.json');
 const originalFetch=global.fetch;
 let rows,reviews,fail,calls;
@@ -26,7 +26,7 @@ beforeEach(()=>{
  };
 });
 after(()=>{global.fetch=originalFetch;});
-function run(name,path,query={}){return require('../netlify/functions/'+name).handler({path,queryStringParameters:query,rawQuery:new URLSearchParams(query).toString(),httpMethod:'GET'});}
+function run(name,path,query={}){return require('../server/routes/'+name).handler({path,queryStringParameters:query,rawQuery:new URLSearchParams(query).toString(),httpMethod:'GET'});}
 function ld(html){return [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(m=>JSON.parse(m[1]));}
 function byType(html,type){return ld(html).find(s=>s['@type']===type);}
 
@@ -155,69 +155,35 @@ test('Feeds and sitemaps agree with catalog URLs and avoid invented freshness',a
  for(const p of rows) assert.ok(products.body.includes(C.site+C.productUrl(p)));
  assert.doesNotMatch(products.body,/<lastmod>/);
  const pages=await run('sitemap-pages','/sitemap-pages.xml');
- assert.ok(pages.body.includes('/journal/abaya-fabric-guide/'));assert.ok(!pages.body.includes('/collections/shawls/'));
+ assert.ok(pages.body.includes('/journal/abaya-fabric-guide/'));assert.ok(pages.body.includes('/privacy'));assert.ok(pages.body.includes('/terms'));assert.ok(!pages.body.includes('/collections/shawls/'));
 });
 test('Sitemaps omit empty shopping pages and unpriced products, but retain out-of-stock pieces',async()=>{
  rows=[{...fixture[0],id:'unpriced-piece',price:0,old_price:5000,is_sale:true,is_new:true}];
  let pages=await run('sitemap-pages','/sitemap-pages.xml');
- for(const path of ['/shop','/sale','/new-arrivals',...Collections.all.map(Collections.url)]){
-  assert.ok(!pages.body.includes('<loc>'+C.site+path+'</loc>'),path+' must be omitted while empty');
- }
+ for(const path of ['/shop','/sale','/new-arrivals',...Collections.all.map(Collections.url)]) assert.ok(!pages.body.includes('<loc>'+C.site+path+'</loc>'),path+' must be omitted while empty');
  assert.ok(pages.body.includes('/journal/abaya-fabric-guide/'));
- const products=await run('sitemap-products','/sitemap-products.xml');
- assert.doesNotMatch(products.body,/<url>/);
- const html=await run('sitemap-html','/sitemap.html');
- assert.ok(!html.body.includes('href="'+C.productUrl(rows[0])+'"'));
- rows[0].price=4000;rows[0].in_stock=false;
- pages=await run('sitemap-pages','/sitemap-pages.xml');
- for(const path of ['/shop','/sale','/new-arrivals']){
-  assert.ok(pages.body.includes('<loc>'+C.site+path+'</loc>'));
-  assert.doesNotMatch((await run('collection-page',path)).body,/noindex, follow/);
- }
+ const products=await run('sitemap-products','/sitemap-products.xml');assert.doesNotMatch(products.body,/<url>/);
+ const html=await run('sitemap-html','/sitemap.html');assert.ok(!html.body.includes('href="'+C.productUrl(rows[0])+'"'));
+ rows[0].price=4000;rows[0].in_stock=false;pages=await run('sitemap-pages','/sitemap-pages.xml');
+ for(const path of ['/shop','/sale','/new-arrivals']){assert.ok(pages.body.includes('<loc>'+C.site+path+'</loc>'));assert.doesNotMatch((await run('collection-page',path)).body,/noindex, follow/);}
  assert.ok((await run('sitemap-products','/sitemap-products.xml')).body.includes(C.site+C.productUrl(rows[0])));
 });
 test('The visitor sitemap links every priced product once, including general abayas and shawls',async()=>{
  rows.push({...fixture[0],id:'general-abaya',category:'Abaya'},{...fixture[0],id:'new-shawl',category:'Shawls'});
  const html=await run('sitemap-html','/sitemap.html');assert.equal(html.statusCode,200);
  const xml=await run('sitemap-products','/sitemap-products.xml');
- for(const p of rows){
-  assert.equal(html.body.split('href="'+C.productUrl(p)+'"').length-1,1,p.id+' needs one visible product link');
-  assert.ok(xml.body.includes('<loc>'+C.site+C.productUrl(p)+'</loc>'));
- }
- assert.match(html.body,/Out of stock/);
- assert.ok((await run('sitemap-pages','/sitemap-pages.xml')).body.includes('/collections/shawls/'));
+ for(const p of rows){assert.equal(html.body.split('href="'+C.productUrl(p)+'"').length-1,1,p.id+' needs one visible product link');assert.ok(xml.body.includes('<loc>'+C.site+C.productUrl(p)+'</loc>'));}
+ assert.match(html.body,/Out of stock/);assert.ok((await run('sitemap-pages','/sitemap-pages.xml')).body.includes('/collections/shawls/'));
 });
-test('Responsive product images stay on an allowlisted CDN path with an original fallback',()=>{
- const html=C.responsive(fixture[0].img);assert.match(html,/\/\.netlify\/images\?url=/);assert.match(html,/removeAttribute\('srcset'\)/);
- assert.equal(C.responsive('https://untrusted.example/image.jpg'),'');
-});
+test('Product cards do not depend on a removed Netlify image transform endpoint',()=>{assert.equal(C.responsive(fixture[0].img),'');assert.equal(C.responsive('https://untrusted.example/image.jpg'),'');assert.doesNotMatch(fs.readFileSync('js/catalog-core.js','utf8'),/\.netlify\/images/);});
 test('Public page caching preserves query variants and never caches errors',async()=>{
- for(const [fn,path] of [['home-page','/'],['collection-page','/shop'],['journal-page','/journal/'],['product-page',C.productUrl(rows[0])]]){
-  const result=await run(fn,path);assert.equal(result.statusCode,200);
-  assert.equal(result.headers['Cache-Control'],'public, max-age=0, must-revalidate');
-  assert.match(result.headers['Netlify-CDN-Cache-Control'],/durable/);
-  assert.match(result.headers['Netlify-CDN-Cache-Control'],/max-age=60, stale-while-revalidate=30/);
-  assert.equal(result.headers['Netlify-Vary'],'query');
- }
- const missing=await run('collection-page','/collections/no-such-collection/');
- assert.equal(missing.statusCode,404);assert.equal(missing.headers['Cache-Control'],'no-store');
- assert.equal(missing.headers['Netlify-CDN-Cache-Control'],undefined);
+ for(const [fn,path] of [['home-page','/'],['collection-page','/shop'],['journal-page','/journal/'],['product-page',C.productUrl(rows[0])]]){const result=await run(fn,path);assert.equal(result.statusCode,200);assert.equal(result.headers['Cache-Control'],'public, max-age=0, must-revalidate');assert.match(result.headers['Cloudflare-CDN-Cache-Control'],/max-age=60, stale-while-revalidate=30/);assert.equal(result.headers['Netlify-CDN-Cache-Control'],undefined);}
+ const missing=await run('collection-page','/collections/no-such-collection/');assert.equal(missing.statusCode,404);assert.equal(missing.headers['Cache-Control'],'no-store');assert.equal(missing.headers['Cloudflare-CDN-Cache-Control'],undefined);
  fail=true;
- for(const [fn,path] of [['home-page','/'],['product-page',C.productUrl(rows[0])]]){
-  const result=await run(fn,path);assert.equal(result.statusCode,503);
-  assert.equal(result.headers['Cache-Control'],'no-store');
-  assert.equal(result.headers['Netlify-CDN-Cache-Control'],undefined);
- }
+ for(const [fn,path] of [['home-page','/'],['product-page',C.productUrl(rows[0])]]){const result=await run(fn,path);assert.equal(result.statusCode,503);assert.equal(result.headers['Cache-Control'],'no-store');assert.equal(result.headers['Cloudflare-CDN-Cache-Control'],undefined);}
 });
 test('A stalled optional review request is aborted while the product remains available',async()=>{
  const fetchCatalog=global.fetch;let reviewAborted=false;
- global.fetch=(input,options)=>String(input).includes('/product_reviews?') ? new Promise((resolve,reject)=>{
-  options.signal.addEventListener('abort',()=>{reviewAborted=true;reject(new Error('Review request timed out'));},{once:true});
- }) : fetchCatalog(input,options);
- const start=performance.now();
- const result=await run('product-page',C.productUrl(rows[0]));
- assert.equal(result.statusCode,200);assert.equal(reviewAborted,true);
- assert.ok(performance.now()-start<2500,'Optional reviews must not block for the eight-second catalog timeout');
- assert.equal(byType(result.body,'Product').aggregateRating,undefined);
- assert.equal(Number(byType(result.body,'Product').offers.price),rows[0].price);
+ global.fetch=(input,options)=>String(input).includes('/product_reviews?') ? new Promise((resolve,reject)=>{options.signal.addEventListener('abort',()=>{reviewAborted=true;reject(new Error('Review request timed out'));},{once:true});}) : fetchCatalog(input,options);
+ const start=performance.now();const result=await run('product-page',C.productUrl(rows[0]));assert.equal(result.statusCode,200);assert.equal(reviewAborted,true);assert.ok(performance.now()-start<2500,'Optional reviews must not block for the eight-second catalog timeout');assert.equal(byType(result.body,'Product').aggregateRating,undefined);assert.equal(Number(byType(result.body,'Product').offers.price),rows[0].price);
 });
