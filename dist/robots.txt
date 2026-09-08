@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /login
-
-Sitemap: https://labelbyzare.com/sitemap.xml
