@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+server/lib/templates.js
+server/lib/asset-versions.json
+test-results/
+*.log
+.env
+.env.*
+!.env.example

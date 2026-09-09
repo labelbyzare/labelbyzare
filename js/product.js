@@ -40,120 +40,35 @@ function buildProductPage(root){
   const collection = LZCollections.forProduct(p);
   p.gallery = buildFullGallery(p);
 
-  // Self-heal the URL to its canonical slug (e.g. an old /product?id=xyz
-  // link, or a stale/renamed slug) without a page reload, so anyone who
-  // lands here shares/bookmarks the correct keyword-rich URL from now on.
-  if(p && window.history && window.history.replaceState){
-    const canonical = productUrl(p);
-    if(location.pathname + location.search !== canonical){
-      window.history.replaceState(null, "", canonical);
-    }
-  }
-
-  let selectedSize = p.sizes[Math.floor(p.sizes.length/2)] || p.sizes[0];
-  let selectedColor = p.colors[0].name;
+  const selection=LZCatalog.selection(p,new URLSearchParams(location.search));
+  let selectedSize=selection.size;
+  let selectedColor=selection.color;
+  // Keep shareable size/colour links while consolidating only the canonical tag.
+  const normalizedUrl=new URL(productUrl(p),location.origin);
+  const originalParams=new URLSearchParams(location.search);
+  for(const key of ['size','color'])if(originalParams.has(key))normalizedUrl.searchParams.set(key,selection[key]);
+  if(location.pathname!==normalizedUrl.pathname)history.replaceState(null,'',normalizedUrl.pathname+normalizedUrl.search);
   let qty = 1;
   const stocked = isInStock(p);
 
-  if (window.LZSEO) LZSEO.applyProduct(p);
-
-  root.innerHTML = `
-    <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
-      ${LZSchema.productBreadcrumbs(p).itemListElement.map((item,i,items)=>i===items.length-1 ? `<span aria-current="page">${e(item.name)}</span>` : `<a href="${e(new URL(item.item).pathname)}">${e(item.name)}</a>`).join(' &rsaquo; ')}
-    </nav>
-    <div class="pdp-gallery reveal">
-      <div class="pdp-main-img" id="pdp-main-img-wrap">
-        <img id="pdp-main-img" src="${e(p.gallery[0])}" width="832" height="1248" fetchpriority="high" decoding="async" ${LZCatalog.responsive(p.gallery[0], "(max-width:768px) 100vw, 50vw", [480,832,1248])} alt="${e(LZCatalog.imageAlt(p))}">
-        <button class="zoom-trigger" id="zoom-trigger" type="button" aria-label="Zoom image">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
-        </button>
-      </div>
-      <div class="pdp-thumbs">
-        ${p.gallery.map((src, i) => `
-          <button class="${i === 0 ? "active" : ""}" data-src="${e(src)}" aria-label="View ${e(LZCatalog.imageAlt(p,i))}">
-            <img width="80" height="120" loading="lazy" decoding="async" src="${e(src)}" ${LZCatalog.responsive(src,"80px",[80,160])} alt="${e(LZCatalog.imageAlt(p,i))}">
-          </button>`).join("")}
-      </div>
-    </div>
-
-    <div class="pdp-info reveal">
-      <div class="cat-label">${e(p.category)} ${p.isNew ? "· New Arrival" : ""}</div>
-      <h1 class="serif">${e(p.name)}</h1>
-      <div class="pdp-price">
-        ${p.oldPrice ? `<span class="price-old">${formatPKR(p.oldPrice)}</span>` : ""}
-        <span class="${p.isSale ? "price-sale" : ""}">${formatPKR(p.price)}</span>
-      </div>
-      <p class="lede">${e(p.description)}</p>
-      <div class="pdp-stock ${stocked ? "" : "out"}">${stocked ? "In Stock" : "Sold Out"}</div>
-
-      <div class="option-block">
-        <div class="option-label"><span>Color</span><span class="muted" id="color-label">${e(selectedColor)}</span></div>
-        <div class="swatches" id="color-swatches">
-          ${p.colors.map(c => `
-            <button class="swatch-color ${c.name === selectedColor ? "active" : ""}" style="background:${c.hex}" data-color="${e(c.name)}" aria-label="${e(c.name)}"></button>
-          `).join("")}
-        </div>
-      </div>
-
-      <div class="option-block">
-        <div class="option-label"><span>Size</span>${LZProductTypes.key(p) === "abayas" ? '<span class="muted link-underline" style="cursor:pointer" id="size-guide-btn">Size Guide</span>' : ""}</div>
-        <div class="swatches" id="size-swatches">
-          ${p.sizes.map(s => `
-            <button class="swatch-size ${s === selectedSize ? "active" : ""}" data-size="${e(s)}">${e(s)}</button>
-          `).join("")}
-        </div>
-      </div>
-
-      <div class="option-block">
-        <div class="option-label"><span>Quantity</span></div>
-        <div class="qty-row">
-          <div class="qty-stepper">
-            <button id="qty-minus" aria-label="Decrease quantity">−</button>
-            <span id="qty-val">1</span>
-            <button id="qty-plus" aria-label="Increase quantity">+</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="pdp-actions">
-        <button class="btn btn-solid" id="add-to-cart" ${stocked ? "" : "disabled"}>${stocked ? `Add to Cart — ${formatPKR(p.price)}` : "Sold Out"}</button>
-        <button class="icon-btn-round ${LZ.isWished(p.id) ? "active" : ""}" data-wish-id="${e(p.id)}" aria-label="Save to wishlist">
-          <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.7.6 4.9 2.2C11.7 4.7 13.3 3.8 15.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>
-        </button>
-      </div>
-      <button class="btn btn-outline btn-block" id="buy-now" ${stocked ? "" : "disabled"}>${stocked ? "Buy Now" : "Sold Out"}</button>
-      <p class="pdp-note">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
-        Free nationwide delivery on orders over PKR <span data-lz-free-shipping-threshold>${Number(LZPolicy.freeShippingAbove).toLocaleString("en-PK")}</span>
-      </p>
-
-      <p class="pdp-note"><a class="link-underline" href="/journal/${collection.guide}/">Read our ${e(collection.name.toLowerCase())} guide</a></p>
-      <div class="accordion">
-        <div class="acc-item open">
-          <button class="acc-head">Details <span class="plus"></span></button>
-          <div class="acc-body" style="max-height:200px"><div class="acc-body-inner">${e(p.description)}</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">Fabric &amp; Care <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${e(p.fabric)}</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">Shipping <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${e(getShippingText(p))}</div></div>
-        </div>
-        <div class="acc-item">
-          <button class="acc-head">Returns <span class="plus"></span></button>
-          <div class="acc-body"><div class="acc-body-inner">${e(getReturnsText(p))}</div></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  root.querySelectorAll('.acc-head').forEach(button=>button.addEventListener('click',()=>{
-    const item=button.closest('.acc-item'); const body=item.querySelector('.acc-body');
-    item.classList.toggle('open');button.setAttribute('aria-expanded',String(item.classList.contains('open')));
-    body.style.maxHeight=item.classList.contains('open') ? body.scrollHeight+'px' : '0px';
-  }));
+  if(root.dataset.productRendered!==String(p.id)){
+    root.innerHTML=LZProductView.render(p,{policy:LZPolicy,query:{size:selectedSize,color:selectedColor}});
+    root.dataset.productRendered=String(p.id);
+    window.LZSEO?.applyProduct(p,{size:selectedSize});
+  }
+  root.querySelectorAll('[data-wish-id]').forEach(button=>{
+    button.classList.toggle('active',LZ.isWished(p.id));
+    button.setAttribute('aria-pressed',String(LZ.isWished(p.id)));
+  });
+  function updateVariant(){
+    const url=new URL(location.href);
+    url.searchParams.set('size',selectedSize);
+    if(p.colors.length>1)url.searchParams.set('color',selectedColor);
+    history.replaceState(null,'',url.pathname+url.search);
+    root.querySelectorAll('.swatch-size').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.size===selectedSize)));
+    root.querySelectorAll('.swatch-color').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===selectedColor)));
+    window.LZSEO?.applyProduct(p,{size:selectedSize});
+  }
 
   // gallery thumbs
   let currentIdx = 0;
@@ -165,10 +80,10 @@ function buildProductPage(root){
       const img = document.getElementById("pdp-main-img");
       if(window.gsap){
         gsap.to(img, { opacity: 0, duration: .18, onComplete: () => {
-          img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; img.alt = LZCatalog.imageAlt(p,i);
+          LZCatalog.setImage(img,btn.dataset.src); img.alt = LZCatalog.imageAlt(p,i);
           gsap.to(img, { opacity: 1, duration: .28 });
         }});
-      } else { img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = btn.dataset.src; img.alt = LZCatalog.imageAlt(p,i); }
+      } else { LZCatalog.setImage(img,btn.dataset.src); img.alt = LZCatalog.imageAlt(p,i); }
     });
   });
 
@@ -178,7 +93,7 @@ function buildProductPage(root){
     currentIdx = i;
     root.querySelectorAll(".pdp-thumbs button").forEach((b, bi) => b.classList.toggle("active", bi === i));
     const img = document.getElementById("pdp-main-img");
-    if(img){ img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = p.gallery[i]; img.alt = LZCatalog.imageAlt(p,i); }
+    if(img){ LZCatalog.setImage(img,p.gallery[i]); img.alt = LZCatalog.imageAlt(p,i); }
   }, LZCatalog.productLabel(p));
   document.getElementById("pdp-main-img-wrap")?.addEventListener("click", () => openZoom(currentIdx));
 
@@ -189,6 +104,7 @@ function buildProductPage(root){
       btn.classList.add("active");
       selectedColor = btn.dataset.color;
       document.getElementById("color-label").textContent = selectedColor;
+      updateVariant();
     });
   });
 
@@ -198,6 +114,7 @@ function buildProductPage(root){
       root.querySelectorAll(".swatch-size").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       selectedSize = btn.dataset.size;
+      updateVariant();
     });
   });
 

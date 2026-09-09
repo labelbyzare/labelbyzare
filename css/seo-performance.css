@@ -1,0 +1,21 @@
+/* Stable product controls and readable buying guidance. */
+.pdp-breadcrumb{grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem}
+.pdp{row-gap:1.5rem}
+.pdp-main-img{aspect-ratio:4/5}
+.size-guide-link{border:0;background:none;color:inherit;padding:0;font:inherit}
+.pdp-details{margin-top:2rem}
+.pdp-details>h2{font-family:var(--font-display);font-size:1.35rem;margin-bottom:1rem}
+.pdp-details details{border-top:1px solid var(--line);padding:1rem 0}
+.pdp-details summary{cursor:pointer;font-weight:600;min-height:24px}
+.pdp-details details p{margin:.8rem 0;line-height:1.75;color:var(--taupe)}
+.pdp-details a,.product-facts a{text-decoration:underline;text-underline-offset:3px}
+.product-facts{margin:1rem 0}
+.product-facts>div{display:grid;grid-template-columns:minmax(100px,1fr) 2fr;gap:1rem;padding:.65rem 0}
+.product-facts dt{font-weight:600}.product-facts dd{margin:0}
+.collection-advice h3{font-family:var(--font-display);font-size:1.2rem;margin:1.25rem 0 .5rem}
+.collection-advice p{margin-bottom:1rem;line-height:1.8}
+.journal-products{margin:2rem 0;padding-top:1.5rem;border-top:1px solid var(--line)}
+.journal-products .collection-grid{margin-top:1rem}
+.journal-products .product-name{font-size:1rem}
+.journal-body table{display:block;overflow-x:auto;max-width:100%}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}

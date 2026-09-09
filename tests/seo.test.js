@@ -10,13 +10,15 @@ const Journal=require('../server/lib/journal');
 const Catalog=require('../server/lib/catalog');
 const fixture=require('./fixtures/catalog.json');
 const originalFetch=global.fetch;
-let rows,reviews,fail,calls;
+let rows,reviews,fail,calls,settingsData,journalRows;
 beforeEach(()=>{
- rows=structuredClone(fixture);reviews=[];fail=false;calls=[];
+ rows=structuredClone(fixture);reviews=[];fail=false;calls=[];settingsData={};journalRows=[];
  global.fetch=async (input,options={})=>{
   assert.equal(options.method || 'GET','GET','Tests must never place orders or mutate the database');
   const url=new URL(input);calls.push(url);
   if(fail) return {ok:false,status:503};
+  if(url.pathname.endsWith('/site_settings'))return {ok:true,json:async()=>[{value:settingsData}]};
+  if(url.pathname.endsWith('/journal_articles'))return {ok:true,json:async()=>journalRows.filter(row=>!url.searchParams.has('slug')||row.slug===url.searchParams.get('slug').replace(/^eq\./,''))};
   if(url.pathname.endsWith('/product_reviews')) return {ok:true,json:async()=>reviews};
   assert.ok(url.pathname.endsWith('/products'));
   const id=url.searchParams.get('id')?.replace(/^eq\./,'');
@@ -65,7 +67,7 @@ test('Price constraints stay strict when using typo-tolerant search',()=>{
 });
 test('Homepage keeps the approved hero and sections while sending actual product HTML',async()=>{
  const result=await run('home-page','/');assert.equal(result.statusCode,200);
- assert.match(result.body,/MODEST WEAR,/);assert.match(result.body,/Label by Zare\./);
+ assert.match(result.body,/ABAYAS &amp; SHAWLS,|ABAYAS & SHAWLS,/);assert.match(result.body,/Label by Zare\./);
  assert.match(result.body,/hero-boutique-1672\.avif/);assert.match(result.body,/class="brand-loader"/);
  assert.match(result.body,/href="\/collections\/shawls\/"/);
  assert.doesNotMatch(result.body,/<!--LZ_(?:BEST|FEATURED|COLLECTION)_START-->/);
@@ -117,7 +119,7 @@ test('Product HTML includes PKR offers, genuine reviews and stable entity IDs',a
  assert.equal(result.statusCode,200);const product=byType(result.body,'Product');
  assert.equal(product.offers.priceCurrency,'PKR');assert.equal(Number(product.offers.price),Number(p.price));
  assert.equal(product.aggregateRating.reviewCount,2);assert.equal(product.aggregateRating.ratingValue,4.5);
- assert.equal(product['@id'],C.site+C.productUrl(p)+'#product');
+ assert.equal(product['@id'],C.site+C.sizeUrl(p,p.sizes[0])+'#product');
  assert.match(result.body,/4\.5 \/ 5 from 2 customer reviews/);
  assert.equal(product.offers.shippingDetails.shippingRate.value,Policy.shippingFee(p.price,'standard'));
 });
@@ -135,12 +137,12 @@ test('Missing products are 404, catalog outages are 503, and out-of-stock URLs r
 test('JSON-LD and product text cannot break out of their HTML context',async()=>{
  rows[0].name='Test </script><script>alert(1)</script> & "piece"';
  const result=await run('product-page',C.productUrl(rows[0]));assert.equal(result.statusCode,200);
- const product=byType(result.body,'Product');assert.equal(product.name,rows[0].name);
+ const product=byType(result.body,'Product');assert.equal(product.name,C.productLabel(rows[0]));
  assert.doesNotMatch(result.body,/<script>alert\(1\)<\/script>/);
  const empty=Schema.product(C.normalize(rows[0]),{count:0,value:5});assert.equal(empty.aggregateRating,undefined);
 });
-test('All eight guides render linked articles without made-up rating or FAQ markup',async()=>{
- assert.equal(Journal.articles.length,8);
+test('All buying guides render linked articles without made-up rating or FAQ markup',async()=>{
+ assert.ok(Journal.articles.some(a=>a.slug==='abaya-silhouette-guide'));
  for(const article of Journal.articles){
   const result=await run('journal-page','/journal/'+article.slug+'/');assert.equal(result.statusCode,200);
   assert.ok(byType(result.body,'Article'));assert.equal(byType(result.body,'FAQPage'),undefined);
@@ -186,4 +188,29 @@ test('A stalled optional review request is aborted while the product remains ava
  const fetchCatalog=global.fetch;let reviewAborted=false;
  global.fetch=(input,options)=>String(input).includes('/product_reviews?') ? new Promise((resolve,reject)=>{options.signal.addEventListener('abort',()=>{reviewAborted=true;reject(new Error('Review request timed out'));},{once:true});}) : fetchCatalog(input,options);
  const start=performance.now();const result=await run('product-page',C.productUrl(rows[0]));assert.equal(result.statusCode,200);assert.equal(reviewAborted,true);assert.ok(performance.now()-start<2500,'Optional reviews must not block for the eight-second catalog timeout');assert.equal(byType(result.body,'Product').aggregateRating,undefined);assert.equal(Number(byType(result.body,'Product').offers.price),rows[0].price);
+});
+
+test('Current shipping settings reach initial product HTML, structured data and the feed together',async()=>{
+ settingsData={standard_fee:350,express_fee:600,free_shipping_above:9000};rows[0].price=9100;
+ const result=await run('product-page',C.productUrl(rows[0]),{size:'L'}),schema=byType(result.body,'Product');
+ assert.equal(result.statusCode,200);assert.equal(schema.size,'L');assert.equal(schema.offers.shippingDetails.shippingRate.value,0);
+ assert.match(result.body,/data-size="L" aria-pressed="true"/);assert.match(result.body,/data-product-rendered="aby-002"/);assert.match(result.body,/9,000/);
+ const feed=await run('product-feed','/product-feed.xml');const item=feed.body.match(/<item><g:id>aby-002--L<\/g:id>[\s\S]*?<\/item>/)[0];
+ assert.ok(item.includes(C.escape(schema.url)));assert.match(item,/<g:price>0\.00 PKR<\/g:price>/);
+ assert.equal((await run('product-page',C.productUrl(rows[0]),{size:'INVALID'})).statusCode,404);
+ const redirect=await run('product-page','/product/old/'+rows[0].id,{size:'L',utm_source:'test'});assert.equal(redirect.headers.Location,C.productUrl(rows[0])+'?size=L&utm_source=test');
+});
+
+test('Unpublished CMS guides stay unpublished and new guides appear in both sitemaps',async()=>{
+ journalRows=[{...Journal.articles[0],active:false},{slug:'custom-buying-guide',title:'A custom buying guide',summary:'Current advice.',collection:'abayas',active:true,sections:[['Choosing','<p>Read the details.</p>']]}];
+ const articles=await Journal.list();assert.ok(!articles.some(a=>a.slug===Journal.articles[0].slug));assert.ok(articles.some(a=>a.slug==='custom-buying-guide'));
+ assert.equal((await run('journal-page','/journal/'+Journal.articles[0].slug+'/')).statusCode,404);
+ for(const [route,path] of [['sitemap-pages','/sitemap-pages.xml'],['sitemap-html','/sitemap.html']]){const sitemap=await run(route,path);assert.ok(sitemap.body.includes('/journal/custom-buying-guide/'));assert.ok(!sitemap.body.includes('/journal/'+Journal.articles[0].slug+'/'));}
+});
+
+test('Worker redirects static collection aliases and keeps utility pages private',async()=>{
+ const worker=(await import('../cloudflare/worker.mjs')).default;
+ const env={ASSETS:{fetch:async()=>new Response('Account shell',{headers:{'Content-Type':'text/html'}})}};
+ const shop=await worker.fetch(new Request(C.site+'/shop.html?cat=Kaftan'),env);assert.equal(shop.status,301);assert.equal(shop.headers.get('Location'),'/shop?cat=Kaftan');
+ const utility=await worker.fetch(new Request(C.site+'/checkout'),env);assert.equal(utility.headers.get('Cache-Control'),'private, no-store');assert.equal(utility.headers.get('X-Robots-Tag'),'noindex, nofollow');
 });
