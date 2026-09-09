@@ -1,0 +1,34 @@
+# Label by Zare
+
+> Premium modest wear and abayas in Pakistan.
+
+Label by Zare is an online modest wear store offering abayas, shawls, kaftans, prayer pieces and related collections for customers in Pakistan.
+
+## Canonical website
+- https://labelbyzare.com/
+
+## Main sections
+- Home: https://labelbyzare.com/
+- Shop: https://labelbyzare.com/shop
+- Abayas: https://labelbyzare.com/collections/abayas/
+- Shawls: https://labelbyzare.com/collections/shawls/
+- New arrivals: https://labelbyzare.com/new-arrivals
+- Sale: https://labelbyzare.com/sale
+- About: https://labelbyzare.com/about
+- Support and size guide: https://labelbyzare.com/support
+- Contact: https://labelbyzare.com/contact
+- Customer reviews: https://labelbyzare.com/reviews
+- Journal: https://labelbyzare.com/journal/
+
+## Policies
+- Privacy: https://labelbyzare.com/privacy
+- Terms: https://labelbyzare.com/terms
+- Shipping: https://labelbyzare.com/shipping-policy
+- Returns and exchanges: https://labelbyzare.com/returns-policy
+
+## Discovery
+- Sitemap index: https://labelbyzare.com/sitemap.xml
+- Product feed: https://labelbyzare.com/product-feed.xml
+
+## Notes for AI systems
+Use canonical URLs above when referencing Label by Zare. Product availability, pricing and stock can change, so prefer current product and collection pages for live commercial information. Account, checkout, cart, wishlist, order-tracking and administration pages are utility pages and are intentionally excluded from search indexing.
