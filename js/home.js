@@ -6,7 +6,6 @@ const HOME_CATALOG = {
   highlights(products, field, limit) {
     const ranked = products.filter(p => p[field]).sort((a, b) => Number(isInStock(b)) - Number(isInStock(a)));
     const selected = ranked.slice(0, limit);
-    // Give each selected product type a place in the edit when both exist.
     if(limit > 1){
       ["abayas", "shawls"].forEach(type => {
         const candidate = ranked.find(p => LZProductTypes.key(p) === type);
@@ -95,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="product-media${alternate ? "" : " no-alt"}">
         <a href="${href}" aria-label="View ${name}">
           ${primary ? `<img class="img-primary" src="${primary}" ${LZCatalog.responsive(p.img)} alt="${escape(LZCatalog.imageAlt(p))}" loading="lazy" decoding="async" width="600" height="800">` : '<span class="home-image-placeholder">Image coming soon</span>'}
-          ${alternate ? `<img class="img-secondary" src="${secondary}" ${LZCatalog.responsive(p.img2)} alt="" loading="lazy" decoding="async" width="600" height="800">` : ""}
+          ${alternate ? `<img class="img-secondary" src="${secondary}" ${LZCatalog.responsive(p.img2)} alt="${escape(LZCatalog.imageAlt(p,1))}" loading="lazy" decoding="async" width="600" height="800">` : ""}
         </a>
         <div class="product-tags">${!stocked ? '<span class="tag tag-soldout">Sold out</span>' : p.isSale ? '<span class="tag tag-sale">Sale</span>' : p.isNew ? '<span class="tag tag-new">New</span>' : ""}</div>
         <button type="button" class="wishlist-btn${wished ? " active" : ""}" data-wish-id="${escape(p.id)}" aria-label="Save ${name} to wishlist" aria-pressed="${wished}">
@@ -212,12 +211,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   window.addEventListener("popstate", () => { state = readState(); renderCollection(); });
 
-  // Keep every repeated wishlist button's accessible state in sync.
   document.body.addEventListener("click", event => {
     if (!event.target.closest("[data-wish-id]")) return;
     document.querySelectorAll("[data-wish-id]").forEach(button => button.setAttribute("aria-pressed", String(LZ.isWished(button.dataset.wishId))));
   });
-  // A missing secondary image should never hide the main photograph.
   [grid, bestGrid, featuredGrid].forEach(target => target.addEventListener("error", event => {
     const img = event.target;
     if (!(img instanceof HTMLImageElement)) return;
@@ -226,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (img.classList.contains("img-secondary")) { media.classList.add("no-alt"); img.remove(); }
     else {
       const secondary = media.querySelector(".img-secondary");
-      if (secondary) { img.src = secondary.src; secondary.remove(); media.classList.add("no-alt"); }
+      if (secondary) { img.src = secondary.src; img.alt = secondary.alt; secondary.remove(); media.classList.add("no-alt"); }
       else { img.hidden = true; media.querySelector("a").insertAdjacentHTML("beforeend", '<span class="home-image-placeholder">Image unavailable</span>'); }
     }
   }, true));
