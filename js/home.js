@@ -111,6 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
     </article>`;
   }
   function renderCards(target, list, emptyText) {
+    const key=JSON.stringify(list.map(p=>[p.id,p.name,p.price,p.oldPrice,p.inStock,p.img,p.img2]));
+    if(target.dataset.renderKey===key)return;
+    if(!target.dataset.renderKey && document.getElementById("lz-catalog-data") && [...target.querySelectorAll("[data-wish-id]")].map(el=>el.dataset.wishId).join("|")===list.map(p=>String(p.id)).join("|") && list.length){target.dataset.renderKey=key;target.setAttribute("aria-busy","false");return;}
+    target.dataset.renderKey=key;
     target.innerHTML = list.length ? list.map(p=>productCard(p,target===grid)).join("") : `<div class="home-empty"><p>${escape(emptyText)}</p></div>`;
     target.setAttribute("aria-busy", "false");
   }
@@ -266,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderCards(bestGrid, HOME_CATALOG.highlights(products, "isBestseller", 4), "Our next best sellers edit is coming soon.");
       renderCards(featuredGrid, HOME_CATALOG.highlights(products, "isFeatured", 2), "Our next featured edit is coming soon.");
       renderCollection();
-      window.LZSEO?.applyItemList(products, "Label by Zare — Abayas & Shawls", "/#collection");
+      if(!document.getElementById("lz-itemlist-schema"))window.LZSEO?.applyItemList(HOME_CATALOG.collection(products,state), "Label by Zare abayas", "/");
       if (["#collection", "#featured", "#best-sellers"].includes(location.hash)) {
         (window.LZ_PAGE_READY || Promise.resolve()).then(() => requestAnimationFrame(() => {
           const section = document.querySelector(location.hash);

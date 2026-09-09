@@ -16,6 +16,18 @@
       return method === "express" ? this.expressFee : this.standardFee;
     }
   };
+  policy.fromSettings = function(settings={}) {
+    const amount=(value,fallback)=>value!==null && value!=='' && Number.isFinite(Number(value)) && Number(value)>=0 ? Number(value) : fallback;
+    const next={...policy,standardFee:amount(settings.standard_fee,policy.standardFee),expressFee:amount(settings.express_fee,policy.expressFee),freeShippingAbove:amount(settings.free_shipping_above,policy.freeShippingAbove)};
+    next.processingDays=settings.processing_days || '1–2 business days';
+    next.standardDays=settings.standard_days || '3–5 business days nationwide';
+    next.expressDays=settings.express_days || '1–2 business days in major cities';
+    next.returnsText=settings.return_policy || policy.returnsText;
+    const days=next.returnsText.match(/within\s+(\d+)\s+days?/i);
+    next.returnDays=days ? Number(days[1]) : null;
+    next.shippingText=`Orders are processed within ${next.processingDays}. Standard delivery takes ${next.standardDays}. Express delivery takes ${next.expressDays}. Standard shipping is PKR ${next.standardFee.toLocaleString('en-PK')} and express shipping is PKR ${next.expressFee.toLocaleString('en-PK')}; both are free on orders over PKR ${next.freeShippingAbove.toLocaleString('en-PK')}.`;
+    return next;
+  };
   if(typeof module === "object" && module.exports) module.exports = policy;
   else root.LZPolicy = policy;
 })(typeof window !== "undefined" ? window : this);

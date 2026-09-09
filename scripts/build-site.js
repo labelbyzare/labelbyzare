@@ -1,7 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
-const hardenHtml=require('./html-hardening');
 require('./build-templates');
+const hardenHtml=require('./html-hardening');
 const root=path.resolve(__dirname,'..');
 const output=path.join(root,'dist');
 fs.rmSync(output,{recursive:true,force:true});

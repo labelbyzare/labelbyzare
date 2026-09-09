@@ -4,6 +4,7 @@ const Collections=require('../../js/collections');
 const Schema=require('../../js/structured-data');
 const Templates=require('../lib/templates');
 const R=require('../lib/render');
+const Settings=require('../lib/store-settings');
 function highlights(products,field,limit){
  const ranked=products.filter(p=>p[field]).sort((a,b)=>Number(b.inStock)-Number(a.inStock));
  const selected=ranked.slice(0,limit);
@@ -17,7 +18,8 @@ function highlights(products,field,limit){
 }
 exports.handler=async event=>{
  try{
-  const products=(await Catalog.all()).filter(p=>p.price>0);
+  const [catalog,settings]=await Promise.all([Catalog.all(),Settings.read()]);
+  const products=catalog.filter(p=>p.price>0);
   const abayas=products.filter(p=>Collections.matches(p,Collections.get('abayas'))).sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured));
   let html=Templates.home;
   for(const [key,list,empty] of [['BEST',highlights(products,'isBestseller',4),'Our next best sellers edit is coming soon.'],['FEATURED',highlights(products,'isFeatured',2),'Our next featured edit is coming soon.'],['COLLECTION',abayas,'The next abaya edit is on its way.']]){
@@ -27,8 +29,8 @@ exports.handler=async event=>{
   html=html.replace('<!--LZ_COLLECTION_LINKS-->',R.collectionLinks());
   const q=event.queryStringParameters || {};
   const filtered=Object.keys(q).some(k=>['q','type','cat','sort','edit'].includes(k));
-  html=R.metadata(html,{title:'Modest Wear, Abayas & Shawls in Pakistan | Label by Zare',description:'Shop thoughtfully designed everyday abayas, occasion wear, kaftans, prayer pieces and shawls by Label by Zare. Delivery across Pakistan.',path:'/',noindex:filtered,image:C.site+'/images/hero-boutique-1672.webp'});
-  html=html.replace('</head>',()=>`${R.seed(products,true)}${R.jsonld('lz-org-schema',Schema.organization())}${R.jsonld('lz-website-schema',Schema.website())}${R.jsonld('lz-itemlist-schema',Schema.list(abayas,'Label by Zare abayas','/'))}</head>`);
+  html=R.metadata(html,{title:'Abayas & Shawls in Pakistan | Label by Zare',description:'Shop thoughtfully designed everyday abayas, occasion wear, kaftans, prayer pieces and shawls by Label by Zare. Delivery across Pakistan.',path:'/',noindex:filtered,image:C.site+'/images/hero-boutique-1672.webp'});
+  html=html.replace('</head>',()=>`${R.seed(products,true)}<script type="application/json" id="lz-settings-data">${C.json(settings)}</script>${R.jsonld('lz-org-schema',Schema.organization(Settings.policy(settings)))}${R.jsonld('lz-website-schema',Schema.website())}${R.jsonld('lz-itemlist-schema',Schema.list(abayas,'Label by Zare abayas','/'))}</head>`);
   return R.response(html);
  }catch{return R.unavailable();}
 };

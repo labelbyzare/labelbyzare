@@ -1,3 +1,1 @@
-/index.html   /        301!
-/*.html       /:splat  301!
- /product-feed.xml /.netlify/functions/product-feed 200 
+# Cloudflare Worker handles dynamic aliases; static assets use html_handling.

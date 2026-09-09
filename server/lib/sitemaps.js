@@ -2,7 +2,7 @@ const C=require('../../js/catalog-core');
 const Collections=require('../../js/collections');
 const Journal=require('./journal');
 const staticPaths=['/','/shop','/about','/support','/contact','/privacy','/terms','/shipping-policy','/returns-policy','/reviews','/journal/'];
-function pagePaths(products){
+function pagePaths(products,articles=Journal.articles){
  // Match the collection renderer: unpriced products cannot populate an indexable page.
  const listed=products.filter(p=>p.price>0);
  return [
@@ -10,7 +10,7 @@ function pagePaths(products){
   ...(listed.some(p=>p.isSale)?['/sale']:[]),
   ...(listed.some(p=>p.isNew)?['/new-arrivals']:[]),
   ...Collections.all.filter(c=>listed.some(p=>Collections.matches(p,c))).map(Collections.url),
-  ...Journal.articles.map(a=>`/journal/${a.slug}/`)
+  ...articles.map(a=>`/journal/${a.slug}/`)
  ];
 }
 function entry(path,updated,image){
