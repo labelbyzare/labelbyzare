@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const hardenHtml=require('./html-hardening');
 const root=path.resolve(__dirname,'..');
-function read(name){return hardenHtml(fs.readFileSync(path.join(root,name),'utf8')).replace(/((?:src|href)=")(images\/|css\/|js\/|supabase-client\.js|manifest\.json)/g,'$1/$2');}
+function read(name){return hardenHtml(fs.readFileSync(path.join(root,name),'utf8'),{file:name}).replace(/((?:src|href)=")(images\/|css\/|js\/|supabase-client\.js|manifest\.json)/g,'$1/$2');}
 const shop=read('shop.html');
 const prefix=shop.slice(0,shop.indexOf('<header class="page-header">'));
 const suffix=shop.slice(shop.indexOf('<div class="newsletter">')).replace(/\/js\/shop\.js(?=[?"'])/g,'/js/collection-page.js');
