@@ -8,4 +8,3 @@ async function read() {
   } catch { return {}; }
 }
 module.exports = { read, policy: Policy.fromSettings };
-

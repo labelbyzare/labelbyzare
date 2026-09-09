@@ -51,4 +51,3 @@
   if(typeof module==='object' && module.exports) module.exports={render};
   else root.LZProductView={render};
 })(typeof window!=='undefined'?window:this);
-
