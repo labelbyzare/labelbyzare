@@ -2,7 +2,6 @@
 // Embedding templates keeps Cloudflare server routes independent of runtime file paths.
 const fs=require('node:fs');
 const path=require('node:path');
-require('./build-asset-versions');
 const hardenHtml=require('./html-hardening');
 const root=path.resolve(__dirname,'..');
 function read(name){return hardenHtml(fs.readFileSync(path.join(root,name),'utf8')).replace(/((?:src|href)=")(images\/|css\/|js\/|supabase-client\.js|manifest\.json)/g,'$1/$2');}

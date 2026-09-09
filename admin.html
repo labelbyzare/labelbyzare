@@ -1367,7 +1367,12 @@ window.editProduct = openForm;
 
 async function uploadImage(file) {
   if (!window.LZAdminAccess?.requirePrepare("products", "product images")) throw new Error("View-only access — upload cancelled.");
-  return window.LZImageUpload.upload(file,supabaseClient);
+  const ext = file.name.split(".").pop();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabaseClient.storage.from("product-images").upload(path, file);
+  if (error) throw error;
+  const { data } = supabaseClient.storage.from("product-images").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 document.getElementById("f-img-file").addEventListener("change", async (e) => {
@@ -1948,6 +1953,5 @@ window.addEventListener("lz:admin-ready",()=>{if(window.LZAdminAccess?.canView("
 <script src="js/admin-growth-tools.js?v=20260907-v26"></script>
 <script src="js/admin-analytics.js?v=20260907-v27"></script>
 
-<script src="/js/image-upload.js"></script>
 </body>
 </html>

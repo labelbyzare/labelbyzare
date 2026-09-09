@@ -1,7 +1,7 @@
 /* Homepage merchandising, using the existing Label by Zare design tokens. */
 .home-page #loader.brand-loader {
   position: fixed; inset: 0; z-index: 10000;
-  display: none; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   width: 100%; height: 100%; box-sizing: border-box;
   background: radial-gradient(ellipse at 50% 42%, #2b2923 0%, var(--ink-soft) 65%);
   gap: 0; padding: 2rem; text-align: center; pointer-events: auto;
@@ -10,7 +10,7 @@
   animation: brand-loader-exit .55s ease 3.2s forwards;
 }
 .home-page #loader.brand-loader::before { content: ''; position: absolute; inset: clamp(16px, 3vw, 36px); border: 1px solid rgba(192,161,106,.16); pointer-events: none; }
-/* The introductory mark never locks document scrolling. */
+html.lz-home-loading, html.lz-home-loading body { overflow: hidden; }
 .brand-loader .loader-eyebrow { color: var(--gold-soft); font-size: .75rem; letter-spacing: .32em; margin-bottom: 1.6rem; }
 .brand-loader .loader-mark { color: var(--cream); font-style: normal; font-weight: 400; font-size: clamp(2.6rem, 7vw, 5.5rem); letter-spacing: -.035em; line-height: 1.2; animation: brand-loader-enter .65s var(--ease) both; }
 .brand-loader .loader-mark em { font-weight: 400; color: var(--gold-soft); }

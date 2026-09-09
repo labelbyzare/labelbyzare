@@ -3,8 +3,6 @@ const Core = require("../../js/catalog-core");
 const Schema = require("../../js/structured-data");
 const Policy = require("../../js/store-policy");
 const publicPageHeaders = require("../lib/page-cache");
-const ProductView = require("../../js/product-view");
-const Settings = require("../lib/store-settings");
 const LZProductTypes = require("../../js/product-types");
 
 /* ==========================================================================
@@ -29,7 +27,7 @@ const LZProductTypes = require("../../js/product-types");
    the product up, so a renamed product never breaks an old link — it just
    301-redirects to its new canonical slug (see below).
 
-   Cloudflare Worker routes both the new path form and the legacy
+   netlify.toml routes both the new path form and the legacy
    /product?id=<id> query form to this function.
    ========================================================================== */
 
@@ -74,15 +72,38 @@ function parseRequest(event) {
   if (i !== -1 && parts.length === i + 3) {
     try { return { id: decodeURIComponent(parts[i + 2]), requestedSlug: decodeURIComponent(parts[i + 1]) }; } catch { return {id:null,requestedSlug:null}; }
   }
-  // Legacy scheme: /product?id=<id>  (Cloudflare Worker forwards this here too)
+  // Legacy scheme: /product?id=<id>  (netlify.toml forwards this here too)
   const id = event.queryStringParameters && event.queryStringParameters.id;
   return { id: id || null, requestedSlug: null };
 }
 
 async function fetchProduct(id){ return Catalog.product(id); }
 async function fetchReviewStats(id){ return Catalog.ratings(id); }
-async function fetchSiteSettings(){return Settings.read();}
-const policyFromSettings=Settings.policy;
+async function fetchSiteSettings(){
+  try {
+    const rows = await Catalog.request("site_settings?key=eq.main&select=value&limit=1", { timeoutMs: 1500 });
+    return Array.isArray(rows) && rows[0] && rows[0].value ? rows[0].value : {};
+  } catch { return {}; }
+}
+function policyFromSettings(settings={}){
+  const standardFee = Number.isFinite(Number(settings.standard_fee)) ? Number(settings.standard_fee) : Policy.standardFee;
+  const expressFee = Number.isFinite(Number(settings.express_fee)) ? Number(settings.express_fee) : Policy.expressFee;
+  const freeShippingAbove = Number.isFinite(Number(settings.free_shipping_above)) ? Number(settings.free_shipping_above) : Policy.freeShippingAbove;
+  const processingDays = settings.processing_days || "1–2 business days";
+  const returnsText = settings.return_policy || Policy.returnsText;
+  const standardDays = settings.standard_days || "3–5 business days nationwide";
+  const expressDays = settings.express_days || "1–2 business days in major cities";
+  return {
+    ...Policy, standardFee, expressFee, freeShippingAbove, returnsText,
+    shippingFee(subtotal, method){
+      const amount=Number(subtotal);
+      if(!Number.isFinite(amount) || amount < 0) throw new Error("Invalid order subtotal");
+      if(amount > this.freeShippingAbove) return 0;
+      return method === "express" ? this.expressFee : this.standardFee;
+    },
+    shippingText:`Orders are processed within ${processingDays}. Standard delivery takes ${standardDays}. Express delivery takes ${expressDays}. Standard shipping is PKR ${standardFee.toLocaleString("en-PK")} and express shipping is PKR ${expressFee.toLocaleString("en-PK")}; both are free on orders over PKR ${freeShippingAbove.toLocaleString("en-PK")}.`
+  };
+}
 function notFoundPage(){
   return `<!doctype html><html lang="en-PK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Piece unavailable | Label by Zare</title><link rel="stylesheet" href="/css/style.css?v=20260907-audit1"><link rel="stylesheet" href="/css/editorial.css?v=20260906-seo1">
 </head><body><main class="wrap section"><a href="/">Label by Zare</a><h1 class="display-2">This piece isn’t available.</h1><p>Explore the current collection or get in touch for help.</p><a class="btn btn-solid" href="/collections/abayas/">Explore abayas</a> <a class="btn btn-outline" href="/collections/shawls/">Explore shawls</a></main></body></html>`;
@@ -90,12 +111,12 @@ function notFoundPage(){
 
 function buildFullGallery(p){ const gallery=Core.normalize(p).gallery; return gallery.length ? gallery : [DEFAULT_IMAGE]; }
 
-function renderPage(p, rating, policy, query={}, settings={}) {
+function renderPage(p, rating, policy) {
   const name = p.name || LZProductTypes.label(p);
   const category = p.category || LZProductTypes.label(p);
   const gallery = buildFullGallery(p);
   const img = gallery[0];
-  const description = p.description || `See photographs, available sizes and current details for ${name} by ${SITE_NAME}. Delivery across Pakistan.`;
+  const description = p.description || `${name} — premium ${LZProductTypes.singular(p)} by ${SITE_NAME}. Considered construction, nationwide delivery across Pakistan.`;
   const inStock = Core.stocked(p) && p.price > 0;
   const slug = slugify(name);
   const canonicalPath = `/product/${slug}/${encodeURIComponent(p.id)}`;
@@ -105,7 +126,7 @@ function renderPage(p, rating, policy, query={}, settings={}) {
   const priceText = formatPKR(p.price);
   const collection = require("../../js/collections").forProduct(p);
 
-  const productSchema = Schema.product(p,rating,policy,query);
+  const productSchema = Schema.product(p,rating,policy);
   const breadcrumbSchema = Schema.productBreadcrumbs(p);
 
   return `<!DOCTYPE html>
@@ -135,10 +156,8 @@ function renderPage(p, rating, policy, query={}, settings={}) {
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#f5efe6">
 <script id="lz-product-schema" type="application/ld+json">${Core.json(productSchema)}</script>
-${p.sizes.length>1 ? `<script id="lz-product-group-schema" type="application/ld+json">${Core.json(Schema.productGroup(p,rating,policy))}</script>` : ''}
-<script type="application/json" id="lz-settings-data">${Core.json(settings)}</script>
 <script id="lz-breadcrumb-schema" type="application/ld+json">${Core.json(breadcrumbSchema)}</script>
-<script id="lz-org-schema" type="application/ld+json">${Core.json(Schema.organization(policy))}</script>
+<script id="lz-org-schema" type="application/ld+json">${Core.json(Schema.organization())}</script>
 <script id="lz-catalog-data" type="application/json" data-complete="false">${Core.json([p])}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,8 +244,32 @@ ${p.sizes.length>1 ? `<script id="lz-product-group-schema" type="application/ld+
   <div class="drawer-foot"></div>
 </div>
 
-<main class="wrap pdp" id="pdp-root" data-product-rendered="${escapeHtml(p.id)}">
-${ProductView.render(p,{policy,rating,query})}
+<main class="wrap pdp" id="pdp-root">
+  <!-- Server-rendered so crawlers/link-preview bots see real content
+       immediately. js/product.js hydrates over this with the full
+       interactive gallery, size/colour selectors and cart controls. -->
+  <nav class="pdp-breadcrumb" aria-label="Breadcrumb" style="grid-column:1/-1;font-size:.8rem;color:var(--taupe);margin-bottom:.6rem">
+    ${breadcrumbSchema.itemListElement.map((item,i,items)=>i===items.length-1 ? `<span aria-current="page">${escapeHtml(item.name)}</span>` : `<a href="${escapeHtml(new URL(item.item).pathname)}">${escapeHtml(item.name)}</a>`).join(' &rsaquo; ')}
+  </nav>
+  <div class="pdp-gallery reveal">
+    <div class="pdp-main-img"><img src="${escapeHtml(img)}" width="832" height="1248" fetchpriority="high" decoding="async" ${Core.responsive(img,"(max-width:768px) 100vw, 50vw",[480,832,1248])} alt="${escapeHtml(Core.imageAlt(p))}"></div>
+  </div>
+  <div class="pdp-info reveal">
+    <div class="cat-label">${escapeHtml(category)}${p.is_new ? " · New Arrival" : ""}</div>
+    <h1 class="serif">${escapeHtml(name)}</h1>
+    <div class="pdp-price">
+      ${p.isSale && p.oldPrice ? `<span class="price-old">${formatPKR(p.oldPrice)}</span>` : ""}
+      <span class="${p.isSale ? "price-sale" : ""}">${priceText}</span>
+    </div>
+    <p class="lede">${escapeHtml(description)}</p>
+    <div class="pdp-stock ${inStock ? "" : "out"}">${inStock ? "In Stock" : "Sold Out"}</div>
+    ${rating.count>0 ? `<p><a href="#product-reviews-root">${rating.value.toFixed(1)} / 5 from ${rating.count} customer reviews</a></p>` : ''}
+    <p><a class="link-underline" href="/journal/${collection.guide}/">Read the ${escapeHtml(collection.name.toLowerCase())} guide</a></p>
+    <details><summary>Fabric &amp; care</summary><p>${escapeHtml(p.fabric || 'Contact us for the fabric and care details of this piece.')}</p></details>
+    <details><summary>Delivery &amp; returns</summary><p>${escapeHtml(policy.shippingText)}</p><p>${escapeHtml(p.returns || policy.returnsText)}</p><a href="/support#shipping-returns">Read the full policy</a></details>
+    <noscript><p>Enable JavaScript to select a size and add this piece to your bag.</p></noscript>
+    <p class="pdp-note">Free nationwide delivery on orders over PKR <span data-lz-free-shipping-threshold>${policy.freeShippingAbove.toLocaleString("en-PK")}</span> — Karachi, Lahore, Islamabad and across Pakistan.</p>
+  </div>
 </main>
 
 <section class="section section-tight">
@@ -334,8 +377,6 @@ exports.handler = async (event) => {
       };
     }
 
-    const query=event.queryStringParameters || {};
-    if((query.size && !p.sizes.includes(query.size)) || (query.color && !p.colors.some(c=>c.name===query.color)))return {statusCode:404,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"},body:notFoundPage()};
     const canonicalSlug = slugify(p.name);
     // Self-heal: any URL that isn't already on its canonical slug (the
     // legacy ?id= form, a stale slug after a rename, a typo'd slug)
@@ -344,7 +385,7 @@ exports.handler = async (event) => {
     if (requestedSlug !== canonicalSlug) {
       return {
         statusCode: 301,
-        headers: { Location: `/product/${canonicalSlug}/${encodeURIComponent(p.id)}`+(() => {const params=new URLSearchParams(query);params.delete("id");return params.size?"?"+params.toString():"";})() },
+        headers: { Location: `/product/${canonicalSlug}/${encodeURIComponent(p.id)}` },
         body: "",
       };
     }
@@ -355,7 +396,7 @@ exports.handler = async (event) => {
         "Content-Type": "text/html; charset=utf-8",
         ...publicPageHeaders(),
       },
-      body: renderPage(p, rating, activePolicy, event.queryStringParameters || {}, siteSettings),
+      body: renderPage(p, rating, activePolicy),
     };
   } catch (err) {
     return {

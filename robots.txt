@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
-Disallow: /api/
+Disallow: /admin
+Disallow: /login
 
-# Utility pages use noindex headers; allow crawlers to read those directives.
 Sitemap: https://labelbyzare.com/sitemap.xml

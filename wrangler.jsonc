@@ -8,31 +8,6 @@
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": [
-      "/",
-      "/index.html",
-      "/api/*",
-      "/collections/*",
-      "/journal*",
-      "/search*",
-      "/product*",
-      "/sitemap-pages.xml",
-      "/sitemap-products.xml",
-      "/sitemap.html",
-      "/shop*",
-      "/sale*",
-      "/new-arrivals*",
-      "/account*",
-      "/admin*",
-      "/cart*",
-      "/checkout*",
-      "/wishlist*",
-      "/track-order*",
-      "/login*",
-      "/reset-password*"
-    ]
-  },
-  "build": {
-    "command": "npm run build"
+    "run_worker_first": ["/","/api/*","/collections/*","/journal*","/search","/product","/product.html","/product/*","/sitemap-pages.xml","/sitemap-products.xml","/sitemap.html","/product-feed.xml","/shop","/sale","/new-arrivals"]
   }
 }

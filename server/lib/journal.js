@@ -1,6 +1,5 @@
 // Editorial pages contain general buying guidance. Product-specific claims belong
 // in verified catalog fields; trade names are never treated as fibre composition.
-const {enhance,silhouette}=require('./journal-enhancements');
 const articles=[
  {slug:'choosing-an-abaya',title:'How to choose an abaya online',collection:'abayas',summary:'A thoughtful checklist for comparing silhouette, measurements, fabric details and the pieces included in your order.',sections:[
   ['Start with the way you will wear it','<p>An abaya for a regular commute may need a different sleeve shape or length from a piece chosen for an evening gathering. Start with your own routine: how much you walk, the shoes you wear, the layers underneath and the coverage you prefer. These details make a more useful starting point than a size label or a styled photograph alone.</p><p>Browse <a href="/collections/everyday-abayas/">everyday abayas</a> for your regular wardrobe, or the <a href="/collections/occasion-abayas/">occasion edit</a> for a celebration. The collection name is a browsing aid; the individual product details should guide your final choice.</p>'],
@@ -54,25 +53,24 @@ const articles=[
   ['Ask a precise question when unsure','<p>Tell us which product and size you are considering, which garment measurement you need and whether you mean a flat width or a circumference. You can also describe the fit you prefer without sharing personal information you do not wish to provide.</p><p>Before buying for a fixed date, confirm stock and delivery timing. When your order arrives, review the <a href="/support#shipping-returns">return conditions</a> before wearing or removing tags.</p>'],
   ['A common question','<h3><span lang="ur-Latn">Meri height ke liye konsa abaya size theek hai?</span></h3><p>Height helps you think about length, but it does not determine the full fit. Compare garment length, body width and sleeves with a piece you already wear comfortably, using the same measurement method.</p>']
  ]}
-,silhouette].map(enhance);
+];
 const Catalog=require('./catalog');
 function normalize(row){
   if(!row) return null;
   const sections=Array.isArray(row.sections)?row.sections.map(section=>Array.isArray(section)?section:[section.heading||'',section.body||'']):[];
-  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.slug || ''))return null;
-  return enhance({slug:row.slug,title:row.title,collection:row.collection||'abayas',summary:row.summary||'',sections,updated_at:row.updated_at,created_at:row.created_at});
+  return {slug:row.slug,title:row.title,collection:row.collection||'abayas',summary:row.summary||'',sections};
 }
 async function list(){
   try{
-    const rows=await Catalog.request('journal_articles?select=slug,title,collection,summary,sections,sort_order,active,updated_at,created_at&order=sort_order.asc,slug.asc',{timeoutMs:2500});
-    if(Array.isArray(rows)&&rows.length) return [...rows.filter(row=>row.active!==false).map(normalize).filter(Boolean),...articles.filter(article=>!rows.some(row=>row.slug===article.slug))];
+    const rows=await Catalog.request('journal_articles?select=slug,title,collection,summary,sections,sort_order&active=eq.true&order=sort_order.asc,slug.asc',{timeoutMs:2500});
+    if(Array.isArray(rows)&&rows.length) return rows.map(normalize).filter(Boolean);
   }catch(error){ console.warn('Journal CMS unavailable; using bundled guides.',error?.message||error); }
   return articles;
 }
 async function getLive(slug){
   try{
-    const rows=await Catalog.request(`journal_articles?slug=eq.${encodeURIComponent(slug)}&select=slug,title,collection,summary,sections,active,updated_at,created_at&limit=1`,{timeoutMs:2500});
-    if(Array.isArray(rows)&&rows[0]) return rows[0].active===false?null:normalize(rows[0]);
+    const rows=await Catalog.request(`journal_articles?slug=eq.${encodeURIComponent(slug)}&active=eq.true&select=slug,title,collection,summary,sections&limit=1`,{timeoutMs:2500});
+    if(Array.isArray(rows)&&rows[0]) return normalize(rows[0]);
   }catch(error){ console.warn('Journal CMS lookup unavailable; using bundled guide.',error?.message||error); }
   return articles.find(a=>a.slug===slug)||null;
 }

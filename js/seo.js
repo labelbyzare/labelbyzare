@@ -119,7 +119,7 @@ window.LZSEO = (() => {
   function organizationSchema(){ return LZSchema.organization(); }
   function websiteSchema(){ return LZSchema.website(); }
   function breadcrumbSchema(items){ return LZSchema.breadcrumbs(items,location.pathname); }
-  function productSchema(p,rating,selection){ return LZSchema.product(p,rating,window.LZPolicy,selection); }
+  function productSchema(p,rating){ return LZSchema.product(p,rating); }
 
   // Called by reviews.js once it has fetched a product's real reviews and
   // computed the visible average — patches aggregateRating into the
@@ -141,8 +141,6 @@ window.LZSEO = (() => {
         delete data.aggregateRating;
       }
       el.textContent = JSON.stringify(data);
-      const groupEl=document.getElementById('lz-product-group-schema');
-      if(groupEl){const group=JSON.parse(groupEl.textContent);for(const variant of group.hasVariant || []){if(data.aggregateRating)variant.aggregateRating=data.aggregateRating;else delete variant.aggregateRating;}groupEl.textContent=JSON.stringify(group);}
     } catch (e) {
       /* malformed existing JSON-LD — leave it untouched */
     }
@@ -176,10 +174,10 @@ window.LZSEO = (() => {
     };
   }
 
-  function applyProduct(p,selection={}) {
+  function applyProduct(p) {
     const title = LZCatalog.productTitle(p);
     const description = truncate(
-      `${p.name} — ${LZProductTypes.singular(p)} by ${SITE.name}. ${p.description || "See photographs, available sizes and current product details. Delivery across Pakistan."}`,
+      `${p.name} — ${LZProductTypes.singular(p)} by ${SITE.name}. ${p.description || "Premium fabric, considered construction, nationwide delivery across Pakistan."}`,
       160
     );
     const canonical = productUrl(p);
@@ -192,9 +190,7 @@ window.LZSEO = (() => {
       type: "product",
     });
 
-    let rating;try{const previous=JSON.parse(document.getElementById("lz-product-schema")?.textContent || "{}").aggregateRating;if(previous)rating={value:previous.ratingValue,count:previous.reviewCount};}catch{}
-    setJsonLd(productSchema(p,rating,selection), "lz-product-schema");
-    const group=LZSchema.productGroup(p,rating,window.LZPolicy);if(group)setJsonLd(group,"lz-product-group-schema");
+    setJsonLd(productSchema(p), "lz-product-schema");
     appendJsonLd(LZSchema.productBreadcrumbs(p), "lz-breadcrumb-schema");
     appendJsonLd(organizationSchema(), "lz-org-schema");
   }
