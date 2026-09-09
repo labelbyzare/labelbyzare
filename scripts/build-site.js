@@ -8,7 +8,7 @@ fs.rmSync(output,{recursive:true,force:true});
 fs.mkdirSync(output,{recursive:true});
 for(const dir of ['css','js','images']) fs.cpSync(path.join(root,dir),path.join(output,dir),{recursive:true});
 for(const file of fs.readdirSync(root)){
-  if(/\.html$/.test(file)) fs.writeFileSync(path.join(output,file),hardenHtml(fs.readFileSync(path.join(root,file),'utf8')));
-  else if(/\.xml$/.test(file) || ['robots.txt','manifest.json','supabase-client.js','_headers'].includes(file)) fs.copyFileSync(path.join(root,file),path.join(output,file));
+  if(/\.html$/.test(file)) fs.writeFileSync(path.join(output,file),hardenHtml(fs.readFileSync(path.join(root,file),'utf8'),{file}));
+  else if(/\.xml$/.test(file) || ['robots.txt','llms.txt','manifest.json','supabase-client.js','_headers'].includes(file)) fs.copyFileSync(path.join(root,file),path.join(output,file));
 }
 console.log('Built public assets in dist/ and compiled Cloudflare server templates.');
