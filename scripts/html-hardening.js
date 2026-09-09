@@ -1,6 +1,7 @@
 const LEGAL='<span class="footer-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping-policy">Shipping</a><a href="/returns-policy">Returns</a></span>';
 const COOKIE_UI='<script src="/js/cookie-preferences.js?v=20260908-v29e"></script>';
 const ESSENTIAL_VIEW='<script src="/js/essential-pageview.js?v=20260908-v29d"></script>';
+const IMAGE_ALT_GUARD='<script defer src="/js/image-alt-guard.js?v=20260909-alt1"></script>';
 const SITE='https://labelbyzare.com';
 
 const PAGE_META={
@@ -36,7 +37,7 @@ function setMeta(html,name,value){const re=new RegExp(`<meta\\s+[^>]*name=["']${
 function setCanonical(html,url){const re=/<link\s+[^>]*rel=["']canonical["'][^>]*>/i;const tag=`<link rel="canonical" href="${esc(url)}">`;return re.test(html)?html.replace(re,tag):insertHead(html,tag);}
 function pageSchema(meta){return {'@context':'https://schema.org','@type':meta.type||'WebPage',name:meta.title,url:SITE+meta.path,description:meta.description,isPartOf:{'@type':'WebSite',name:'Label by Zare',url:SITE+'/'},publisher:{'@type':'Organization',name:'Label by Zare',url:SITE+'/',logo:{'@type':'ImageObject',url:SITE+'/images/logo.jpg'}}};}
 function addSchema(html,meta){if(!meta.index||html.includes('id="lz-static-page-schema"'))return html;const json=JSON.stringify(pageSchema(meta)).replace(/</g,'\\u003c');return insertHead(html,`<script type="application/ld+json" id="lz-static-page-schema">${json}</script>`);}
-function imageFallback(tag,pageLabel){if(/aria-hidden\s*=\s*["']true["']/i.test(tag))return'';const src=(tag.match(/\bsrc\s*=\s*["']([^"']+)/i)||[])[1]||'';if(/logo|brand-mark|wordmark/i.test(src))return'Label by Zare logo';return `${pageLabel||'Label by Zare'} image`;}
+function imageFallback(tag,pageLabel){if(/aria-hidden\s*=\s*["']true["']/i.test(tag))return'';const src=(tag.match(/\bsrc\s*=\s*["']([^"']+)/i)||[])[1]||'';if(/logo|brand-mark|wordmark/i.test(src))return'Label by Zare logo';if(/hero-boutique/i.test(src))return'Label by Zare abaya and modest wear boutique collection';if(/occasion-emerald-abaya/i.test(src))return'Emerald green occasion abaya by Label by Zare';if(/story-abaya/i.test(src))return'Label by Zare abaya brand story';if(/construction-detail/i.test(src))return'Label by Zare abaya craftsmanship and construction detail';if(/\/images\/products\/abaya-/i.test(src))return'Label by Zare abaya product photo';return `${pageLabel||'Label by Zare'} image`;}
 function fixImageAlts(html,pageLabel){return html.replace(/<img\b[^>]*>/gi,tag=>{const fallback=esc(imageFallback(tag,pageLabel));if(/\balt\s*=/i.test(tag)){if(!fallback)return tag;if(/\balt\s*=\s*(["'])\s*\1/i.test(tag))return tag.replace(/\balt\s*=\s*(["'])\s*\1/i,`alt="${fallback}"`);return tag;}return tag.replace(/\s*\/?>$/,m=>` alt="${fallback}"${m}`);});}
 
 module.exports=function hardenHtml(input,options={}){
@@ -64,6 +65,7 @@ module.exports=function hardenHtml(input,options={}){
     if(html.includes('/supabase-client.js'))html=html.replace(/(<script[^>]+src=["']\/supabase-client\.js[^>]*><\/script>)/i,'$1'+ESSENTIAL_VIEW);
     else html=html.replace('</body>',ESSENTIAL_VIEW+'</body>');
   }
+  if(!html.includes('/js/image-alt-guard.js'))html=html.replace('</body>',IMAGE_ALT_GUARD+'</body>');
   if(!html.includes('/js/cookie-preferences.js'))html=html.replace('</body>',COOKIE_UI+'</body>');
   return html;
 };
